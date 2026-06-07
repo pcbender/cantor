@@ -1,0 +1,46 @@
+name: local_scaffolder
+skill: scaffold_provider
+version: 0.1.0
+description: Generate provider files under work/scaffolds without registering them.
+runner:
+  type: python
+  entrypoint: run.py
+inputs:
+  skill:
+    type: string
+    required: true
+  provider:
+    type: string
+    required: true
+  description:
+    type: string
+    default: TODO provider description
+outputs:
+  scaffold_manifest:
+    path: provider.yaml
+    type: file
+    format: yaml
+  scaffold_runner:
+    path: run.py
+    type: file
+    format: python
+  scaffold_readme:
+    path: README.md
+    type: file
+    format: markdown
+  scaffold_test:
+    path: test_provider.py
+    type: file
+    format: python
+dependencies:
+  system:
+    - python3
+permissions:
+  filesystem_write:
+    - ./work/jobs/
+    - ./work/scaffolds/
+  destructive: false
+risk_level: 2
+approval_required:
+  - scaffold_capability
+

@@ -1,0 +1,48 @@
+name: public_html_crawler
+skill: source_inventory
+version: 0.1.0
+description: Crawl a public same-domain website and inventory pages, links, titles, descriptions, and media.
+runner:
+  type: python
+  entrypoint: run.py
+inputs:
+  source_url:
+    type: string
+    required: true
+  max_depth:
+    type: integer
+    default: 3
+  max_pages:
+    type: integer
+    default: 100
+  include_media:
+    type: boolean
+    default: true
+outputs:
+  inventory_json:
+    path: inventory.json
+    type: file
+    format: json
+  report_md:
+    path: report.md
+    type: file
+    format: markdown
+tools:
+  - http_fetch
+  - html_parser
+dependencies:
+  system:
+    - python3
+  python:
+    - requests
+    - beautifulsoup4
+permissions:
+  network_read: true
+  network_write: false
+  filesystem_write:
+    - ./work/jobs/
+  destructive: false
+risk_level: 1
+approval_required:
+  - max_depth_greater_than_5
+

@@ -1,0 +1,17 @@
+name: http_fetch
+version: 0.1.0
+type: tool
+description: Fetch public HTTP and HTTPS pages with bounded timeouts.
+runtime:
+  language: python
+  entrypoint: run.py
+dependencies:
+  system:
+    - python3
+  python:
+    - requests
+permissions:
+  network_read: true
+  network_write: false
+risk_level: 1
+

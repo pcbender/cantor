@@ -1,0 +1,42 @@
+name: local_scaffolder
+skill: scaffold_tool
+version: 0.1.0
+description: Generate tool files under a job artifact directory without registering them.
+runner:
+  type: python
+  entrypoint: run.py
+inputs:
+  name:
+    type: string
+    required: true
+  description:
+    type: string
+    default: TODO tool description
+outputs:
+  scaffold_manifest:
+    path: tool.yaml
+    type: file
+    format: yaml
+  scaffold_runner:
+    path: run.py
+    type: file
+    format: python
+  scaffold_readme:
+    path: README.md
+    type: file
+    format: markdown
+  scaffold_test:
+    path: test_tool.py
+    type: file
+    format: python
+dependencies:
+  system:
+    - python3
+permissions:
+  filesystem_write:
+    - ./work/jobs/
+  destructive: false
+risk_level: 2
+approval_required:
+  - scaffold_capability
+

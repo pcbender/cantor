@@ -1,0 +1,8 @@
+name: scaffold_tool
+version: 0.1.0
+description: Create an unregistered tool scaffold for review.
+domain: development
+providers:
+  - local_scaffolder
+risk_level: 2
+

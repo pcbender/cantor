@@ -1,0 +1,16 @@
+name: html_parser
+version: 0.1.0
+type: tool
+description: Parse HTML documents into structured page metadata.
+runtime:
+  language: python
+  entrypoint: run.py
+dependencies:
+  system:
+    - python3
+  python:
+    - beautifulsoup4
+permissions:
+  network_read: false
+risk_level: 1
+

@@ -1,0 +1,19 @@
+name: source_inventory
+version: 0.1.0
+description: Create a structured inventory of content from an existing website or CMS.
+domain: migration
+inputs:
+  source_url:
+    type: string
+    required: true
+outputs:
+  inventory_json:
+    type: file
+    format: json
+  report_md:
+    type: file
+    format: markdown
+providers:
+  - public_html_crawler
+risk_level: 1
+
