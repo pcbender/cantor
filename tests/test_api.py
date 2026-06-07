@@ -45,3 +45,20 @@ def test_api_missing_provider_is_structured(runtime):
     )
     assert response.status_code == 200
     assert response.json()["status"] == "missing_provider"
+
+
+def test_api_missing_skill_is_structured(runtime):
+    settings, _, store, _ = runtime
+    client = TestClient(create_app(settings, store))
+    response = client.post(
+        "/jobs",
+        json={
+            "skill": "extract_content",
+            "provider": "readability_html",
+            "inputs": {},
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "missing_skill"
+    assert body["suggested_action"]["skill"] == "scaffold_skill"

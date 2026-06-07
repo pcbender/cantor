@@ -1,0 +1,41 @@
+name: local_scaffolder
+skill: scaffold_skill
+version: 0.1.0
+description: Generate skill files under a job artifact directory without registering them.
+runner:
+  type: python
+  entrypoint: run.py
+inputs:
+  skill:
+    type: string
+    required: true
+  description:
+    type: string
+    default: TODO skill description
+  domain:
+    type: string
+    default: general
+outputs:
+  scaffold_manifest:
+    path: skill.yaml
+    type: file
+    format: yaml
+  scaffold_readme:
+    path: README.md
+    type: file
+    format: markdown
+  scaffold_test:
+    path: test_skill.py
+    type: file
+    format: python
+dependencies:
+  system:
+    - python3
+permissions:
+  filesystem_write:
+    - ./work/jobs/
+  destructive: false
+risk_level: 2
+approval_required:
+  - scaffold_capability
+

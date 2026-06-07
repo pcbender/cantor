@@ -24,3 +24,16 @@ def test_missing_provider_returns_scaffold_suggestion(runtime):
     assert result["suggested_action"]["skill"] == "scaffold_provider"
     assert result["suggested_action"]["requires_approval"] is True
 
+
+def test_missing_skill_returns_scaffold_skill_suggestion(runtime):
+    _, _, _, service = runtime
+    from canto.models.schemas import JobRequest
+
+    result = service.missing_capability(
+        JobRequest(skill="extract_content", provider="readability_html")
+    )
+    assert result["status"] == "missing_skill"
+    assert result["suggested_action"]["skill"] == "scaffold_skill"
+    assert result["suggested_action"]["provider"] == "local_scaffolder"
+    assert result["suggested_action"]["inputs"] == {"skill": "extract_content"}
+    assert result["suggested_action"]["requires_approval"] is True

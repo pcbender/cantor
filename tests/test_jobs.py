@@ -48,6 +48,28 @@ def test_approval_gate_and_scaffold_artifacts(runtime):
     assert Path(completed.artifact_dir, "provider.yaml").is_file()
 
 
+def test_scaffold_skill_requires_approval_and_writes_artifacts(runtime):
+    _, _, store, service = runtime
+    job = service.create_job(
+        JobRequest(
+            skill="scaffold_skill",
+            provider="local_scaffolder",
+            inputs={"skill": "extract_content", "description": "Extract normalized content."},
+        )
+    )
+    waiting = service.process_job(job.job_id)
+    assert waiting.status == "waiting_for_approval"
+    completed = service.approve(waiting.approval_id, "cantor", "Review scaffold")
+    assert completed.status == "completed"
+    artifacts = store.get_artifacts(job.job_id)
+    assert {item["name"] for item in artifacts} == {
+        "scaffold_manifest",
+        "scaffold_readme",
+        "scaffold_test",
+    }
+    assert Path(completed.artifact_dir, "skill.yaml").is_file()
+
+
 def test_approval_rejection_does_not_run(runtime):
     _, _, store, service = runtime
     job = service.create_job(
@@ -61,4 +83,3 @@ def test_approval_rejection_does_not_run(runtime):
     rejected = service.reject(waiting.approval_id, "cantor", "Not needed")
     assert rejected.status == "rejected"
     assert store.get_artifacts(job.job_id) == []
-

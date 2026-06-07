@@ -1,0 +1,18 @@
+name: scaffold_skill
+version: 0.1.0
+description: Create an unregistered skill scaffold for review.
+domain: development
+providers:
+  - local_scaffolder
+outputs:
+  scaffold_manifest:
+    type: file
+    format: yaml
+  scaffold_readme:
+    type: file
+    format: markdown
+  scaffold_test:
+    type: file
+    format: python
+risk_level: 2
+

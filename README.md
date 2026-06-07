@@ -6,7 +6,7 @@ Canto is a deliberately small local execution broker for Echo. It discovers regi
 
 - WSL2 Ubuntu or another Linux environment
 - Python 3.11+
-- Redis 7 (local package or Docker)
+- Redis 7 running inside WSL2
 
 ## Install and run
 
@@ -14,7 +14,9 @@ Canto is a deliberately small local execution broker for Echo. It discovers regi
 python3 -m venv .venv
 .venv/bin/pip install -e '.[test]'
 cp .env.example .env
-docker compose up -d redis
+sudo apt update
+sudo apt install redis-server
+sudo service redis-server start
 .venv/bin/canto serve
 ```
 
@@ -24,6 +26,14 @@ The API listens on `http://127.0.0.1:8765` by default. Interactive API documenta
 curl http://127.0.0.1:8765/health
 curl http://127.0.0.1:8765/registry
 ```
+
+Check Redis directly with:
+
+```bash
+redis-cli ping
+```
+
+Expected response: `PONG`.
 
 ## Run a source inventory
 
@@ -46,7 +56,7 @@ Providers can declare approval rules. Canto checks dependencies and policy befor
 .venv/bin/canto reject approval_YYYYMMDD_abcdef --reason "Not yet"
 ```
 
-The built-in `scaffold_provider` and `scaffold_tool` capabilities always require approval. Their output remains in the job artifact directory and is never automatically added to the live registry.
+The built-in `scaffold_skill`, `scaffold_provider`, and `scaffold_tool` capabilities always require approval. Their output remains in the job artifact directory and is never automatically added to the live registry.
 
 ## API summary
 
@@ -62,7 +72,7 @@ The built-in `scaffold_provider` and `scaffold_tool` capabilities always require
 - `POST /approvals/{approval_id}/approve`
 - `POST /approvals/{approval_id}/reject`
 
-Unknown providers return a structured `missing_provider` response with an approval-gated `scaffold_provider` suggestion.
+Unknown skills and providers return structured `missing_skill` or `missing_provider` responses with approval-gated scaffold suggestions.
 
 ## Security boundaries
 

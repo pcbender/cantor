@@ -81,8 +81,9 @@ class JobService:
                 "skill": request.skill,
                 "message": f"Skill {request.skill} is not installed.",
                 "suggested_action": {
-                    "skill": "scaffold_tool",
-                    "inputs": {"name": request.skill},
+                    "skill": "scaffold_skill",
+                    "provider": "local_scaffolder",
+                    "inputs": {"skill": request.skill},
                     "requires_approval": True,
                 },
             }
