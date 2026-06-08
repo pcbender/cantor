@@ -11,11 +11,34 @@ import requests
 from bs4 import BeautifulSoup
 
 
+class ExternalRedirect(requests.RequestException):
+    pass
+
+
 def normalize_url(url: str) -> str:
     url, _ = urldefrag(url)
     parsed = urlparse(url)
     path = parsed.path or "/"
     return urlunparse((parsed.scheme.lower(), parsed.netloc.lower(), path, "", parsed.query, ""))
+
+
+def fetch_same_domain(
+    session: requests.Session, url: str, source_hostname: str, max_redirects: int = 10
+) -> requests.Response:
+    current = url
+    for _ in range(max_redirects + 1):
+        response = session.get(current, timeout=(5, 20), allow_redirects=False)
+        if not response.is_redirect and not response.is_permanent_redirect:
+            return response
+        location = response.headers.get("location")
+        if not location:
+            return response
+        target = normalize_url(urljoin(current, location))
+        parsed = urlparse(target)
+        if parsed.scheme not in {"http", "https"} or parsed.hostname != source_hostname:
+            raise ExternalRedirect(f"Refused redirect outside source domain: {target}")
+        current = target
+    raise requests.TooManyRedirects(f"Exceeded {max_redirects} redirects for {url}")
 
 
 def probable_type(url: str, title: str) -> str:
@@ -61,7 +84,7 @@ def main() -> int:
     while queue and len(pages) < max_pages:
         url, depth = queue.popleft()
         try:
-            response = session.get(url, timeout=(5, 20), allow_redirects=True)
+            response = fetch_same_domain(session, url, parsed_source.hostname)
             content_type = response.headers.get("content-type", "")
             status_code = response.status_code
             if status_code >= 400:
@@ -166,4 +189,3 @@ Source: {source_url}
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

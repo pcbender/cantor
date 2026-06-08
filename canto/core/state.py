@@ -20,6 +20,7 @@ class StateStore(Protocol):
     def get_artifacts(self, job_id: str) -> list[dict[str, Any]]: ...
     def set_approval(self, approval_id: str, value: dict[str, Any]) -> None: ...
     def get_approval(self, approval_id: str) -> dict[str, Any] | None: ...
+    def transition_approval(self, approval_id: str, expected_statuses: set[str], value: dict[str, Any]) -> bool: ...
     def set_registry(self, value: dict[str, Any]) -> None: ...
 
 
@@ -73,6 +74,25 @@ class RedisStateStore:
     def get_approval(self, approval_id: str) -> dict[str, Any] | None:
         value = self.client.get(f"canto:approval:{approval_id}")
         return json.loads(value) if value else None
+
+    def transition_approval(
+        self, approval_id: str, expected_statuses: set[str], value: dict[str, Any]
+    ) -> bool:
+        key = f"canto:approval:{approval_id}"
+        while True:
+            with self.client.pipeline() as pipe:
+                try:
+                    pipe.watch(key)
+                    current = pipe.get(key)
+                    if not current or json.loads(current).get("status") not in expected_statuses:
+                        pipe.unwatch()
+                        return False
+                    pipe.multi()
+                    pipe.set(key, json.dumps(value))
+                    pipe.execute()
+                    return True
+                except WatchError:
+                    continue
 
     def set_registry(self, value: dict[str, Any]) -> None:
         self.client.set("canto:registry:snapshot", json.dumps(value))
@@ -131,6 +151,16 @@ class MemoryStateStore:
         with self.lock:
             value = self.approvals.get(approval_id)
             return json.loads(json.dumps(value)) if value else None
+
+    def transition_approval(
+        self, approval_id: str, expected_statuses: set[str], value: dict[str, Any]
+    ) -> bool:
+        with self.lock:
+            current = self.approvals.get(approval_id)
+            if not current or current.get("status") not in expected_statuses:
+                return False
+            self.approvals[approval_id] = json.loads(json.dumps(value))
+            return True
 
     def set_registry(self, value: dict[str, Any]) -> None:
         with self.lock:

@@ -1,0 +1,38 @@
+name: manifest_dependency_checker
+skill: check_dependencies
+version: 0.1.0
+description: Inspect dependency declarations for a registered skill, provider, or tool.
+runner:
+  type: python
+  entrypoint: run.py
+inputs:
+  skill:
+    type: string
+    required: false
+  provider:
+    type: string
+    required: false
+  tool:
+    type: string
+    required: false
+outputs:
+  dependency_report_json:
+    path: dependency_report.json
+    type: file
+    format: json
+  dependency_report_md:
+    path: dependency_report.md
+    type: file
+    format: markdown
+dependencies:
+  system:
+    - python3
+  python:
+    - PyYAML
+permissions:
+  network_read: false
+  network_write: false
+  filesystem_write:
+    - ./work/jobs/
+  destructive: false
+risk_level: 1

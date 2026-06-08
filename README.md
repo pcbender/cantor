@@ -41,6 +41,7 @@ Expected response: `PONG`.
 .venv/bin/canto run source_inventory \
   --provider public_html_crawler \
   --allow-network \
+  --approved-domain example.com \
   --input source_url=https://example.com \
   --input max_depth=2
 ```
@@ -57,6 +58,24 @@ Providers can declare approval rules. Canto checks dependencies and policy befor
 ```
 
 The built-in `scaffold_skill`, `scaffold_provider`, and `scaffold_tool` capabilities always require approval. Their output remains in the job artifact directory and is never automatically added to the live registry.
+
+Inspect a registered provider's declared dependencies without installing anything:
+
+```bash
+.venv/bin/canto run check_dependencies \
+  --provider manifest_dependency_checker \
+  --input skill=source_inventory \
+  --input provider=public_html_crawler
+```
+
+Build a deterministic migration assessment from a completed inventory job:
+
+```bash
+.venv/bin/canto run migration_report \
+  --provider local_markdown_report \
+  --input source_job_id=job_YYYYMMDD_abcdef \
+  --input target_cms=WordPress
+```
 
 ## API summary
 
@@ -76,7 +95,7 @@ Unknown skills and providers return structured `missing_skill` or `missing_provi
 
 ## Security boundaries
 
-Canto only launches entrypoints declared by registered provider manifests. It rejects entrypoints outside their provider directory, enforces subprocess timeouts and output limits, validates policy before launch, and only collects declared artifacts whose resolved paths remain inside the job artifact directory. v1 does not provide a kernel-level filesystem or network sandbox, so manifests and provider code remain trusted local configuration.
+Canto only launches entrypoints declared by registered provider manifests. It rejects entrypoints outside their provider directory, enforces subprocess timeouts and output limits, validates policy before launch, and only collects declared artifacts whose resolved paths remain inside the job artifact directory. Credential-like inputs must use `*_ref` fields with local environment references such as `env:CANTO_API_TOKEN`; raw credential values are rejected before job persistence. v1 does not provide a kernel-level filesystem or network sandbox, so manifests and provider code remain trusted local configuration.
 
 ## Tests
 

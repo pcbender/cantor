@@ -1,0 +1,21 @@
+name: migration_report
+version: 0.1.0
+description: Summarize a source inventory into a deterministic CMS migration assessment.
+domain: migration
+inputs:
+  source_job_id:
+    type: string
+    required: true
+  target_cms:
+    type: string
+    required: false
+outputs:
+  migration_report_json:
+    type: file
+    format: json
+  migration_report_md:
+    type: file
+    format: markdown
+providers:
+  - local_markdown_report
+risk_level: 1

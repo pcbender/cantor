@@ -44,5 +44,5 @@ permissions:
   destructive: false
 risk_level: 1
 approval_required:
+  - network_access_to_non_approved_domain
   - max_depth_greater_than_5
-

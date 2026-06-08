@@ -93,13 +93,14 @@ def run(
     provider: str = typer.Option(..., "--provider"),
     input_value: list[str] = typer.Option([], "--input"),
     allow_network: bool = typer.Option(False, "--allow-network"),
+    approved_domain: list[str] = typer.Option([], "--approved-domain"),
 ) -> None:
     _, _, _, service = _runtime()
     request = JobRequest(
         skill=skill,
         provider=provider,
         inputs=_parse_inputs(input_value),
-        policy=Policy(allow_network=allow_network),
+        policy=Policy(allow_network=allow_network, approved_domains=approved_domain),
         requested_by="cli",
     )
     missing = service.missing_capability(request)

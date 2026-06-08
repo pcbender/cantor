@@ -1,0 +1,33 @@
+name: local_markdown_report
+skill: migration_report
+version: 0.1.0
+description: Build a local migration assessment from a completed source inventory job.
+runner:
+  type: python
+  entrypoint: run.py
+inputs:
+  source_job_id:
+    type: string
+    required: true
+  target_cms:
+    type: string
+    default: unspecified
+outputs:
+  migration_report_json:
+    path: migration_report.json
+    type: file
+    format: json
+  migration_report_md:
+    path: migration_report.md
+    type: file
+    format: markdown
+dependencies:
+  system:
+    - python3
+permissions:
+  network_read: false
+  network_write: false
+  filesystem_write:
+    - ./work/jobs/
+  destructive: false
+risk_level: 1
