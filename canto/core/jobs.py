@@ -46,6 +46,11 @@ class JobService:
         job.updated_at = utc_now()
         self.store.set_job(job.job_id, job.model_dump(mode="json"))
 
+    def _transition(self, job: Job, expected_statuses: set[str], status: str) -> bool:
+        job.status = status
+        job.updated_at = utc_now()
+        return self.store.transition_job(job.job_id, expected_statuses, job.model_dump(mode="json"))
+
     def _validate_inputs(self, provider: dict[str, Any], values: dict[str, Any]) -> dict[str, Any]:
         declarations = provider.get("inputs", {})
         unknown = set(values) - set(declarations)
@@ -143,9 +148,11 @@ class JobService:
             approval = self.store.get_approval(job.approval_id or "")
             if not approval or approval.get("status") != "approved":
                 return job
+            if not self._transition(job, {"waiting_for_approval"}, "running"):
+                return Job.model_validate(self.store.get_job(job_id))
         else:
-            job.status = "checking_dependencies"
-            self._save(job)
+            if not self._transition(job, {"queued"}, "checking_dependencies"):
+                return Job.model_validate(self.store.get_job(job_id))
             self._event(job_id, "dependency_check_started", "Checking provider and tool dependencies.")
             tool_manifests = []
             for tool_name in provider.get("tools", []):
@@ -182,9 +189,10 @@ class JobService:
                 self._event(job_id, "approval_requested", approval.reason, {"approval_id": approval_id})
                 return job
 
-        job.status = "running"
+            if not self._transition(job, {"checking_dependencies"}, "running"):
+                return Job.model_validate(self.store.get_job(job_id))
+
         job.error = None
-        self._save(job)
         self._event(job_id, "provider_started", f"Running {job.skill}.{job.provider}.")
         payload = {
             "job_id": job.job_id,

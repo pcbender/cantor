@@ -6,12 +6,14 @@ from threading import RLock
 from typing import Any, Protocol
 
 import redis
+from redis.exceptions import WatchError
 
 
 class StateStore(Protocol):
     def ping(self) -> bool: ...
     def set_job(self, job_id: str, value: dict[str, Any]) -> None: ...
     def get_job(self, job_id: str) -> dict[str, Any] | None: ...
+    def transition_job(self, job_id: str, expected_statuses: set[str], value: dict[str, Any]) -> bool: ...
     def append_event(self, job_id: str, value: dict[str, Any]) -> None: ...
     def get_events(self, job_id: str) -> list[dict[str, Any]]: ...
     def set_artifacts(self, job_id: str, value: list[dict[str, Any]]) -> None: ...
@@ -34,6 +36,23 @@ class RedisStateStore:
     def get_job(self, job_id: str) -> dict[str, Any] | None:
         value = self.client.get(f"canto:job:{job_id}")
         return json.loads(value) if value else None
+
+    def transition_job(self, job_id: str, expected_statuses: set[str], value: dict[str, Any]) -> bool:
+        key = f"canto:job:{job_id}"
+        while True:
+            with self.client.pipeline() as pipe:
+                try:
+                    pipe.watch(key)
+                    current = pipe.get(key)
+                    if not current or json.loads(current).get("status") not in expected_statuses:
+                        pipe.unwatch()
+                        return False
+                    pipe.multi()
+                    pipe.set(key, json.dumps(value))
+                    pipe.execute()
+                    return True
+                except WatchError:
+                    continue
 
     def append_event(self, job_id: str, value: dict[str, Any]) -> None:
         self.client.rpush(f"canto:job:{job_id}:events", json.dumps(value))
@@ -79,6 +98,14 @@ class MemoryStateStore:
         with self.lock:
             value = self.jobs.get(job_id)
             return json.loads(json.dumps(value)) if value else None
+
+    def transition_job(self, job_id: str, expected_statuses: set[str], value: dict[str, Any]) -> bool:
+        with self.lock:
+            current = self.jobs.get(job_id)
+            if not current or current.get("status") not in expected_statuses:
+                return False
+            self.jobs[job_id] = json.loads(json.dumps(value))
+            return True
 
     def append_event(self, job_id: str, value: dict[str, Any]) -> None:
         with self.lock:

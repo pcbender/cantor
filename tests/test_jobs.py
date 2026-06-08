@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import threading
+import time
 from pathlib import Path
 
+import canto.core.jobs as jobs_module
 from canto.models.schemas import JobRequest, Policy
 
 
@@ -83,3 +86,44 @@ def test_approval_rejection_does_not_run(runtime):
     rejected = service.reject(waiting.approval_id, "cantor", "Not needed")
     assert rejected.status == "rejected"
     assert store.get_artifacts(job.job_id) == []
+
+
+def test_concurrent_processing_runs_provider_once(runtime, monkeypatch):
+    _, _, store, service = runtime
+    job = service.create_job(
+        JobRequest(
+            skill="source_inventory",
+            provider="public_html_crawler",
+            inputs={"source_url": "https://example.com"},
+            policy=Policy(allow_network=True),
+        )
+    )
+    calls = 0
+    calls_lock = threading.Lock()
+
+    def fake_run_provider(*args, **kwargs):
+        nonlocal calls
+        with calls_lock:
+            calls += 1
+        time.sleep(0.05)
+        return {"summary": "Completed once"}
+
+    monkeypatch.setattr(jobs_module, "run_provider", fake_run_provider)
+    monkeypatch.setattr(jobs_module, "collect_artifacts", lambda *args, **kwargs: [])
+
+    barrier = threading.Barrier(3)
+
+    def process() -> None:
+        barrier.wait()
+        service.process_job(job.job_id)
+
+    workers = [threading.Thread(target=process) for _ in range(2)]
+    for worker in workers:
+        worker.start()
+    barrier.wait()
+    for worker in workers:
+        worker.join()
+
+    assert calls == 1
+    assert store.get_job(job.job_id)["status"] == "completed"
+    assert [event["type"] for event in store.get_events(job.job_id)].count("provider_started") == 1
