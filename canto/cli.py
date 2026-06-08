@@ -109,6 +109,7 @@ def run(
         raise typer.Exit(2)
     try:
         job = service.create_job(request)
+        typer.echo(f"Created {job.job_id} ({job.status}); processing...", err=True)
         job = service.process_job(job.job_id)
     except JobError as exc:
         raise typer.BadParameter(str(exc)) from exc

@@ -47,6 +47,9 @@ Expected response: `PONG`.
 ```
 
 The crawler stays on the source hostname, uses bounded request and process timeouts, and defaults to at most 100 pages. Outputs are written under `work/jobs/<job_id>/`.
+An approved domain also covers its subdomains, so `--approved-domain example.com`
+allows `www.example.com`. The CLI prints the job ID before processing; execution
+remains synchronous and the final job JSON is printed when processing stops.
 
 ## Approval flow
 
