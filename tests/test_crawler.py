@@ -35,7 +35,7 @@ def test_crawler_runs_and_artifacts_are_readable(runtime, tmp_path: Path):
                 skill="source_inventory",
                 provider="public_html_crawler",
                 inputs={"source_url": source_url, "max_depth": 2},
-                policy=Policy(allow_network=True),
+                policy=Policy(allow_network=True, approved_domains=["127.0.0.1"]),
             )
         )
         completed = service.process_job(job.job_id)
@@ -51,3 +51,53 @@ def test_crawler_runs_and_artifacts_are_readable(runtime, tmp_path: Path):
     assert inventory["pages"][0]["title"] == "Home"
     assert len(inventory["media"]) == 1
 
+
+def test_crawler_refuses_cross_host_redirect(runtime):
+    requests_to_redirect_target = 0
+
+    class RedirectHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            nonlocal requests_to_redirect_target
+            if self.path == "/target":
+                requests_to_redirect_target += 1
+                self.send_response(200)
+                self.send_header("content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(b"<html><title>Unexpected</title></html>")
+                return
+            self.send_response(302)
+            self.send_header(
+                "location",
+                f"http://localhost:{self.server.server_port}/target",
+            )
+            self.end_headers()
+
+        def log_message(self, format, *args):
+            return
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), RedirectHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        _, _, store, service = runtime
+        job = service.create_job(
+            JobRequest(
+                skill="source_inventory",
+                provider="public_html_crawler",
+                inputs={"source_url": f"http://127.0.0.1:{server.server_port}/"},
+                policy=Policy(allow_network=True, approved_domains=["127.0.0.1"]),
+            )
+        )
+        completed = service.process_job(job.job_id)
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+
+    assert completed.status == "completed"
+    inventory_meta = next(
+        item for item in store.get_artifacts(job.job_id) if item["name"] == "inventory_json"
+    )
+    inventory = json.loads(read_artifact(inventory_meta)["content"])
+    assert inventory["pages"] == []
+    assert requests_to_redirect_target == 0
+    assert "Refused redirect outside source domain" in inventory["warnings"][0]

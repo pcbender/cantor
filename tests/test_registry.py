@@ -6,6 +6,10 @@ def test_registry_loads(runtime):
     snapshot = registry.snapshot()
     source_inventory = next(item for item in snapshot["skills"] if item["name"] == "source_inventory")
     assert source_inventory["providers"] == ["public_html_crawler"]
+    dependency_check = next(item for item in snapshot["skills"] if item["name"] == "check_dependencies")
+    assert dependency_check["providers"] == ["manifest_dependency_checker"]
+    migration_report = next(item for item in snapshot["skills"] if item["name"] == "migration_report")
+    assert migration_report["providers"] == ["local_markdown_report"]
 
     app = create_app(settings, store)
     registry_route = next(route for route in app.routes if route.path == "/registry")

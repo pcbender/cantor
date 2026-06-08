@@ -1,0 +1,24 @@
+name: check_dependencies
+version: 0.1.0
+description: Check registered skill, provider, or tool dependencies without installing them.
+domain: operations
+inputs:
+  skill:
+    type: string
+    required: false
+  provider:
+    type: string
+    required: false
+  tool:
+    type: string
+    required: false
+outputs:
+  dependency_report_json:
+    type: file
+    format: json
+  dependency_report_md:
+    type: file
+    format: markdown
+providers:
+  - manifest_dependency_checker
+risk_level: 1

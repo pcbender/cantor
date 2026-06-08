@@ -10,6 +10,7 @@ from canto.core.dependencies import check_dependencies
 from canto.core.policy import PolicyDenied, evaluate_policy
 from canto.core.registry import Registry
 from canto.core.runner import RunnerError, run_provider
+from canto.core.security import SensitiveInputError, validate_sensitive_inputs
 from canto.core.state import StateStore
 from canto.models.schemas import Approval, Job, JobRequest, utc_now
 
@@ -112,6 +113,10 @@ class JobService:
         if not provider:
             raise JobError("Requested capability is not registered")
         inputs = self._validate_inputs(provider, request.inputs)
+        try:
+            validate_sensitive_inputs(inputs)
+        except SensitiveInputError as exc:
+            raise JobError(str(exc)) from exc
         job_id = _id("job")
         artifact_dir = (self.settings.jobs_dir / job_id).resolve()
         artifact_dir.mkdir(parents=True, exist_ok=False)
@@ -200,6 +205,7 @@ class JobService:
             "provider": job.provider,
             "inputs": job.inputs,
             "artifact_dir": job.artifact_dir,
+            "canto_root": str(self.settings.root_dir.resolve()),
             "scaffolds_dir": str(self.settings.scaffolds_dir.resolve()),
         }
         try:
@@ -234,7 +240,12 @@ class JobService:
         approval.updated_at = utc_now()
         approval.decided_by = approved_by
         approval.note = note
-        self.store.set_approval(approval_id, approval.model_dump(mode="json"))
+        if not self.store.transition_approval(
+            approval_id, {"pending"}, approval.model_dump(mode="json")
+        ):
+            current = self.store.get_approval(approval_id)
+            status = current.get("status", "unknown") if current else "unknown"
+            raise JobError(f"Approval is already {status}")
         self._event(approval.job_id, "approval_granted", "Cantor approved the job.", {"approved_by": approved_by})
         return self.process_job(approval.job_id)
 
@@ -249,7 +260,12 @@ class JobService:
         approval.updated_at = utc_now()
         approval.decided_by = rejected_by
         approval.note = reason
-        self.store.set_approval(approval_id, approval.model_dump(mode="json"))
+        if not self.store.transition_approval(
+            approval_id, {"pending"}, approval.model_dump(mode="json")
+        ):
+            current = self.store.get_approval(approval_id)
+            status = current.get("status", "unknown") if current else "unknown"
+            raise JobError(f"Approval is already {status}")
         job = Job.model_validate(self.store.get_job(approval.job_id))
         job.status = "rejected"
         job.error = {"code": "approval_rejected", "message": reason}
