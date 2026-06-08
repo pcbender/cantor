@@ -10,6 +10,15 @@ class PolicyDenied(ValueError):
     pass
 
 
+def domain_is_approved(hostname: str, approved_domains: list[str]) -> bool:
+    hostname = hostname.lower().rstrip(".")
+    for domain in approved_domains:
+        domain = domain.lower().rstrip(".")
+        if hostname == domain or hostname.endswith(f".{domain}"):
+            return True
+    return False
+
+
 def evaluate_policy(provider: dict[str, Any], inputs: dict[str, Any], policy: Policy) -> list[str]:
     permissions = provider.get("permissions", {})
     reasons: list[str] = []
@@ -29,8 +38,7 @@ def evaluate_policy(provider: dict[str, Any], inputs: dict[str, Any], policy: Po
     if "network_access_to_non_approved_domain" in approval_rules:
         source_url = inputs.get("source_url")
         hostname = urlparse(source_url).hostname if isinstance(source_url, str) else None
-        approved = {domain.lower() for domain in policy.approved_domains}
-        if hostname and hostname.lower() not in approved:
+        if hostname and not domain_is_approved(hostname, policy.approved_domains):
             reasons.append(f"Network access to non-approved domain {hostname}")
     if permissions.get("database_write"):
         reasons.append("Database write access")
@@ -39,4 +47,3 @@ def evaluate_policy(provider: dict[str, Any], inputs: dict[str, Any], policy: Po
     if policy.mode == "live" and provider.get("risk_level", 1) >= 2:
         reasons.append("Live execution with elevated risk")
     return sorted(set(reasons))
-

@@ -71,6 +71,29 @@ def test_network_provider_waits_for_unapproved_domain(runtime):
     assert waiting.requires_approval is True
 
 
+def test_approved_parent_domain_allows_subdomain(runtime, monkeypatch):
+    _, _, _, service = runtime
+    monkeypatch.setattr(
+        jobs_module,
+        "run_provider",
+        lambda *args, **kwargs: {"status": "completed", "summary": "Done"},
+    )
+    monkeypatch.setattr(jobs_module, "collect_artifacts", lambda *args, **kwargs: [])
+    job = service.create_job(
+        JobRequest(
+            skill="source_inventory",
+            provider="public_html_crawler",
+            inputs={"source_url": "https://www.example.com"},
+            policy=Policy(allow_network=True, approved_domains=["example.com"]),
+        )
+    )
+
+    completed = service.process_job(job.job_id)
+
+    assert completed.status == "completed"
+    assert completed.requires_approval is False
+
+
 def test_raw_sensitive_input_is_rejected_before_job_storage(runtime):
     _, registry, store, service = runtime
     provider = registry.provider_internal("scaffold_tool", "local_scaffolder")
