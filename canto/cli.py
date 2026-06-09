@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import typer
@@ -8,7 +9,27 @@ import uvicorn
 
 from canto.api.server import create_app
 from canto.config import get_settings
+from canto.core.capability_manifest import CapabilityManifestValidator
+from canto.core.capability_package import (
+    CapabilityPackageError,
+    pack_capability,
+    validate_package,
+)
+from canto.core.capability_scaffold import (
+    CapabilityScaffoldError,
+    scaffold_capability_structure,
+)
 from canto.core.jobs import JobError, JobService
+from canto.core.local_registry import (
+    LocalRegistryError,
+    Registry as CapabilityRegistry,
+)
+from canto.core.orchestration import (
+    CapabilityMatcher,
+    OrchestrationError,
+    Orchestrator,
+    PlanStore,
+)
 from canto.core.registry import Registry
 from canto.core.state import RedisStateStore
 from canto.models.schemas import JobRequest, Policy
@@ -17,16 +38,32 @@ app = typer.Typer(help="Canto local orchestration broker")
 skill_app = typer.Typer(help="Inspect skills")
 provider_app = typer.Typer(help="Inspect providers")
 job_app = typer.Typer(help="Inspect jobs")
+capability_app = typer.Typer(help="Manage capability manifests")
 app.add_typer(skill_app, name="skill")
 app.add_typer(provider_app, name="provider")
 app.add_typer(job_app, name="job")
+app.add_typer(capability_app, name="capability")
 
 
 def _runtime() -> tuple:
     settings = get_settings()
     store = RedisStateStore(settings.redis_url)
-    registry = Registry(settings.skills_dir, settings.tools_dir)
+    capability_roots = _capability_registry().execution_roots()
+    registry = Registry(
+        settings.skills_dir,
+        settings.tools_dir,
+        capability_roots=capability_roots,
+    )
     return settings, store, registry, JobService(settings, registry, store)
+
+
+def _capability_registry() -> CapabilityRegistry:
+    return CapabilityRegistry.local()
+
+
+def _orchestrator() -> Orchestrator:
+    registry = _capability_registry()
+    return Orchestrator(registry, PlanStore(registry.store.paths.plans))
 
 
 def _print(value: Any) -> None:
@@ -67,6 +104,264 @@ def health() -> None:
 def registry() -> None:
     _, _, registry_value, _ = _runtime()
     _print(registry_value.snapshot())
+
+
+@app.command("list")
+def list_capabilities() -> None:
+    """List installed capabilities."""
+    try:
+        capabilities = _capability_registry().list_installed()
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    if not capabilities:
+        typer.echo("No capabilities installed.")
+        return
+
+    typer.echo("NAME\tVERSION\tRISK\tPATH")
+    for capability in capabilities:
+        typer.echo(
+            f"{capability.name}\t{capability.version}\t"
+            f"{capability.risk}\t{capability.path}"
+        )
+
+
+@app.command()
+def search(query: str) -> None:
+    """Search capabilities in the local registry."""
+    try:
+        capabilities = _capability_registry().search(query)
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    if not capabilities:
+        typer.echo(f"No local capabilities found matching: {query}")
+        return
+
+    typer.echo("NAME\tVERSION\tINSTALLED\tRISK\tPATH")
+    for capability in capabilities:
+        installed = "yes" if capability.installed else "no"
+        typer.echo(
+            f"{capability.name}\t{capability.version}\t{installed}\t"
+            f"{capability.risk}\t{capability.path}"
+        )
+
+
+@app.command()
+def discover(goal: str) -> None:
+    """Rank installed local capabilities for a goal without executing them."""
+    try:
+        matches = CapabilityMatcher(_capability_registry()).discover(goal)
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    _print([match.model_dump(mode="json") for match in matches])
+
+
+@app.command()
+def plan(goal: str, approve: bool = typer.Option(False, "--approve")) -> None:
+    """Build a local workflow candidate without executing it."""
+    try:
+        execution_plan = _orchestrator().create_plan(goal, approve=approve)
+    except (LocalRegistryError, OrchestrationError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    _print(execution_plan.model_dump(mode="json"))
+
+
+@app.command()
+def execute(plan_id: str) -> None:
+    """Execute an approved local orchestration plan."""
+    orchestrator = _orchestrator()
+    settings, store, _, service = _runtime()
+
+    def execute_step(
+        capability: str,
+        provider_identifier: str,
+        resolved_inputs: dict[str, str],
+        produces: list[str],
+    ) -> dict[str, str]:
+        if "." not in provider_identifier:
+            raise OrchestrationError(
+                f"Invalid provider identifier for {capability}: {provider_identifier}"
+            )
+        skill, provider = provider_identifier.split(".", 1)
+        job = service.create_job(
+            JobRequest(
+                skill=skill,
+                provider=provider,
+                inputs=resolved_inputs,
+                requested_by=f"plan:{plan_id}",
+            )
+        )
+        completed = service.process_job(job.job_id)
+        if completed.status != "completed":
+            raise OrchestrationError(
+                f"Step {capability} stopped with status {completed.status}"
+            )
+        artifact_dir = Path(completed.artifact_dir)
+        return {
+            output: str((artifact_dir / output).resolve())
+            for output in produces
+            if (artifact_dir / output).is_file()
+        }
+
+    try:
+        result = orchestrator.execute(plan_id, execute_step)
+    except (LocalRegistryError, OrchestrationError, JobError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    _print(result.model_dump(mode="json"))
+
+
+@app.command()
+def explain(plan_id: str) -> None:
+    """Explain a saved orchestration plan without executing it."""
+    try:
+        explanation = _orchestrator().explain(plan_id)
+    except (LocalRegistryError, OrchestrationError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    _print(explanation.model_dump(mode="json"))
+
+
+@app.command()
+def inspect(name: str, version: str | None = typer.Option(None, "--version")) -> None:
+    """Inspect an installed capability."""
+    try:
+        capability = _capability_registry().inspect(name, version)
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    _print(capability.model_dump(mode="json"))
+
+
+@app.command()
+def remove(name: str, version: str | None = typer.Option(None, "--version")) -> None:
+    """Remove an installed capability."""
+    try:
+        entry = _capability_registry().remove(name, version)
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Removed {entry.name} {entry.version}")
+
+
+@app.command("validate-installed")
+def validate_installed(
+    name: str, version: str | None = typer.Option(None, "--version")
+) -> None:
+    """Validate an installed capability and registry metadata."""
+    try:
+        result = _capability_registry().validate_installed(name, version)
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    for warning in result.warnings:
+        typer.echo(f"Warning: {warning}")
+    if not result.valid:
+        for error in result.errors:
+            typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"Installed capability is valid: {name}")
+
+
+@app.command()
+def install(source: Path) -> None:
+    """Install a capability from a local .canto archive."""
+    try:
+        result = _capability_registry().install_package(source)
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    for warning in result.warnings:
+        typer.echo(f"Warning: {warning}")
+    if result.dependencies:
+        typer.echo(
+            "Dependencies declared but not installed: "
+            + json.dumps(result.dependencies, sort_keys=True)
+        )
+    typer.echo(f"Installed {result.entry.name} {result.entry.version}")
+
+
+@app.command()
+def pack(
+    capability_dir: Path,
+    output: Path = typer.Option(Path("."), "--output", "-o"),
+) -> None:
+    """Pack a capability directory into a deterministic .canto archive."""
+    try:
+        package_path = pack_capability(capability_dir, output)
+    except CapabilityPackageError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Created {package_path}")
+
+
+@app.command("validate-package")
+def validate_capability_package(package: Path) -> None:
+    """Validate a .canto archive and its checksums."""
+    result = validate_package(package)
+    for warning in result.warnings:
+        typer.echo(f"Warning: {warning}")
+    if not result.valid:
+        for error in result.errors:
+            typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"Capability package is valid: {package}")
+
+
+@app.command()
+def export(
+    name: str,
+    version: str | None = typer.Option(None, "--version"),
+    output: Path = typer.Option(Path("."), "--output", "-o"),
+) -> None:
+    """Export an installed capability as a .canto archive."""
+    try:
+        package_path = _capability_registry().export(name, version, output)
+    except LocalRegistryError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Exported {package_path}")
+
+
+@app.command()
+def scaffold(
+    name: str,
+    output: Path = typer.Option(Path("."), "--output", "-o"),
+) -> None:
+    """Create a local capability scaffold."""
+    try:
+        destination = scaffold_capability_structure(name, output)
+    except CapabilityScaffoldError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Created scaffold {destination}")
+
+
+@capability_app.command("validate")
+def capability_validate(path: Path) -> None:
+    """Validate a capability manifest."""
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        typer.echo(f"Error: cannot read capability manifest {path}: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+    result = CapabilityManifestValidator.validate_yaml(content)
+    for warning in result.warnings:
+        typer.echo(f"Warning: {warning}")
+    if not result.valid:
+        for error in result.errors:
+            typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Capability manifest is valid: {path}")
 
 
 @skill_app.command("show")

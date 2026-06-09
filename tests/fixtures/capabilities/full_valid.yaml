@@ -1,0 +1,25 @@
+name: source_inventory
+version: 1.0.0
+description: Inventory a website and produce migration planning artifacts.
+skills:
+  - source_inventory
+providers:
+  - source_inventory.public_html_crawler
+tools: []
+intents:
+  - inventory_content
+inputs:
+  - website_url
+outputs:
+  - inventory.json
+  - report.md
+dependencies:
+  python:
+    - requests
+    - beautifulsoup4
+risk:
+  level: low
+  requires_approval: false
+artifacts:
+  - inventory.json
+  - report.md

@@ -1,0 +1,17 @@
+{
+  "content_types": [
+    {"name": "post"},
+    {"name": "page"},
+    {"name": "media"},
+    {"name": "product"}
+  ],
+  "taxonomies": [
+    {"name": "category"},
+    {"name": "tag"},
+    {"name": "product_brand"}
+  ],
+  "relationships": [],
+  "fields": [
+    {"name": "custom_rating"}
+  ]
+}

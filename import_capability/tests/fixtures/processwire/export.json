@@ -1,0 +1,26 @@
+{
+  "pages": [
+    {
+      "id": 101,
+      "template": "article",
+      "title": "Example article",
+      "name": "example-article",
+      "status": "published",
+      "modified": "2026-01-02T03:04:05Z",
+      "url": "/articles/example-article/",
+      "summary": "Article summary",
+      "body": "<p>Article body</p>"
+    }
+  ],
+  "templates": [
+    {
+      "name": "article",
+      "fields": ["title", "summary", "body"]
+    }
+  ],
+  "fields": [
+    {"name": "title", "type": "Text"},
+    {"name": "summary", "type": "Textarea"},
+    {"name": "body", "type": "Textarea"}
+  ]
+}

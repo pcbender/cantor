@@ -12,9 +12,15 @@ class RegistryError(ValueError):
 
 
 class Registry:
-    def __init__(self, skills_dir: Path, tools_dir: Path):
+    def __init__(
+        self,
+        skills_dir: Path,
+        tools_dir: Path,
+        capability_roots: list[Path] | None = None,
+    ):
         self.skills_dir = skills_dir.resolve()
         self.tools_dir = tools_dir.resolve()
+        self.capability_roots = [path.resolve() for path in capability_roots or []]
         self.skills: dict[str, dict[str, Any]] = {}
         self.providers: dict[tuple[str, str], dict[str, Any]] = {}
         self.tools: dict[str, dict[str, Any]] = {}
@@ -36,20 +42,34 @@ class Registry:
         providers: dict[tuple[str, str], dict[str, Any]] = {}
         tools: dict[str, dict[str, Any]] = {}
 
-        if self.skills_dir.exists():
-            for path in sorted(self.skills_dir.glob("*/skill.yaml")):
+        roots = [(self.skills_dir, self.tools_dir)]
+        roots.extend(
+            (root / "skills", root / "tools") for root in self.capability_roots
+        )
+        for skills_dir, tools_dir in roots:
+            for path in sorted(skills_dir.glob("*/skill.yaml")):
                 manifest = self._load_yaml(path)
+                if manifest["name"] in skills:
+                    raise RegistryError(
+                        f"Duplicate skill {manifest['name']} from {path}"
+                    )
                 skills[manifest["name"]] = manifest
-            for path in sorted(self.skills_dir.glob("*/providers/*/provider.yaml")):
+            for path in sorted(skills_dir.glob("*/providers/*/provider.yaml")):
                 manifest = self._load_yaml(path)
                 key = (manifest.get("skill", ""), manifest["name"])
                 if key[0] not in skills:
                     raise RegistryError(f"Provider {path} refers to unknown skill {key[0]}")
+                if key in providers:
+                    raise RegistryError(
+                        f"Duplicate provider {key[0]}.{key[1]} from {path}"
+                    )
                 providers[key] = manifest
-
-        if self.tools_dir.exists():
-            for path in sorted(self.tools_dir.glob("*/tool.yaml")):
+            for path in sorted(tools_dir.glob("*/tool.yaml")):
                 manifest = self._load_yaml(path)
+                if manifest["name"] in tools:
+                    raise RegistryError(
+                        f"Duplicate tool {manifest['name']} from {path}"
+                    )
                 tools[manifest["name"]] = manifest
 
         for skill_name, manifest in skills.items():
@@ -97,4 +117,3 @@ class Registry:
 
     def provider_internal(self, skill: str, provider: str) -> dict[str, Any] | None:
         return self.providers.get((skill, provider))
-
