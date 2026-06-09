@@ -104,6 +104,31 @@ Success condition:
 
 Canto can analyze an existing site and produce a migration-ready plan as durable artifacts.
 
+## v1.3.5 — Capability Archives
+
+Goal: complete the local package lifecycle before capability scaffolding.
+
+Deliverables:
+
+- Deterministic `.canto` archive creation
+- Archive manifest, content, and checksum validation
+- Installation from local `.canto` archives
+- Export of installed capabilities
+- End-to-end pack, install, inspect, and execution demo
+
+Non-goals:
+
+- No remote package download
+- No public registry or publishing
+- No dependency auto-install
+- No package signing or autonomous trust
+
+Success condition:
+
+A local capability directory can be packed, validated, installed, listed,
+inspected, executed, and exported without copying package files into the
+source-controlled v1 registry directories.
+
 ## v1.4 — Capability Scaffolding Workflow
 
 Goal: turn missing capability responses into approved capability creation workflows.
@@ -115,29 +140,43 @@ Deliverables:
 - Scaffold tests
 - Scaffold manifest
 - Approval gate before registration
+- Local `canto scaffold NAME` command
+- Validate, pack, and install workflow for generated scaffolds
 
 Success condition:
 
 When Echo requests a missing capability, Canto can propose and scaffold a package without automatically trusting or registering it.
 
-## v2.0 — Remote Registry
+The local scaffold command creates deterministic placeholder files only. It
+does not use AI generation, contact a remote registry, install dependencies,
+or automatically install the generated package.
 
-Goal: enable a remote capability registry with trust metadata.
+## v2.0 — Orchestrated Capability Discovery
+
+Goal: discover installed local capabilities, propose reviewable workflows, and
+execute only explicitly approved plans.
 
 Deliverables:
 
-- Remote manifest index
-- Capability search
-- Capability fetch
-- Signature/checksum verification
-- Risk metadata
-- Compatibility metadata
+- Capability intent, input, and output metadata
+- Deterministic installed-capability discovery
+- Workflow candidate and execution plan models
+- Local plan approval records
+- Approved-only sequential execution
+- Artifact dependency resolution
+- Plan explanation
 
 Non-goals:
 
-- No fully open marketplace at first
-- No unreviewed autonomous installs
+- No remote registry or package discovery
+- No AI-generated plans or capabilities
+- No live credential handling or target writes
+- No automatic dependency installation
 
 Success condition:
 
-Canto can discover a remote capability, inspect its metadata, verify integrity, and install only with Cantor approval.
+Canto can discover installed local capabilities for a goal, save and approve a
+deterministic plan, execute its steps through existing provider controls, and
+explain every selection and dependency.
+
+Remote registry and publishing work remains deferred beyond v2.0.

@@ -1,0 +1,22 @@
+name: import_capability
+version: 0.1.0
+description: Inventory a local static site and produce migration planning artifacts.
+skills:
+  - import_capability
+providers:
+  - import_capability.static_html
+  - import_capability.wordpress
+  - import_capability.processwire
+  - import_capability.database_snapshot
+tools: []
+dependencies: {}
+risk:
+  level: low
+  requires_approval: false
+artifacts:
+  - inventory.json
+  - content.json
+  - schema.json
+  - migration_plan.md
+  - crosswalk.json
+  - transformed_content.json

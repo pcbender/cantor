@@ -1,0 +1,4 @@
+name: source_inventory
+version: 1.0.0
+risk:
+  level: critical

@@ -1,0 +1,13 @@
+{
+  "pages": [
+    {
+      "id": 10,
+      "title": {"rendered": "Example title"},
+      "content": {"rendered": "<p>Example body</p>"}
+    },
+    {
+      "id": 11,
+      "title": {"rendered": "Missing body"}
+    }
+  ]
+}
