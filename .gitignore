@@ -7,4 +7,4 @@ work/jobs/*
 work/scaffolds/*
 !work/jobs/.gitkeep
 !work/scaffolds/.gitkeep
-
+.continue/
