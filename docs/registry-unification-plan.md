@@ -1,17 +1,32 @@
-# Registry & Identifier Unification Plan
+# Registry & Identifier Unification (as-built design record)
 
-Status: **proposal / design** — no code changes implied by this document.
-Audience: Canto maintainers deciding what to build before freezing the public contract.
+Status: **DELIVERED in v2.1 (Registry Unification).** This document is retained as the design
+record for that work; it is no longer a forward proposal. It was the prerequisite for the
+v2.2 contract freeze (`docs/orchestration-api-contract.md`).
+
+### As-built summary (what shipped, verified against the code)
+
+| Plan section | Delivered as |
+|---|---|
+| Phase 0 — HTTP/CLI registry parity | `create_app()` constructs the runtime `Registry` with a `capability_registry`, which loads installed capabilities via `execution_roots()` (`canto/api/server.py`, `canto/core/registry.py`). HTTP and CLI now see the same installed capabilities. |
+| Phase 1 — capability → (skill, provider) bindings | `manifest.execution.providers` + `resolve_provider_binding` (`canto/core/orchestration.py`); binding validation in the manifest validator. |
+| Phase 2 — plan steps carry runnable identity | `WorkflowStep` now carries `skill`/`provider` (`canto/core/orchestration.py`); artifact→input binding model added. |
+| Phase 3 — real runner, not a callback | `Orchestrator` takes `job_service=` and executes steps through `JobService`/`runner.py`; the caller-supplied executor is gone from the public path. |
+| Phase 4 — one approval model | Plan execution reuses the existing `Approval` object and `/approvals/{id}` flow. |
+| Canonical identity | Adopted **Option A**: `(skill, provider)` is the execution identity, `capability@version` is the packaging/provenance identity (see ROADMAP "Canonical Identity Decision"). |
+
+The numbered phases and gap analysis below are preserved as written during design; read them
+as the rationale that produced the shipped result, not as outstanding work.
 
 ---
 
-## 1. Why this is the first thing to fix
+## 1. Why this was the first thing fixed
 
-Canto currently maintains **two registries with two different addressing schemes**, and the
-orchestration layer reads one while the execution layer reads the other. Until a plan step
-resolves deterministically to something the runner can execute, nothing downstream
-(planning over HTTP, a single approval model, a frozen contract) can be built on solid
-ground. This is the highest-leverage change.
+Canto had maintained **two registries with two different addressing schemes**, and the
+orchestration layer read one while the execution layer read the other. Until a plan step
+resolved deterministically to something the runner could execute, nothing downstream
+(planning over HTTP, a single approval model, a frozen contract) could be built on solid
+ground. This was the highest-leverage change, and it landed in v2.1.
 
 ### The two registries
 
@@ -37,13 +52,16 @@ The bridge exists but is only half-wired:
 
 So via the CLI, an installed capability's providers *do* become runnable jobs.
 
-### Where they do NOT connect (the gaps to close)
+### Where they did NOT connect (the gaps v2.1 closed)
 
-1. **The HTTP server ignores installed capabilities.** `create_app()` builds
-   `Registry(settings.skills_dir, settings.tools_dir)` with **no `capability_roots`**
-   (`server.py:16`). Result: `POST /jobs` and `GET /registry` over HTTP can only see the
-   repo's built-in `skills/` — the entire installed package ecosystem is invisible to the
-   API. The CLI and the HTTP API therefore disagree about what exists.
+These were the gaps at design time. Each was closed in v2.1 — see the as-built summary above.
+The descriptions are left in past tense and reference the pre-unification code.
+
+1. **The HTTP server ignored installed capabilities.** `create_app()` built
+   `Registry(settings.skills_dir, settings.tools_dir)` with no capability roots, so
+   `POST /jobs` and `GET /registry` over HTTP saw only the repo's built-in `skills/`.
+   *Closed:* `create_app()` now passes a `capability_registry` into the runtime `Registry`,
+   which loads installed capabilities via `execution_roots()`; CLI and HTTP now agree.
 
 2. **Plan steps don't carry a runnable identity.** A plan step addresses a `capability`
    (`orchestration.py` `WorkflowStep.capability`), and `create_plan()` records
@@ -68,9 +86,9 @@ So via the CLI, an installed capability's providers *do* become runnable jobs.
 
 ---
 
-## 2. Decision to make: the canonical identifier
+## 2. The canonical-identifier decision (resolved: Option A)
 
-Everything else follows from one choice. Three options:
+Everything else followed from one choice. The three options considered were:
 
 | Option | Execution identity | Trade-off |
 |---|---|---|
@@ -108,9 +126,11 @@ to runtime entries, not duplicated.
 
 ---
 
-## 4. Phased plan (documentation-level steps)
+## 4. Phases as designed (all delivered in v2.1)
 
-Each step lists the files it would touch so scope is visible. No code is changed by this doc.
+These were the design-time phases. All five shipped — see the as-built summary at the top for
+where each landed. The "Touches"/"Acceptance" notes are preserved as the original scope
+sketch; line numbers in this section refer to the pre-unification code and have since moved.
 
 ### Phase 0 — Close the HTTP/CLI registry split (smallest, unblocks everything)
 - Make `create_app()` build its runtime `Registry` with
@@ -184,7 +204,7 @@ Each step lists the files it would touch so scope is visible. No code is changed
 - **HTTP:** Phase 0 is additive (the API simply sees more). The orchestration endpoints are
   new (see the contract doc) and don't alter `POST /jobs`.
 
-## 6. Acceptance criteria for "registries unified"
+## 6. Acceptance criteria (all met in v2.1)
 
 1. CLI and HTTP API return identical `GET /registry` output for the same installed state.
 2. Every `WorkflowStep` in a saved `ExecutionPlan` resolves to a runnable `(skill, provider)`
@@ -194,12 +214,13 @@ Each step lists the files it would touch so scope is visible. No code is changed
 5. `capability@version`, checksum, and risk are still attached to every executable surfaced
    from an installed package (provenance preserved).
 
-## 7. Open questions for the maintainers
+## 7. Open questions — disposition
 
-- Should a single capability be allowed to expose **multiple** `(skill, provider)` pairs, or
-  is one capability = one provider the intended simplification?
-- When two installed capabilities provide the same logical output artifact, how is the
-  ambiguity resolved at plan time? (Today `create_plan` errors on >1 installed *version* of
-  the same capability — `orchestration.py:279` — but not on two capabilities producing the
-  same artifact.)
-- Live registry reload on install: lazy mtime check vs explicit reload endpoint?
+- *Resolved:* a single capability may expose **multiple** `(skill, provider)` pairs
+  (`manifest.execution.providers` is a list; `resolve_provider_binding` selects among them).
+- *Resolved:* live registry reload uses a **lazy mtime check** on the registry index file
+  (`canto/core/registry.py`), not an explicit reload endpoint.
+- *Still open:* when two installed capabilities produce the same logical output artifact, plan
+  selection between them is not disambiguated. `create_plan` guards >1 installed *version* of
+  one capability, but not two *different* capabilities producing the same artifact. Worth a
+  follow-up before the capability library grows.

@@ -1,25 +1,32 @@
 # Canto Orchestration API Contract v1.0
 
-Status: **frozen**, subject to the deferred items in
+Status: **frozen and implemented as of v2.2**, subject to the deferred items in
 `docs/contract-freeze-audit.md`.
 Purpose: define the single HTTP contract an external orchestrator uses to talk to Canto,
-spanning **discover → plan → approve → execute → observe**. This is the artifact intended
-for "contract freeze," once the registry unification (`docs/registry-unification-plan.md`)
-lands.
+spanning **discover → plan → approve → execute → observe**. The registry unification this
+contract depends on shipped in v2.1 (`docs/registry-unification-plan.md`); all endpoints
+below are live in `canto/api/server.py`.
+
+> **Authoritative artifacts.** The machine-readable contract is `docs/openapi.json` and
+> `docs/schemas/*.json`. This document is the human-readable design narrative. The inline
+> `file:line` citations are illustrative references to the implementing modules and are not
+> kept in lockstep with the source; when they disagree with the code, the code and the
+> OpenAPI export win.
 
 ---
 
-## 1. Problem this contract solves
+## 1. Problem this contract solved
 
-Today the execution half is on HTTP (`POST /jobs`, `GET /jobs/...`, `POST /approvals/...`,
-`server.py:52–107`) but the **orchestration half is in-process only**: `CapabilityMatcher`,
-`WorkflowPlanner`, and `Orchestrator` (`orchestration.py`) have no endpoints. An
-out-of-process orchestrator — the model-agnostic caller the project targets — can inspect the
-static registry and fire one capability at a time, but cannot discover, plan multi-step work,
-or drive a governed workflow over the wire.
+Before v2.1/v2.2, the execution half was on HTTP (`POST /jobs`, `GET /jobs/...`,
+`POST /approvals/...`) but the **orchestration half was in-process only**: `CapabilityMatcher`,
+`WorkflowPlanner`, and `Orchestrator` had no endpoints. An out-of-process orchestrator — the
+model-agnostic caller the project targets — could inspect the static registry and fire one
+capability at a time, but could not discover, plan multi-step work, or drive a governed
+workflow over the wire.
 
-This contract puts the whole loop on HTTP, reuses the existing `Approval` object as the one
-approval model, and makes Canto (not the caller) execute the steps.
+This contract put the whole loop on HTTP, reuses the existing `Approval` object as the one
+approval model, and makes Canto (not the caller) execute the steps. As of v2.2 it is
+implemented and frozen.
 
 ## 2. Principles
 
@@ -64,7 +71,7 @@ today.
 - `POST /jobs` · `GET /jobs/{id}` · `GET /jobs/{id}/events` · `GET /jobs/{id}/artifacts` · `GET /jobs/{id}/artifacts/{name}`
 - `POST /approvals/{id}/approve` · `POST /approvals/{id}/reject`
 
-### New (orchestration)
+### Orchestration (added in v2.2, live in `canto/api/server.py`)
 - `POST /discover` — rank capabilities for a goal (read-only)
 - `POST /plans` — build a plan from a goal (read-only persistence of a draft)
 - `GET /plans/{plan_id}` — fetch a plan and its status
@@ -72,7 +79,7 @@ today.
 - `POST /plans/{plan_id}/approve` — approve a plan for execution (creates/links `Approval`s)
 - `POST /plans/{plan_id}/execute` — run an approved plan (Canto executes the steps)
 - `GET /plans/{plan_id}/events` — merged lifecycle + per-step job events
-- `GET /plans` *(optional)* — list plans
+- `GET /plans` *(not shipped in v1.0; reserved for a future list endpoint)* — list plans
 
 ---
 
@@ -157,9 +164,10 @@ Response `200` — a persisted draft `ExecutionPlan` (maps to `WorkflowPlanner.p
   "created_at": "2026-06-09T12:00:00Z"
 }
 ```
-`skill`/`provider`/`version` on each step come from the unification plan (Phase 2). If
-required inputs aren't satisfied, they appear in `missing_inputs` and execution is refused
-until provided (mirrors `orchestration.py:317`).
+`skill`/`provider`/`version` on each step are resolved from the capability's execution
+bindings (the v2.1 unification; see `WorkflowStep` and `resolve_provider_binding` in
+`orchestration.py`). If required inputs aren't satisfied, they appear in `missing_inputs` and
+execution is refused until provided.
 
 If the goal matches nothing or names an uninstalled capability, return a miss with a
 submittable action (mirrors `missing_capability`, `jobs.py:83`):
@@ -212,9 +220,9 @@ Request:
 { "approved_by": "cantor", "note": "reviewed scope" }
 ```
 
-Behavior (one approval model — unification Phase 4): for each step whose underlying job would
-trigger `evaluate_policy()` reasons (`policy.py:22–49`), an `Approval` is created/granted.
-Steps with no triggers need no approval.
+Behavior (one approval model, unified in v2.1): for each step whose underlying job would
+trigger `evaluate_policy()` reasons, an `Approval` is created/granted. Steps with no triggers
+need no approval.
 
 Response `200`:
 ```json
@@ -321,16 +329,16 @@ The operational boundary and deferred work are documented in
 - **Compatibility statement:** additive fields are minor; removing/renaming fields or
   changing status enums is a major `contract_version` bump.
 
-## 9. Mapping to existing internals (so the contract is implementable as-is)
+## 9. Mapping to implementing internals
 
-| Contract endpoint | Backing code today |
+| Contract endpoint | Backing code |
 |---|---|
-| `POST /discover` | `CapabilityMatcher.discover` (`orchestration.py:161`) |
-| `POST /plans`, `GET /plans/{id}` | `WorkflowPlanner.plan` + `Orchestrator.create_plan` + `PlanStore` (`orchestration.py:188,266,94`) |
-| `GET /plans/{id}/explain` | `Orchestrator.explain` (`orchestration.py:368`) |
-| `POST /plans/{id}/execute` | `Orchestrator.execute` — with the executor replaced by `JobService` (unification Phase 3) |
-| `POST /plans/{id}/approve` | new glue over the existing `Approval` flow (`jobs.py:179`, `state.py` CAS) |
-| step execution, artifacts, events | `JobService` + `runner.py` + `artifacts.py` (unchanged) |
+| `POST /discover` | `CapabilityMatcher.discover` |
+| `POST /plans`, `GET /plans/{id}` | `WorkflowPlanner.plan` + `Orchestrator.create_plan` + `PlanStore` |
+| `GET /plans/{id}/explain` | `Orchestrator.explain` |
+| `POST /plans/{id}/execute` | `Orchestrator.prepare_execution` + `Orchestrator.execute`, backed by `JobService`/`runner.py` (the v2.1 unification replaced the caller-supplied executor with `JobService`) |
+| `POST /plans/{id}/approve` | `Orchestrator` approval glue over the existing `Approval` flow (`jobs.py`, `state.py` CAS) |
+| step execution, artifacts, events | `JobService` + `runner.py` + `artifacts.py` |
 
 ## 10. Explicitly deferred (not in v1.0 freeze)
 
