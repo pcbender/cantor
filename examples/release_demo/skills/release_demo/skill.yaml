@@ -1,0 +1,10 @@
+name: release_demo
+version: 1.0.0
+description: Produce the deterministic v2.2 release demonstration artifact.
+providers:
+  - local
+outputs:
+  release_demo_file:
+    type: file
+    format: json
+risk_level: 1

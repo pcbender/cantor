@@ -1,0 +1,23 @@
+name: local
+skill: release_demo
+version: 1.0.0
+description: Write a deterministic local release demonstration artifact.
+runner:
+  type: python
+  entrypoint: run.py
+inputs: {}
+outputs:
+  release_demo_file:
+    path: release-demo.json
+    type: file
+    format: json
+dependencies:
+  system:
+    - python3
+permissions:
+  network_read: false
+  network_write: false
+  filesystem_write:
+    - ./work/jobs/
+  destructive: false
+risk_level: 1
