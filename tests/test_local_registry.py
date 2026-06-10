@@ -401,6 +401,29 @@ risk:
     assert registry.validate_installed("source_inventory").valid is True
 
 
+def test_registry_rejects_missing_execution_provider_binding(tmp_path):
+    registry = Registry.local(tmp_path / "home")
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "canto.yaml").write_text(
+        """\
+name: source_inventory
+version: 1.0.0
+execution:
+  providers:
+    - skill: source_inventory
+      provider: missing
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"Missing execution provider binding \(source_inventory, missing\)",
+    ):
+        registry.install_directory(source)
+
+
 def test_registry_install_rejects_duplicate_version(tmp_path):
     registry = Registry.local(tmp_path / "home")
     source = tmp_path / "source"

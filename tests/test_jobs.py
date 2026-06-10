@@ -12,6 +12,32 @@ import canto.core.jobs as jobs_module
 from canto.models.schemas import JobRequest, Policy
 
 
+def test_job_rejects_nonapproved_linked_approval(runtime):
+    _, _, store, service = runtime
+    store.set_approval(
+        "approval_plan_step",
+        {
+            "approval_id": "approval_plan_step",
+            "plan_id": "plan_20260610_abcdef",
+            "reason": "Plan step approval",
+            "risk_level": 1,
+            "status": "pending",
+            "created_at": "2026-06-10T00:00:00Z",
+            "updated_at": "2026-06-10T00:00:00Z",
+        },
+    )
+
+    with pytest.raises(ValueError, match="is pending"):
+        service.create_job(
+            JobRequest(
+                skill="source_inventory",
+                provider="public_html_crawler",
+                inputs={"source_url": "https://example.com"},
+                approval_id="approval_plan_step",
+            )
+        )
+
+
 def test_dependency_check_waits_when_dependency_missing(runtime):
     _, registry, store, service = runtime
     provider = registry.provider_internal("source_inventory", "public_html_crawler")

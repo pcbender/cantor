@@ -3,11 +3,14 @@ import json
 import zipfile
 from pathlib import Path
 
+import pytest
+
 from typer.testing import CliRunner
 
 import canto.cli as cli_module
 from canto.core.capability_package import (
     CHECKSUMS_NAME,
+    CapabilityPackageError,
     pack_capability,
     validate_package,
 )
@@ -111,6 +114,80 @@ def test_validate_package_verifies_manifest_checksums_and_contents(tmp_path):
     )
     assert cli_result.exit_code == 0
     assert f"Capability package is valid: {package}" in cli_result.output
+
+
+def test_package_with_matching_execution_provider_binding_is_valid(tmp_path):
+    source = make_capability(tmp_path)
+    manifest = source / "canto.yaml"
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8")
+        + "execution:\n"
+        + "  providers:\n"
+        + "    - skill: source_inventory\n"
+        + "      provider: local\n",
+        encoding="utf-8",
+    )
+
+    result = validate_package(pack_capability(source, tmp_path / "dist"))
+
+    assert result.valid is True
+
+
+def test_pack_rejects_missing_execution_provider_binding(tmp_path):
+    source = make_capability(tmp_path)
+    manifest = source / "canto.yaml"
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8")
+        + "execution:\n"
+        + "  providers:\n"
+        + "    - skill: source_inventory\n"
+        + "      provider: missing\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        CapabilityPackageError,
+        match=r"Missing execution provider binding \(source_inventory, missing\)",
+    ):
+        pack_capability(source, tmp_path / "dist")
+
+
+def test_validate_package_rejects_missing_execution_provider_binding(tmp_path):
+    package = pack_capability(make_capability(tmp_path), tmp_path / "dist")
+    invalid = tmp_path / "missing-binding.canto"
+    with zipfile.ZipFile(package) as archive:
+        manifest = archive.read("canto.yaml") + (
+            b"execution:\n"
+            b"  providers:\n"
+            b"    - skill: source_inventory\n"
+            b"      provider: missing\n"
+        )
+        checksums = archive.read(CHECKSUMS_NAME).decode("utf-8").splitlines()
+    checksums = [
+        f"{hashlib.sha256(manifest).hexdigest()}  canto.yaml"
+        if line.endswith("  canto.yaml")
+        else line
+        for line in checksums
+    ]
+    rewrite_archive(
+        package,
+        invalid,
+        {
+            "canto.yaml": manifest,
+            CHECKSUMS_NAME: ("\n".join(checksums) + "\n").encode("utf-8"),
+        },
+    )
+
+    result = validate_package(invalid)
+    cli_result = CliRunner().invoke(
+        cli_module.app, ["validate-package", str(invalid)]
+    )
+
+    expected = "Missing execution provider binding (source_inventory, missing)"
+    assert result.valid is False
+    assert any(expected in error for error in result.errors)
+    assert cli_result.exit_code == 1
+    assert expected in cli_result.output
 
 
 def test_validate_package_rejects_checksum_mismatch(tmp_path):

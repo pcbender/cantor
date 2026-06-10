@@ -35,6 +35,14 @@ tool, registry, job, policy, or approval models.
   defaults to `low`. `risk.requires_approval` defaults to `false`.
 - `artifacts`: List of artifact names associated with the capability. Defaults
   to an empty list.
+- `execution`: Explicit bindings from the package to runnable providers. It is
+  optional for backward compatibility. `execution.providers` is a list whose
+  entries require `skill` and `provider`. Optional `consumes` and `produces`
+  fields are string mappings between provider names and logical artifact names.
+  In `consumes`, the key is the provider input and the value is the required
+  logical artifact. In `produces`, the key is the provider output and the value
+  is the logical artifact made available to later steps. Bindings are explicit;
+  Canto does not guess or transform unclear mappings.
 
 Unknown top-level fields are allowed for forward compatibility. Validation
 reports them as warnings, and warnings do not make a manifest invalid.
@@ -60,6 +68,14 @@ risk:
 artifacts:
   - inventory.json
   - report.md
+execution:
+  providers:
+    - skill: source_inventory
+      provider: public_html_crawler
+      consumes:
+        website_url: website_url
+      produces:
+        inventory_path: inventory.json
 ```
 
 The same example is maintained as
@@ -78,7 +94,8 @@ with a nonzero status. Warnings are printed but retain a successful exit
 status.
 
 The validator checks YAML syntax, required fields, package name and version
-formats, list-valued fields, Python dependency shape, and risk level.
+formats, list-valued fields, Python dependency shape, risk level, and explicit
+execution provider binding structure.
 
 ## Current non-goals
 

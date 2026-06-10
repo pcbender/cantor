@@ -6,20 +6,31 @@ from canto import __version__
 from canto.config import Settings, get_settings
 from canto.core.artifacts import ArtifactError, read_artifact
 from canto.core.jobs import JobError, JobService
+from canto.core.local_registry import Registry as CapabilityRegistry
 from canto.core.registry import Registry
 from canto.core.state import RedisStateStore, StateStore
 from canto.models.schemas import ApprovalDecision, JobRequest, RejectionDecision
 
 
-def create_app(settings: Settings | None = None, store: StateStore | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    store: StateStore | None = None,
+    capability_registry: CapabilityRegistry | None = None,
+) -> FastAPI:
     settings = settings or get_settings()
-    registry = Registry(settings.skills_dir, settings.tools_dir)
+    capability_registry = capability_registry or CapabilityRegistry.local()
+    registry = Registry(
+        settings.skills_dir,
+        settings.tools_dir,
+        capability_registry=capability_registry,
+    )
     store = store or RedisStateStore(settings.redis_url)
     service = JobService(settings, registry, store)
 
     app = FastAPI(title="Canto", version=__version__)
     app.state.settings = settings
     app.state.registry = registry
+    app.state.capability_registry = capability_registry
     app.state.store = store
     app.state.service = service
 

@@ -10,7 +10,10 @@ from typing import Callable, Iterable, Any
 from pydantic import BaseModel, Field
 
 from canto.core.capability_manifest import CapabilityManifest
+from canto.core.jobs import JobService
 from canto.core.local_registry import Registry, RegistryEntry
+from canto.core.policy import PolicyDenied, evaluate_policy
+from canto.models.schemas import Approval, JobRequest, Policy
 
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
@@ -30,6 +33,11 @@ class CapabilityMatch(BaseModel):
 
 class WorkflowStep(BaseModel):
     capability: str
+    version: str = ""
+    skill: str = ""
+    provider: str = ""
+    consumes: dict[str, str] = Field(default_factory=dict)
+    artifact_outputs: dict[str, str] = Field(default_factory=dict)
     reason: str
     requires: list[str] = Field(default_factory=list)
     produces: list[str] = Field(default_factory=list)
@@ -56,6 +64,7 @@ class ExecutionPlan(BaseModel):
     approved_at: str | None = None
     capability_versions: dict[str, str] = Field(default_factory=dict)
     capability_providers: dict[str, str] = Field(default_factory=dict)
+    step_approval_ids: dict[str, str] = Field(default_factory=dict)
     error: str | None = None
     completed_at: str | None = None
 
@@ -69,6 +78,8 @@ class PlanExecutionResult(BaseModel):
 class PlanStepExplanation(BaseModel):
     capability: str
     version: str
+    skill: str
+    provider: str
     reason: str
     inputs: list[str] = Field(default_factory=list)
     outputs: list[str] = Field(default_factory=list)
@@ -154,6 +165,79 @@ def score_manifest(goal: str, manifest: CapabilityManifest) -> tuple[int, list[s
     return score, reasons
 
 
+def resolve_provider_binding(
+    manifest: CapabilityManifest,
+) -> tuple[str, str, dict[str, str], dict[str, str]] | None:
+    if manifest.execution and manifest.execution.providers:
+        bindings = sorted(
+            manifest.execution.providers,
+            key=lambda item: (item.skill, item.provider),
+        )
+        binding = bindings[0]
+        duplicates = [
+            item
+            for item in bindings
+            if (item.skill, item.provider) == (binding.skill, binding.provider)
+        ]
+        if len(duplicates) > 1:
+            raise OrchestrationError(
+                "Ambiguous execution provider bindings for "
+                f"({binding.skill}, {binding.provider})"
+            )
+        return (
+            binding.skill,
+            binding.provider,
+            binding.consumes,
+            binding.produces,
+        )
+    legacy = sorted(manifest.providers)
+    if not legacy or "." not in legacy[0]:
+        return None
+    skill, provider = legacy[0].split(".", 1)
+    return (
+        skill,
+        provider,
+        {name: name for name in manifest.inputs},
+        {name: name for name in manifest.outputs},
+    )
+
+
+def resolve_artifact_inputs(
+    step: WorkflowStep, artifacts: dict[str, str]
+) -> dict[str, str]:
+    resolved = {}
+    consumes = step.consumes or {name: name for name in step.requires}
+    for provider_input, artifact_name in consumes.items():
+        if artifact_name not in artifacts:
+            raise OrchestrationError(
+                f"Step {step.capability} is missing artifact {artifact_name} "
+                f"for provider input {provider_input}"
+            )
+        resolved[provider_input] = artifacts[artifact_name]
+    return resolved
+
+
+def manifest_execution_metadata(
+    manifest: CapabilityManifest,
+) -> tuple[
+    tuple[str, str, dict[str, str], dict[str, str]] | None,
+    list[str],
+    list[str],
+]:
+    binding = resolve_provider_binding(manifest)
+    requires = (
+        sorted(set(binding[2].values()))
+        if binding and binding[2]
+        else manifest.inputs
+    )
+    produces = (
+        sorted(set(binding[3].values()))
+        if binding and binding[3]
+        else manifest.outputs
+    )
+    return binding, requires, produces
+
+
 class CapabilityMatcher:
     def __init__(self, registry: Registry):
         self.registry = registry
@@ -213,11 +297,13 @@ class WorkflowPlanner:
                 raise OrchestrationError(f"Artifact dependency cycle includes {name}")
             visiting.add(name)
             manifest = installed[name]
-            for requirement in manifest.inputs:
+            binding, requires, produces = manifest_execution_metadata(manifest)
+            for requirement in requires:
                 producers = [
                     producer_name
                     for producer_name, producer_manifest in installed.items()
-                    if producer_name != name and requirement in producer_manifest.outputs
+                    if producer_name != name
+                    and requirement in manifest_execution_metadata(producer_manifest)[2]
                 ]
                 if not producers:
                     missing_inputs.add(requirement)
@@ -239,9 +325,14 @@ class WorkflowPlanner:
             steps.append(
                 WorkflowStep(
                     capability=name,
+                    version=manifest.version,
+                    skill=binding[0] if binding else "",
+                    provider=binding[1] if binding else "",
+                    consumes=binding[2] if binding else {},
+                    artifact_outputs=binding[3] if binding else {},
                     reason=reason or "highest deterministic metadata score",
-                    requires=manifest.inputs,
-                    produces=manifest.outputs,
+                    requires=requires,
+                    produces=produces,
                 )
             )
             added.add(name)
@@ -258,10 +349,16 @@ class WorkflowPlanner:
 
 
 class Orchestrator:
-    def __init__(self, registry: Registry, store: PlanStore):
+    def __init__(
+        self,
+        registry: Registry,
+        store: PlanStore,
+        job_service: JobService | None = None,
+    ):
         self.registry = registry
         self.planner = WorkflowPlanner(registry)
         self.store = store
+        self.job_service = job_service
 
     def create_plan(self, goal: str, approve: bool = False) -> ExecutionPlan:
         preview = self.planner.plan(goal)
@@ -281,33 +378,147 @@ class Orchestrator:
                     f"Plan requires exactly one installed version of {step.capability}"
                 )
             entry = matches[0]
-            manifest = self.registry.inspect(entry.name, entry.version).manifest
-            if not manifest.providers:
+            if not step.skill or not step.provider:
                 raise OrchestrationError(
                     f"Capability {entry.name} does not declare an executable provider"
                 )
             versions[entry.name] = entry.version
-            providers[entry.name] = sorted(manifest.providers)[0]
+            providers[entry.name] = f"{step.skill}.{step.provider}"
         plan = ExecutionPlan(
             plan_id=f"plan_{now[:10].replace('-', '')}_{secrets.token_hex(3)}",
             candidate=preview.candidate,
             missing_inputs=preview.missing_inputs,
             produced_artifacts=preview.produced_artifacts,
-            status="approved" if approve else "draft",
+            status="draft",
             created_at=now,
-            approved_at=now if approve else None,
             capability_versions=versions,
             capability_providers=providers,
         )
+        if approve:
+            self._request_plan_approvals(plan)
         self.store.save(plan)
         return plan
 
-    def execute(
+    def _request_plan_approvals(self, plan: ExecutionPlan) -> None:
+        for index, step in enumerate(plan.candidate.steps):
+            installed = self.registry.inspect(step.capability, step.version)
+            reasons = []
+            if installed.manifest.risk.requires_approval:
+                reasons.append("Capability manifest requires approval")
+            provider_risk = {
+                "low": 1,
+                "medium": 2,
+                "high": 3,
+            }[installed.entry.risk]
+            if self.job_service is not None:
+                provider = self.job_service.registry.provider_internal(
+                    step.skill, step.provider
+                )
+                if not provider and reasons:
+                    raise OrchestrationError(
+                        f"Provider {step.skill}.{step.provider} is not executable"
+                    )
+                if provider:
+                    try:
+                        reasons.extend(evaluate_policy(provider, {}, Policy()))
+                    except PolicyDenied as exc:
+                        raise OrchestrationError(str(exc)) from exc
+                    provider_risk = int(provider.get("risk_level", provider_risk))
+            if not reasons:
+                continue
+            if self.job_service is None:
+                raise OrchestrationError(
+                    "JobService is required to persist plan approvals"
+                )
+            approval_id = (
+                f"approval_{_now()[:10].replace('-', '')}_{secrets.token_hex(3)}"
+            )
+            approval = Approval(
+                approval_id=approval_id,
+                plan_id=plan.plan_id,
+                step_capability=step.capability,
+                skill=step.skill,
+                provider=step.provider,
+                reason="; ".join(sorted(set(reasons))),
+                risk_level=provider_risk,
+                created_at=_now(),
+                updated_at=_now(),
+            )
+            self.job_service.store.set_approval(
+                approval_id, approval.model_dump(mode="json")
+            )
+            plan.step_approval_ids[str(index)] = approval_id
+        plan.approved_at = _now()
+        plan.status = "waiting_for_approval" if plan.step_approval_ids else "approved"
+
+    def _refresh_approval_status(self, plan: ExecutionPlan) -> None:
+        if not plan.step_approval_ids:
+            return
+        if self.job_service is None:
+            raise OrchestrationError("JobService is required to read plan approvals")
+        statuses = []
+        for approval_id in plan.step_approval_ids.values():
+            approval = self.job_service.store.get_approval(approval_id)
+            if not approval:
+                raise OrchestrationError(f"Plan approval not found: {approval_id}")
+            statuses.append(approval["status"])
+        if "rejected" in statuses:
+            plan.status = "rejected"
+        elif all(status == "approved" for status in statuses):
+            plan.status = "approved"
+        else:
+            plan.status = "waiting_for_approval"
+        self.store.save(plan)
+
+    def execute(self, plan_id: str) -> PlanExecutionResult:
+        if self.job_service is None:
+            raise OrchestrationError("JobService is required to execute a plan")
+        return self._execute(plan_id, self._execute_job_step)
+
+    def _execute_job_step(
+        self,
+        step: WorkflowStep,
+        inputs: dict[str, str],
+        approval_id: str | None,
+    ) -> dict[str, str]:
+        if self.job_service is None:
+            raise OrchestrationError("JobService is required to execute a plan")
+        job = self.job_service.create_job(
+            JobRequest(
+                skill=step.skill,
+                provider=step.provider,
+                inputs=inputs,
+                requested_by=f"plan:{step.capability}@{step.version}",
+                approval_id=approval_id,
+            )
+        )
+        completed = self.job_service.process_job(job.job_id)
+        if completed.status != "completed":
+            raise OrchestrationError(
+                f"Step {step.capability} stopped with status {completed.status}"
+            )
+        records = {
+            item["name"]: item["path"]
+            for item in self.job_service.store.get_artifacts(job.job_id)
+        }
+        output_bindings = step.artifact_outputs or {
+            name: name for name in step.produces
+        }
+        return {
+            logical_name: records[provider_output]
+            for provider_output, logical_name in output_bindings.items()
+            if provider_output in records
+        }
+
+    def _execute(
         self,
         plan_id: str,
-        executor: Callable[[str, str, dict[str, str], list[str]], dict[str, str]],
+        executor: Callable[
+            [WorkflowStep, dict[str, str], str | None], dict[str, str]
+        ],
     ) -> PlanExecutionResult:
         plan = self.store.load(plan_id)
+        self._refresh_approval_status(plan)
         if plan.status != "approved":
             raise OrchestrationError(
                 f"Plan {plan_id} is not approved and cannot be executed"
@@ -321,26 +532,12 @@ class Orchestrator:
 
         artifacts: dict[str, str] = {}
         try:
-            for step in plan.candidate.steps:
-                resolved = {
-                    requirement: artifacts[requirement]
-                    for requirement in step.requires
-                    if requirement in artifacts
-                }
-                missing = [
-                    requirement
-                    for requirement in step.requires
-                    if requirement not in resolved
-                ]
-                if missing:
-                    raise OrchestrationError(
-                        f"Step {step.capability} is missing dependencies: {missing}"
-                    )
+            for index, step in enumerate(plan.candidate.steps):
+                resolved = resolve_artifact_inputs(step, artifacts)
                 produced = executor(
-                    step.capability,
-                    plan.capability_providers[step.capability],
+                    step,
                     resolved,
-                    step.produces,
+                    plan.step_approval_ids.get(str(index)),
                 )
                 for output in step.produces:
                     if output not in produced:
@@ -367,6 +564,7 @@ class Orchestrator:
 
     def explain(self, plan_id: str) -> PlanExplanation:
         plan = self.store.load(plan_id)
+        self._refresh_approval_status(plan)
         steps = []
         for step in plan.candidate.steps:
             version = plan.capability_versions[step.capability]
@@ -375,6 +573,8 @@ class Orchestrator:
                 PlanStepExplanation(
                     capability=step.capability,
                     version=version,
+                    skill=step.skill,
+                    provider=step.provider,
                     reason=step.reason,
                     inputs=step.requires,
                     outputs=step.produces,
