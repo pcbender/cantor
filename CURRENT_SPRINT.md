@@ -1,47 +1,55 @@
-# Current Sprint — v3.0 External Orchestrator Integration
+# Current Sprint — MVP v1 (Single-User, Write-Capable)
 
 ## Sprint Goal
 
-Prove that an external process can drive Canto entirely through the frozen v1.0
-HTTP orchestration contract — `discover → plan → approve → execute → observe` —
-with no in-process access and no caller-supplied executor. Canto owns execution;
-the external orchestrator only calls the contract.
+Deliver the foundation of the first genuinely usable release: move the system of record off
+Redis onto an embedded SQL store, then build guarded single-user target-system writes on top of
+it. The tier's exit is a single developer performing a real, reversible, audited write to a
+target system, locally, with no networked multi-user surface.
+
+Start with the state store (`CP-5002`) — it underpins durability and the audit trail that every
+later packet assumes, has no upstream dependencies, and removes the Redis-daemon setup friction
+from local development immediately.
 
 ## Architecture Rule
 
-This sprint must not change the frozen orchestration contract. The locked model
-(Skill, Provider, Tool, Artifact, Job, Approval, Registry, Policy, Capability
-package, Execution plan, Orchestration contract) stays intact. If integration
-work surfaces a genuine contract gap, it is raised as an explicit
-`contract_version` change — not patched silently. New work lives in client code,
-examples, and docs.
+Do not break the frozen orchestration contract. The new state store lands behind the existing
+`StateStore` Protocol (no contract change); `PlanStore` folds into that store as server-owned
+state. Writes are always guarded — dry-run → live promotion, explicit approval, idempotency,
+and a rollback path. The locked model (Skill, Provider, Tool, Artifact, Job, Approval, Registry,
+Policy, Capability package, Execution plan, Orchestration contract) stays intact. See
+`docs/adr-state-store.md`.
 
-## Tasks
+## Tasks (MVP v1 core)
 
 | ID | Status | Task |
 | --- | --- | --- |
-| CP-1001 | READY | External orchestrator integration design: confirm the frozen contract against a real out-of-process client; record any wire-shape gaps as candidate `contract_version` 1.1 items. |
-| CP-1002 | BLOCKED | Python client library over the HTTP contract (discover/plan/approve/execute/poll/explain/artifacts). Depends on CP-1001. |
-| CP-1003 | BLOCKED | Contract smoke-test script exercising the full loop against a running server. Depends on CP-1002. |
-| CP-1004 | BLOCKED | External orchestrator example prompts and request/response samples. Depends on CP-1002. |
-| CP-1005 | BLOCKED | Human-in-the-loop approval demo (pause at `waiting_for_approval`, approve, resume). Depends on CP-1002. |
-| CP-1006 | BLOCKED | Error-scenario examples: missing inputs, missing capability, rejected approval, failed step, missing artifact. Depends on CP-1002. |
-| CP-1007 | BLOCKED | End-to-end external demo: `import my WordPress site and generate a migration report`. Depends on CP-1003–CP-1006. |
-| CP-1008 | BLOCKED | v3.0 documentation pass and external orchestrator README. Depends on CP-1007. |
+| CP-5001 | READY | MVP v1 scope and design. |
+| CP-5002 | BLOCKED | `SqliteStateStore` as system of record (behind the `StateStore` Protocol; covers jobs, events, approvals, artifact metadata, registry snapshot, plans). Depends on CP-5001. |
+| CP-5003 | BLOCKED | Redis → SQLite state-migration tool. Depends on CP-5002. |
+| CP-5004 | BLOCKED | Single-user credential vault and vault-backed `*_ref` resolution. Depends on CP-5002. |
+| CP-5005 | BLOCKED | Secret rotation and redaction guarantees. Depends on CP-5004. |
+| CP-5006 | BLOCKED | Guarded write execution path (dry-run → live promotion). Depends on CP-5004. |
+| CP-5007 | BLOCKED | Idempotency and rollback / compensation. Depends on CP-5006. |
+| CP-5008 | BLOCKED | Write-provider contract and reference write-capable provider. Depends on CP-5006. |
+| CP-5009 | BLOCKED | Pre-write validation and post-write verification artifacts. Depends on CP-5006. |
+| CP-5010 | BLOCKED | Multi-runtime provider execution (node / container / binary). Depends on CP-5001. |
+| CP-5011 | BLOCKED | Baseline resource limits and per-job egress allowlist. Depends on CP-5001. |
+| CP-5012 | BLOCKED | Local install / packaging and quickstart. Depends on CP-5002, CP-5006. |
+| CP-5013 | BLOCKED | Seed trusted capability set, incl. one real write workflow. Depends on CP-5008, CP-5010. |
+| CP-5014 | BLOCKED | MVP v1 stability, release notes, and documentation. Depends on all above. |
 
-## Open Decision Carried Into This Sprint
-
-Authentication and non-loopback enforcement are deferred contract items, but v3.0
-is the first phase with real external callers. CP-1001 must decide whether a
-minimal bearer-token + server-populated identity scheme is in scope now or
-explicitly punted to a scheduled v3.x — adding auth to a frozen contract later is
-itself a contract change.
+Developer-experience packets (CP-1201..CP-1210, formerly v3.2) are part of MVP v1 but a later
+slice in this tier; they are not the immediate sprint focus.
 
 ## Definition of Done
 
-- An external process completes discover → plan → approve → execute → poll →
-  explain → inspect artifacts using only the HTTP contract.
-- Existing tests still pass; new tests cover the client and error scenarios.
+- A single developer installs Canto locally, stores credentials in the vault, installs a trusted
+  capability, approves a plan, and performs a real reversible guarded write to a target system —
+  observed and audited.
+- The SQL store is the system of record; existing Redis state migrates cleanly; no Redis daemon
+  is required for local use.
+- Existing tests still pass; new tests cover the state store (incl. CAS and ordered-append
+  semantics), the credential vault, and guarded-write dry-run/rollback paths.
 - No change to the frozen contract without an explicit `contract_version` bump.
-- No remote registry, AI generation, autonomous approval, credential storage, or
-  target writes introduced.
+- No multi-user, authentication, networked exposure, remote registry, or unattended writes.
