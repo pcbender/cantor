@@ -25,6 +25,7 @@ class JobRequest(BaseModel):
     inputs: dict[str, Any] = Field(default_factory=dict)
     policy: Policy = Field(default_factory=Policy)
     requested_by: str = "echo"
+    approval_id: str | None = None
 
 
 class Job(BaseModel):
@@ -67,7 +68,11 @@ class RejectionDecision(BaseModel):
 
 class Approval(BaseModel):
     approval_id: str
-    job_id: str
+    job_id: str | None = None
+    plan_id: str | None = None
+    step_capability: str | None = None
+    skill: str | None = None
+    provider: str | None = None
     reason: str
     risk_level: int
     status: Literal["pending", "approved", "rejected"] = "pending"
@@ -75,4 +80,3 @@ class Approval(BaseModel):
     updated_at: str
     decided_by: str | None = None
     note: str = ""
-

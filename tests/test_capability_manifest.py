@@ -128,6 +128,62 @@ def test_existing_minimal_manifest_defaults_intent_metadata():
     assert manifest.outputs == []
 
 
+def test_execution_provider_bindings_are_optional():
+    manifest = CapabilityManifest.load(FIXTURES / "minimal_valid.yaml")
+
+    assert manifest.execution is None
+
+
+def test_loads_and_validates_execution_provider_bindings():
+    manifest = CapabilityManifest.load(FIXTURES / "execution_providers_valid.yaml")
+    result = CapabilityManifestValidator.validate(manifest)
+
+    assert result.valid is True
+    binding = manifest.execution.providers[0]
+    assert (binding.skill, binding.provider) == (
+        "site_inventory",
+        "wordpress_crawler",
+    )
+    assert binding.consumes == {"website_url": "website_url"}
+    assert binding.produces == {"inventory.json": "inventory.json"}
+
+
+@pytest.mark.parametrize(
+    ("execution", "error"),
+    [
+        ({"providers": [{}]}, "execution.providers[0].skill"),
+        (
+            {"providers": [{"skill": "site_inventory"}]},
+            "execution.providers[0].provider",
+        ),
+        ({"providers": "invalid"}, "execution.providers must be a list"),
+        (
+            {
+                "providers": [
+                    {
+                        "skill": "site_inventory",
+                        "provider": "local",
+                        "consumes": ["inventory.json"],
+                    }
+                ]
+            },
+            "execution.providers[0].consumes must be a string mapping",
+        ),
+    ],
+)
+def test_validator_rejects_malformed_execution_provider_bindings(execution, error):
+    result = CapabilityManifestValidator.validate(
+        {
+            "name": "site_inventory",
+            "version": "1.0.0",
+            "execution": execution,
+        }
+    )
+
+    assert result.valid is False
+    assert any(error in item for item in result.errors)
+
+
 @pytest.mark.parametrize("field", ["intents", "inputs", "outputs"])
 def test_validator_rejects_invalid_intent_metadata_lists(field):
     result = CapabilityManifestValidator.validate(

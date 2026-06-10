@@ -1,11 +1,17 @@
 from fastapi.testclient import TestClient
 
 from canto.api.server import create_app
+from canto.core.local_registry import Registry as CapabilityRegistry
+
+
+def isolated_app(runtime):
+    settings, _, store, _ = runtime
+    registry = CapabilityRegistry.local(settings.root_dir / "registry-home")
+    return create_app(settings, store, registry)
 
 
 def test_api_approval_and_artifact_read(runtime):
-    settings, _, store, _ = runtime
-    client = TestClient(create_app(settings, store))
+    client = TestClient(isolated_app(runtime))
     created = client.post(
         "/jobs",
         json={
@@ -33,8 +39,7 @@ def test_api_approval_and_artifact_read(runtime):
 
 
 def test_api_missing_provider_is_structured(runtime):
-    settings, _, store, _ = runtime
-    client = TestClient(create_app(settings, store))
+    client = TestClient(isolated_app(runtime))
     response = client.post(
         "/jobs",
         json={
@@ -48,8 +53,7 @@ def test_api_missing_provider_is_structured(runtime):
 
 
 def test_api_missing_skill_is_structured(runtime):
-    settings, _, store, _ = runtime
-    client = TestClient(create_app(settings, store))
+    client = TestClient(isolated_app(runtime))
     response = client.post(
         "/jobs",
         json={

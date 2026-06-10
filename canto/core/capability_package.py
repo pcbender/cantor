@@ -4,6 +4,7 @@ import hashlib
 import io
 import zipfile
 from pathlib import Path, PurePosixPath
+from typing import Callable
 
 from pydantic import BaseModel, Field
 
@@ -37,6 +38,28 @@ class PackageValidationResult(BaseModel):
     manifest: CapabilityManifest | None = None
 
 
+def provider_binding_errors(
+    manifest: CapabilityManifest, contains: Callable[[str], bool]
+) -> list[str]:
+    if manifest.execution is None:
+        return []
+    errors = []
+    for binding in manifest.execution.providers:
+        skill_path = f"skills/{binding.skill}/skill.yaml"
+        provider_path = (
+            f"skills/{binding.skill}/providers/{binding.provider}/provider.yaml"
+        )
+        missing = [
+            path for path in (skill_path, provider_path) if not contains(path)
+        ]
+        if missing:
+            errors.append(
+                "Missing execution provider binding "
+                f"({binding.skill}, {binding.provider}): {', '.join(missing)}"
+            )
+    return errors
+
+
 def _source_manifest_path(source: Path) -> Path:
     candidates = [path for path in (source / "canto.yaml", source / "manifest.yaml") if path.is_file()]
     if not candidates:
@@ -61,6 +84,11 @@ def _validate_source(source: Path) -> tuple[CapabilityManifest, Path]:
     result = CapabilityManifestValidator.validate(manifest)
     if not result.valid:
         raise CapabilityPackageError("Invalid capability manifest: " + "; ".join(result.errors))
+    binding_errors = provider_binding_errors(
+        manifest, lambda relative: (source / relative).is_file()
+    )
+    if binding_errors:
+        raise CapabilityPackageError("Invalid capability package: " + "; ".join(binding_errors))
     return manifest, manifest_path
 
 
@@ -253,6 +281,9 @@ def validate_package(package: str | Path) -> PackageValidationResult:
                 validation = CapabilityManifestValidator.validate(manifest)
                 errors.extend(validation.errors)
                 warnings.extend(validation.warnings)
+                errors.extend(
+                    provider_binding_errors(manifest, lambda path: path in name_set)
+                )
                 for skill in manifest.skills:
                     expected = f"skills/{skill}/skill.yaml"
                     if expected not in name_set:

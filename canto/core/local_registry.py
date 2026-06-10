@@ -19,6 +19,7 @@ from canto.core.capability_package import (
     CapabilityPackageError,
     extract_package,
     pack_capability,
+    provider_binding_errors,
     validate_package,
 )
 
@@ -285,6 +286,11 @@ class Registry:
 
         manifest_result = CapabilityManifestValidator.validate(manifest)
         errors.extend(manifest_result.errors)
+        errors.extend(
+            provider_binding_errors(
+                manifest, lambda relative: (installed_path / relative).is_file()
+            )
+        )
         if manifest.name != entry.name:
             errors.append(
                 f"manifest name {manifest.name} does not match registry name {entry.name}"
@@ -329,6 +335,13 @@ class Registry:
         validation = CapabilityManifestValidator.validate(manifest)
         if not validation.valid:
             raise LocalRegistryError("Invalid capability manifest: " + "; ".join(validation.errors))
+        binding_errors = provider_binding_errors(
+            manifest, lambda relative: (source_path / relative).is_file()
+        )
+        if binding_errors:
+            raise LocalRegistryError(
+                "Invalid capability package: " + "; ".join(binding_errors)
+            )
 
         entries = self.store.load()
         if any(

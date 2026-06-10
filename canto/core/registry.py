@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import yaml
 
@@ -11,20 +11,64 @@ class RegistryError(ValueError):
     pass
 
 
+class CapabilityRootSource(Protocol):
+    def execution_roots(self) -> list[Path]: ...
+
+    @property
+    def store(self) -> Any: ...
+
+
 class Registry:
     def __init__(
         self,
         skills_dir: Path,
         tools_dir: Path,
         capability_roots: list[Path] | None = None,
+        capability_registry: CapabilityRootSource | None = None,
     ):
         self.skills_dir = skills_dir.resolve()
         self.tools_dir = tools_dir.resolve()
-        self.capability_roots = [path.resolve() for path in capability_roots or []]
+        self.capability_registry = capability_registry
+        roots = (
+            capability_registry.execution_roots()
+            if capability_registry is not None
+            else capability_roots or []
+        )
+        self.capability_roots = [path.resolve() for path in roots]
+        self._capability_index_state = self._index_state()
         self.skills: dict[str, dict[str, Any]] = {}
         self.providers: dict[tuple[str, str], dict[str, Any]] = {}
         self.tools: dict[str, dict[str, Any]] = {}
         self.reload()
+
+    def _index_state(self) -> tuple[int, int] | None:
+        if self.capability_registry is None:
+            return None
+        path = self.capability_registry.store.paths.index_file
+        try:
+            stat = path.stat()
+        except FileNotFoundError:
+            return None
+        return stat.st_mtime_ns, stat.st_size
+
+    def refresh_if_changed(self) -> bool:
+        if self.capability_registry is None:
+            return False
+        state = self._index_state()
+        if state == self._capability_index_state:
+            return False
+        previous_roots = self.capability_roots
+        try:
+            self.capability_roots = [
+                path.resolve()
+                for path in self.capability_registry.execution_roots()
+            ]
+            self.reload()
+        except Exception:
+            self.capability_roots = previous_roots
+            raise
+        self._capability_index_state = state
+        return True
 
     @staticmethod
     def _load_yaml(path: Path) -> dict[str, Any]:
@@ -88,6 +132,7 @@ class Registry:
         return result
 
     def snapshot(self) -> dict[str, Any]:
+        self.refresh_if_changed()
         skill_items = []
         for name, manifest in sorted(self.skills.items()):
             item = self._public(manifest)
@@ -100,6 +145,7 @@ class Registry:
         }
 
     def get_skill(self, name: str) -> dict[str, Any] | None:
+        self.refresh_if_changed()
         manifest = self.skills.get(name)
         if not manifest:
             return None
@@ -112,8 +158,10 @@ class Registry:
         return result
 
     def get_provider(self, skill: str, provider: str) -> dict[str, Any] | None:
+        self.refresh_if_changed()
         manifest = self.providers.get((skill, provider))
         return self._public(manifest) if manifest else None
 
     def provider_internal(self, skill: str, provider: str) -> dict[str, Any] | None:
+        self.refresh_if_changed()
         return self.providers.get((skill, provider))

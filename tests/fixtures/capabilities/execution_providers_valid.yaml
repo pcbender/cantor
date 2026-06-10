@@ -1,0 +1,17 @@
+name: site_inventory
+version: 1.0.0
+description: Inventory a public website.
+skills:
+  - site_inventory
+providers:
+  - site_inventory.wordpress_crawler
+execution:
+  providers:
+    - skill: site_inventory
+      provider: wordpress_crawler
+      consumes:
+        website_url: website_url
+      produces:
+        inventory.json: inventory.json
+risk:
+  level: low

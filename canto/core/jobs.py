@@ -43,6 +43,10 @@ class JobService:
             {"timestamp": utc_now(), "type": event_type, "message": message, "data": data or {}},
         )
 
+    def _refresh_registry(self) -> None:
+        if self.registry.refresh_if_changed():
+            self.store.set_registry(self.registry.snapshot())
+
     def _save(self, job: Job) -> None:
         job.updated_at = utc_now()
         self.store.set_job(job.job_id, job.model_dump(mode="json"))
@@ -81,6 +85,7 @@ class JobService:
         return normalized
 
     def missing_capability(self, request: JobRequest) -> dict[str, Any] | None:
+        self._refresh_registry()
         if request.skill not in self.registry.skills:
             return {
                 "status": "missing_skill",
@@ -109,6 +114,7 @@ class JobService:
         return None
 
     def create_job(self, request: JobRequest) -> Job:
+        self._refresh_registry()
         provider = self.registry.provider_internal(request.skill, request.provider)
         if not provider:
             raise JobError("Requested capability is not registered")
@@ -117,6 +123,16 @@ class JobService:
             validate_sensitive_inputs(inputs)
         except SensitiveInputError as exc:
             raise JobError(str(exc)) from exc
+        linked_approval = None
+        if request.approval_id:
+            raw_approval = self.store.get_approval(request.approval_id)
+            if not raw_approval:
+                raise JobError(f"Unknown approval: {request.approval_id}")
+            linked_approval = Approval.model_validate(raw_approval)
+            if linked_approval.status != "approved":
+                raise JobError(
+                    f"Approval {request.approval_id} is {linked_approval.status}"
+                )
         job_id = _id("job")
         artifact_dir = (self.settings.jobs_dir / job_id).resolve()
         artifact_dir.mkdir(parents=True, exist_ok=False)
@@ -133,12 +149,20 @@ class JobService:
             inputs=inputs,
             policy=request.policy,
             artifact_dir=str(artifact_dir),
+            approval_id=request.approval_id,
+            requires_approval=request.approval_id is not None,
         )
+        if linked_approval:
+            linked_approval.job_id = job_id
+            self.store.set_approval(
+                request.approval_id, linked_approval.model_dump(mode="json")
+            )
         self._save(job)
         self._event(job_id, "job_created", "Job queued.")
         return job
 
     def process_job(self, job_id: str) -> Job:
+        self._refresh_registry()
         raw = self.store.get_job(job_id)
         if not raw:
             raise JobError(f"Unknown job: {job_id}")
@@ -177,24 +201,48 @@ class JobService:
             except PolicyDenied as exc:
                 return self._fail(job, "policy_denied", str(exc))
             if reasons:
-                approval_id = _id("approval")
-                approval = Approval(
-                    approval_id=approval_id,
-                    job_id=job_id,
-                    reason="; ".join(reasons),
-                    risk_level=int(provider.get("risk_level", 1)),
-                    created_at=utc_now(),
-                    updated_at=utc_now(),
-                )
-                self.store.set_approval(approval_id, approval.model_dump(mode="json"))
-                job.status = "waiting_for_approval"
-                job.requires_approval = True
-                job.approval_id = approval_id
-                self._save(job)
-                self._event(job_id, "approval_requested", approval.reason, {"approval_id": approval_id})
-                return job
+                if job.approval_id:
+                    approval = self.store.get_approval(job.approval_id)
+                    status = approval.get("status") if approval else None
+                    if status == "approved":
+                        if not self._transition(
+                            job, {"checking_dependencies"}, "running"
+                        ):
+                            return Job.model_validate(self.store.get_job(job_id))
+                    elif status == "rejected":
+                        return self._fail(
+                            job,
+                            "approval_rejected",
+                            "The linked approval was rejected",
+                        )
+                    else:
+                        job.status = "waiting_for_approval"
+                        job.requires_approval = True
+                        self._save(job)
+                        return job
+                else:
+                    approval_id = _id("approval")
+                    approval = Approval(
+                        approval_id=approval_id,
+                        job_id=job_id,
+                        skill=job.skill,
+                        provider=job.provider,
+                        reason="; ".join(reasons),
+                        risk_level=int(provider.get("risk_level", 1)),
+                        created_at=utc_now(),
+                        updated_at=utc_now(),
+                    )
+                    self.store.set_approval(approval_id, approval.model_dump(mode="json"))
+                    job.status = "waiting_for_approval"
+                    job.requires_approval = True
+                    job.approval_id = approval_id
+                    self._save(job)
+                    self._event(job_id, "approval_requested", approval.reason, {"approval_id": approval_id})
+                    return job
 
-            if not self._transition(job, {"checking_dependencies"}, "running"):
+            if job.status != "running" and not self._transition(
+                job, {"checking_dependencies"}, "running"
+            ):
                 return Job.model_validate(self.store.get_job(job_id))
 
         job.error = None
@@ -229,7 +277,7 @@ class JobService:
         self._event(job.job_id, "job_failed", message, {"code": code})
         return job
 
-    def approve(self, approval_id: str, approved_by: str, note: str) -> Job:
+    def approve(self, approval_id: str, approved_by: str, note: str) -> Job | Approval:
         raw = self.store.get_approval(approval_id)
         if not raw:
             raise JobError(f"Unknown approval: {approval_id}")
@@ -246,10 +294,12 @@ class JobService:
             current = self.store.get_approval(approval_id)
             status = current.get("status", "unknown") if current else "unknown"
             raise JobError(f"Approval is already {status}")
-        self._event(approval.job_id, "approval_granted", "Cantor approved the job.", {"approved_by": approved_by})
-        return self.process_job(approval.job_id)
+        if approval.job_id:
+            self._event(approval.job_id, "approval_granted", "Cantor approved the job.", {"approved_by": approved_by})
+            return self.process_job(approval.job_id)
+        return approval
 
-    def reject(self, approval_id: str, rejected_by: str, reason: str) -> Job:
+    def reject(self, approval_id: str, rejected_by: str, reason: str) -> Job | Approval:
         raw = self.store.get_approval(approval_id)
         if not raw:
             raise JobError(f"Unknown approval: {approval_id}")
@@ -266,6 +316,8 @@ class JobService:
             current = self.store.get_approval(approval_id)
             status = current.get("status", "unknown") if current else "unknown"
             raise JobError(f"Approval is already {status}")
+        if not approval.job_id:
+            return approval
         job = Job.model_validate(self.store.get_job(approval.job_id))
         job.status = "rejected"
         job.error = {"code": "approval_rejected", "message": reason}

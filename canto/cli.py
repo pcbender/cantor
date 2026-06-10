@@ -48,11 +48,11 @@ app.add_typer(capability_app, name="capability")
 def _runtime() -> tuple:
     settings = get_settings()
     store = RedisStateStore(settings.redis_url)
-    capability_roots = _capability_registry().execution_roots()
+    capability_registry = _capability_registry()
     registry = Registry(
         settings.skills_dir,
         settings.tools_dir,
-        capability_roots=capability_roots,
+        capability_registry=capability_registry,
     )
     return settings, store, registry, JobService(settings, registry, store)
 
@@ -61,9 +61,13 @@ def _capability_registry() -> CapabilityRegistry:
     return CapabilityRegistry.local()
 
 
-def _orchestrator() -> Orchestrator:
+def _orchestrator(job_service: JobService | None = None) -> Orchestrator:
     registry = _capability_registry()
-    return Orchestrator(registry, PlanStore(registry.store.paths.plans))
+    return Orchestrator(
+        registry,
+        PlanStore(registry.store.paths.plans),
+        job_service=job_service,
+    )
 
 
 def _print(value: Any) -> None:
@@ -164,7 +168,8 @@ def discover(goal: str) -> None:
 def plan(goal: str, approve: bool = typer.Option(False, "--approve")) -> None:
     """Build a local workflow candidate without executing it."""
     try:
-        execution_plan = _orchestrator().create_plan(goal, approve=approve)
+        service = _runtime()[3] if approve else None
+        execution_plan = _orchestrator(service).create_plan(goal, approve=approve)
     except (LocalRegistryError, OrchestrationError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -174,42 +179,11 @@ def plan(goal: str, approve: bool = typer.Option(False, "--approve")) -> None:
 @app.command()
 def execute(plan_id: str) -> None:
     """Execute an approved local orchestration plan."""
-    orchestrator = _orchestrator()
-    settings, store, _, service = _runtime()
-
-    def execute_step(
-        capability: str,
-        provider_identifier: str,
-        resolved_inputs: dict[str, str],
-        produces: list[str],
-    ) -> dict[str, str]:
-        if "." not in provider_identifier:
-            raise OrchestrationError(
-                f"Invalid provider identifier for {capability}: {provider_identifier}"
-            )
-        skill, provider = provider_identifier.split(".", 1)
-        job = service.create_job(
-            JobRequest(
-                skill=skill,
-                provider=provider,
-                inputs=resolved_inputs,
-                requested_by=f"plan:{plan_id}",
-            )
-        )
-        completed = service.process_job(job.job_id)
-        if completed.status != "completed":
-            raise OrchestrationError(
-                f"Step {capability} stopped with status {completed.status}"
-            )
-        artifact_dir = Path(completed.artifact_dir)
-        return {
-            output: str((artifact_dir / output).resolve())
-            for output in produces
-            if (artifact_dir / output).is_file()
-        }
+    _, _, _, service = _runtime()
+    orchestrator = _orchestrator(service)
 
     try:
-        result = orchestrator.execute(plan_id, execute_step)
+        result = orchestrator.execute(plan_id)
     except (LocalRegistryError, OrchestrationError, JobError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc

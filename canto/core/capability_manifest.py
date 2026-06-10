@@ -17,6 +17,17 @@ class CapabilityRisk(BaseModel):
     requires_approval: bool = False
 
 
+class CapabilityProviderBinding(BaseModel):
+    skill: str = Field(min_length=1)
+    provider: str = Field(min_length=1)
+    consumes: dict[str, str] = Field(default_factory=dict)
+    produces: dict[str, str] = Field(default_factory=dict)
+
+
+class CapabilityExecution(BaseModel):
+    providers: list[CapabilityProviderBinding] = Field(default_factory=list)
+
+
 class CapabilityManifest(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -32,6 +43,7 @@ class CapabilityManifest(BaseModel):
     dependencies: dict[str, list[str]] = Field(default_factory=dict)
     risk: CapabilityRisk = Field(default_factory=CapabilityRisk)
     artifacts: list[str] = Field(default_factory=list)
+    execution: CapabilityExecution | None = None
 
     @classmethod
     def load(cls, path: str | Path) -> CapabilityManifest:
@@ -130,6 +142,37 @@ class CapabilityManifestValidator:
             risk_level = risk.get("level", "low")
             if risk_level not in cls.RISK_LEVELS:
                 errors.append("risk.level must be one of: low, medium, high")
+
+        execution = data.get("execution")
+        if execution is not None:
+            if not isinstance(execution, dict):
+                errors.append("execution must be a mapping")
+            else:
+                providers = execution.get("providers", [])
+                if not isinstance(providers, list):
+                    errors.append("execution.providers must be a list")
+                else:
+                    for index, binding in enumerate(providers):
+                        prefix = f"execution.providers[{index}]"
+                        if not isinstance(binding, dict):
+                            errors.append(f"{prefix} must be a mapping")
+                            continue
+                        for field in ("skill", "provider"):
+                            value = binding.get(field)
+                            if not isinstance(value, str) or not value:
+                                errors.append(
+                                    f"{prefix}.{field} must be a non-empty string"
+                                )
+                        for field in ("consumes", "produces"):
+                            value = binding.get(field, {})
+                            if not isinstance(value, dict) or any(
+                                not isinstance(key, str)
+                                or not isinstance(item, str)
+                                for key, item in value.items()
+                            ):
+                                errors.append(
+                                    f"{prefix}.{field} must be a string mapping"
+                                )
 
         return CapabilityValidationResult(
             valid=not errors,
