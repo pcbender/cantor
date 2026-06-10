@@ -8,7 +8,7 @@ Canto is a deliberately small local execution broker for Echo. It discovers regi
 - Python 3.11+
 - Redis 7 running inside WSL2
 
-## Install and run
+## Quickstart
 
 ```bash
 python3 -m venv .venv
@@ -20,20 +20,44 @@ sudo service redis-server start
 .venv/bin/canto serve
 ```
 
-The API listens on `http://127.0.0.1:8765` by default. Interactive API documentation is at `/docs`.
+Verify the environment before starting the server:
+
+```bash
+.venv/bin/pip check
+redis-cli ping
+.venv/bin/canto --help
+.venv/bin/canto health
+```
+
+Expected results are `PONG` from Redis and an `ok` health status.
+
+The API listens on `http://127.0.0.1:8765` by default. Interactive API
+documentation is at `/docs`. The unauthenticated server is intended for
+loopback-only use.
 
 ```bash
 curl http://127.0.0.1:8765/health
 curl http://127.0.0.1:8765/registry
 ```
 
-Check Redis directly with:
+Verify that the orchestration contract is exposed:
 
 ```bash
-redis-cli ping
+curl -X POST http://127.0.0.1:8765/discover \
+  -H 'Content-Type: application/json' \
+  -d '{"goal":"run the release demo"}'
 ```
 
-Expected response: `PONG`.
+An empty `matches` list is valid when no matching local capability is installed.
+
+Run the deterministic local package and orchestration demonstration with:
+
+```bash
+./scripts/demo-v2.2.sh
+```
+
+The script uses an isolated temporary Canto home, performs no network access,
+and leaves the normal user registry unchanged.
 
 ## Run a source inventory
 

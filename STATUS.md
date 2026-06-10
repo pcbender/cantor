@@ -2,6 +2,32 @@
 
 Updated: 2026-06-10
 
+## Release Preparation
+
+The v2.2 implementation is merged. Release notes are available at
+`docs/release-notes-v2.2.md`. README quickstart commands and the isolated local
+demonstration flow have been verified before v3 work begins.
+
+Completed milestones:
+
+- v1.1-v1.4: capability manifests, local packages, registry lifecycle, import
+  planning capabilities, archives, and scaffolding.
+- v2.0: installed-capability discovery, deterministic plans, approvals,
+  artifact dependencies, execution, and explanation.
+- v2.1: unified runtime/package registry view, canonical runnable identity,
+  provider bindings, JobService execution, approval objects, and lazy refresh.
+- v2.2: frozen orchestration contract v1.0, HTTP orchestration endpoints,
+  polling semantics, OpenAPI, JSON Schemas, and compatibility documentation.
+
+Release-prep verification:
+
+- `pip check`: no broken requirements.
+- Redis and CLI checks: `PONG`, healthy runtime, and expected registry output.
+- API quickstart: focused API and OpenAPI tests pass.
+- `./scripts/demo-v2.2.sh`: pack, validate, install, list, inspect, discover,
+  plan, approve, execute, explain, export, and archive revalidation pass using
+  isolated local state.
+
 ## Orchestration Contract v1.0
 
 **Canto orchestration contract v1.0 is frozen subject to documented deferred

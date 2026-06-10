@@ -1,0 +1,22 @@
+name: release_demo
+version: 1.0.0
+description: Produce a local artifact for the Canto v2.2 release demonstration.
+skills:
+  - release_demo
+providers:
+  - release_demo.local
+intents:
+  - release_demo
+outputs:
+  - release-demo.json
+execution:
+  providers:
+    - skill: release_demo
+      provider: local
+      produces:
+        release_demo_file: release-demo.json
+risk:
+  level: low
+  requires_approval: false
+artifacts:
+  - release-demo.json
