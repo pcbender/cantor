@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "CapabilityExecution": {
+      "properties": {
+        "providers": {
+          "items": {
+            "$ref": "#/$defs/CapabilityProviderBinding"
+          },
+          "title": "Providers",
+          "type": "array"
+        }
+      },
+      "title": "CapabilityExecution",
+      "type": "object"
+    },
+    "CapabilityProviderBinding": {
+      "properties": {
+        "consumes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Consumes",
+          "type": "object"
+        },
+        "produces": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Produces",
+          "type": "object"
+        },
+        "provider": {
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "skill": {
+          "minLength": 1,
+          "title": "Skill",
+          "type": "string"
+        }
+      },
+      "required": [
+        "skill",
+        "provider"
+      ],
+      "title": "CapabilityProviderBinding",
+      "type": "object"
+    },
+    "CapabilityRisk": {
+      "properties": {
+        "level": {
+          "default": "low",
+          "title": "Level",
+          "type": "string"
+        },
+        "requires_approval": {
+          "default": false,
+          "title": "Requires Approval",
+          "type": "boolean"
+        }
+      },
+      "title": "CapabilityRisk",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "dependencies": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Dependencies",
+      "type": "object"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "execution": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CapabilityExecution"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "inputs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Inputs",
+      "type": "array"
+    },
+    "intents": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Intents",
+      "type": "array"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "outputs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Outputs",
+      "type": "array"
+    },
+    "providers": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Providers",
+      "type": "array"
+    },
+    "risk": {
+      "$ref": "#/$defs/CapabilityRisk"
+    },
+    "skills": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Skills",
+      "type": "array"
+    },
+    "tools": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tools",
+      "type": "array"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "version"
+  ],
+  "title": "CapabilityManifest",
+  "type": "object"
+}

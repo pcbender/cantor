@@ -1,12 +1,25 @@
 from __future__ import annotations
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, status
 
 from canto import __version__
 from canto.config import Settings, get_settings
 from canto.core.artifacts import ArtifactError, read_artifact
 from canto.core.jobs import JobError, JobService
 from canto.core.local_registry import Registry as CapabilityRegistry
+from canto.core.orchestration import (
+    CapabilityMatcher,
+    DiscoverRequest,
+    DiscoverResponse,
+    ExecutionPlan,
+    OrchestrationError,
+    Orchestrator,
+    PlanCreateRequest,
+    PlanEventsResponse,
+    PlanExecutionAccepted,
+    PlanExplanation,
+    PlanStore,
+)
 from canto.core.registry import Registry
 from canto.core.state import RedisStateStore, StateStore
 from canto.models.schemas import ApprovalDecision, JobRequest, RejectionDecision
@@ -26,6 +39,11 @@ def create_app(
     )
     store = store or RedisStateStore(settings.redis_url)
     service = JobService(settings, registry, store)
+    orchestrator = Orchestrator(
+        capability_registry,
+        PlanStore(capability_registry.store.paths.plans),
+        job_service=service,
+    )
 
     app = FastAPI(title="Canto", version=__version__)
     app.state.settings = settings
@@ -33,6 +51,7 @@ def create_app(
     app.state.capability_registry = capability_registry
     app.state.store = store
     app.state.service = service
+    app.state.orchestrator = orchestrator
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -71,6 +90,66 @@ def create_app(
             raise HTTPException(422, str(exc)) from exc
         background_tasks.add_task(service.process_job, job.job_id)
         return {"job_id": job.job_id, "status": job.status}
+
+    @app.post("/discover", response_model=DiscoverResponse)
+    def discover(request: DiscoverRequest) -> DiscoverResponse:
+        matches = CapabilityMatcher(capability_registry).discover(request.goal)
+        return DiscoverResponse(
+            goal=request.goal,
+            matches=matches[: request.limit],
+        )
+
+    @app.post("/plans", response_model=ExecutionPlan)
+    def create_plan(request: PlanCreateRequest) -> ExecutionPlan:
+        try:
+            return orchestrator.create_plan(request.goal, inputs=request.inputs)
+        except OrchestrationError as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @app.get("/plans/{plan_id}", response_model=ExecutionPlan)
+    def get_plan(plan_id: str) -> ExecutionPlan:
+        try:
+            return orchestrator.get_plan(plan_id)
+        except OrchestrationError as exc:
+            raise HTTPException(404, str(exc)) from exc
+
+    @app.get("/plans/{plan_id}/explain", response_model=PlanExplanation)
+    def explain_plan(plan_id: str) -> PlanExplanation:
+        try:
+            return orchestrator.explain(plan_id)
+        except OrchestrationError as exc:
+            raise HTTPException(404, str(exc)) from exc
+
+    @app.post("/plans/{plan_id}/approve", response_model=ExecutionPlan)
+    def approve_plan(plan_id: str, decision: ApprovalDecision) -> ExecutionPlan:
+        try:
+            return orchestrator.approve_plan(
+                plan_id, decision.approved_by, decision.note
+            )
+        except OrchestrationError as exc:
+            raise HTTPException(409, str(exc)) from exc
+
+    @app.post(
+        "/plans/{plan_id}/execute",
+        response_model=PlanExecutionAccepted,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    def execute_plan(
+        plan_id: str, background_tasks: BackgroundTasks
+    ) -> PlanExecutionAccepted:
+        try:
+            accepted = orchestrator.prepare_execution(plan_id)
+        except OrchestrationError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        background_tasks.add_task(orchestrator.execute, plan_id)
+        return accepted
+
+    @app.get("/plans/{plan_id}/events", response_model=PlanEventsResponse)
+    def plan_events(plan_id: str) -> PlanEventsResponse:
+        try:
+            return orchestrator.events(plan_id)
+        except OrchestrationError as exc:
+            raise HTTPException(404, str(exc)) from exc
 
     @app.get("/jobs/{job_id}")
     def get_job(job_id: str) -> dict:

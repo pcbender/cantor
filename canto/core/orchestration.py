@@ -5,7 +5,7 @@ import re
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable, Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -18,9 +18,11 @@ from canto.models.schemas import Approval, JobRequest, Policy
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 PLAN_ID_PATTERN = re.compile(r"plan_[0-9]{8}_[a-f0-9]{6}")
+CONTRACT_VERSION = "1.0"
 
 
 class CapabilityMatch(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     name: str
     version: str
     score: int
@@ -31,7 +33,19 @@ class CapabilityMatch(BaseModel):
     risk: str
 
 
+class DiscoverRequest(BaseModel):
+    goal: str = Field(min_length=1)
+    limit: int = Field(default=10, ge=1, le=100)
+
+
+class DiscoverResponse(BaseModel):
+    contract_version: str = CONTRACT_VERSION
+    goal: str
+    matches: list[CapabilityMatch] = Field(default_factory=list)
+
+
 class WorkflowStep(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     capability: str
     version: str = ""
     skill: str = ""
@@ -44,38 +58,88 @@ class WorkflowStep(BaseModel):
 
 
 class WorkflowCandidate(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     goal: str
     steps: list[WorkflowStep] = Field(default_factory=list)
 
 
 class PlanPreview(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     candidate: WorkflowCandidate
     missing_inputs: list[str] = Field(default_factory=list)
     produced_artifacts: list[str] = Field(default_factory=list)
 
 
+class PlanCreateRequest(BaseModel):
+    goal: str = Field(min_length=1)
+    inputs: dict[str, Any] = Field(default_factory=dict)
+
+
+class PlanStepJob(BaseModel):
+    step_index: int
+    job_id: str
+    status: str
+
+
+class PlanEvent(BaseModel):
+    timestamp: str
+    type: str
+    message: str
+    step_index: int | None = None
+    job_id: str | None = None
+
+
 class ExecutionPlan(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     plan_id: str
     candidate: WorkflowCandidate
     missing_inputs: list[str] = Field(default_factory=list)
     produced_artifacts: list[str] = Field(default_factory=list)
-    status: str = "draft"
+    status: Literal[
+        "draft",
+        "waiting_for_approval",
+        "approved",
+        "running",
+        "completed",
+        "failed",
+        "rejected",
+        "cancelled",
+    ] = "draft"
     created_at: str
+    inputs: dict[str, Any] = Field(default_factory=dict)
     approved_at: str | None = None
     capability_versions: dict[str, str] = Field(default_factory=dict)
     capability_providers: dict[str, str] = Field(default_factory=dict)
     step_approval_ids: dict[str, str] = Field(default_factory=dict)
+    step_jobs: list[PlanStepJob] = Field(default_factory=list)
+    artifacts: dict[str, str] = Field(default_factory=dict)
+    events: list[PlanEvent] = Field(default_factory=list)
     error: str | None = None
     completed_at: str | None = None
 
 
 class PlanExecutionResult(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     plan_id: str
     status: str
     artifacts: dict[str, str] = Field(default_factory=dict)
 
 
+class PlanExecutionAccepted(BaseModel):
+    contract_version: str = CONTRACT_VERSION
+    plan_id: str
+    status: Literal["running"] = "running"
+    step_jobs: list[PlanStepJob] = Field(default_factory=list)
+
+
+class PlanEventsResponse(BaseModel):
+    contract_version: str = CONTRACT_VERSION
+    plan_id: str
+    events: list[PlanEvent] = Field(default_factory=list)
+
+
 class PlanStepExplanation(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     capability: str
     version: str
     skill: str
@@ -88,6 +152,7 @@ class PlanStepExplanation(BaseModel):
 
 
 class PlanExplanation(BaseModel):
+    contract_version: str = CONTRACT_VERSION
     plan_id: str
     goal: str
     status: str
@@ -203,8 +268,8 @@ def resolve_provider_binding(
 
 
 def resolve_artifact_inputs(
-    step: WorkflowStep, artifacts: dict[str, str]
-) -> dict[str, str]:
+    step: WorkflowStep, artifacts: dict[str, Any]
+) -> dict[str, Any]:
     resolved = {}
     consumes = step.consumes or {name: name for name in step.requires}
     for provider_input, artifact_name in consumes.items():
@@ -360,7 +425,12 @@ class Orchestrator:
         self.store = store
         self.job_service = job_service
 
-    def create_plan(self, goal: str, approve: bool = False) -> ExecutionPlan:
+    def create_plan(
+        self,
+        goal: str,
+        approve: bool = False,
+        inputs: dict[str, Any] | None = None,
+    ) -> ExecutionPlan:
         preview = self.planner.plan(goal)
         if approve and not preview.candidate.steps:
             raise OrchestrationError("Cannot approve a plan with no capability steps")
@@ -387,15 +457,57 @@ class Orchestrator:
         plan = ExecutionPlan(
             plan_id=f"plan_{now[:10].replace('-', '')}_{secrets.token_hex(3)}",
             candidate=preview.candidate,
-            missing_inputs=preview.missing_inputs,
+            missing_inputs=[
+                name for name in preview.missing_inputs if name not in (inputs or {})
+            ],
             produced_artifacts=preview.produced_artifacts,
             status="draft",
             created_at=now,
+            inputs=inputs or {},
             capability_versions=versions,
             capability_providers=providers,
+            events=[
+                PlanEvent(
+                    timestamp=now,
+                    type="plan_created",
+                    message="Plan created.",
+                )
+            ],
         )
         if approve:
             self._request_plan_approvals(plan)
+        self.store.save(plan)
+        return plan
+
+    def get_plan(self, plan_id: str) -> ExecutionPlan:
+        plan = self.store.load(plan_id)
+        self._refresh_approval_status(plan)
+        return plan
+
+    def approve_plan(
+        self, plan_id: str, approved_by: str, note: str = ""
+    ) -> ExecutionPlan:
+        plan = self.store.load(plan_id)
+        if plan.status != "draft":
+            raise OrchestrationError(
+                f"Plan {plan_id} cannot be approved from status {plan.status}"
+            )
+        if not plan.candidate.steps:
+            raise OrchestrationError("Cannot approve a plan with no capability steps")
+        self._request_plan_approvals(plan)
+        if self.job_service is None:
+            raise OrchestrationError("JobService is required to approve a plan")
+        for approval_id in plan.step_approval_ids.values():
+            self.job_service.approve(approval_id, approved_by, note)
+        self._refresh_approval_status(plan)
+        plan.approved_at = _now()
+        plan.events.append(
+            PlanEvent(
+                timestamp=plan.approved_at,
+                type="plan_approved",
+                message=f"Plan approved by {approved_by}.",
+            )
+        )
         self.store.save(plan)
         return plan
 
@@ -420,7 +532,14 @@ class Orchestrator:
                     )
                 if provider:
                     try:
-                        reasons.extend(evaluate_policy(provider, {}, Policy()))
+                        policy_inputs = {
+                            provider_input: plan.inputs[logical_name]
+                            for provider_input, logical_name in step.consumes.items()
+                            if logical_name in plan.inputs
+                        }
+                        reasons.extend(
+                            evaluate_policy(provider, policy_inputs, Policy())
+                        )
                     except PolicyDenied as exc:
                         raise OrchestrationError(str(exc)) from exc
                     provider_risk = int(provider.get("risk_level", provider_risk))
@@ -452,7 +571,13 @@ class Orchestrator:
         plan.status = "waiting_for_approval" if plan.step_approval_ids else "approved"
 
     def _refresh_approval_status(self, plan: ExecutionPlan) -> None:
-        if not plan.step_approval_ids:
+        if not plan.step_approval_ids or plan.status in {
+            "running",
+            "completed",
+            "failed",
+            "rejected",
+            "cancelled",
+        }:
             return
         if self.job_service is None:
             raise OrchestrationError("JobService is required to read plan approvals")
@@ -473,12 +598,44 @@ class Orchestrator:
     def execute(self, plan_id: str) -> PlanExecutionResult:
         if self.job_service is None:
             raise OrchestrationError("JobService is required to execute a plan")
+        plan = self.store.load(plan_id)
+        if plan.status == "approved":
+            self.prepare_execution(plan_id)
         return self._execute(plan_id, self._execute_job_step)
+
+    def prepare_execution(self, plan_id: str) -> PlanExecutionAccepted:
+        plan = self.store.load(plan_id)
+        self._refresh_approval_status(plan)
+        if plan.status != "approved":
+            raise OrchestrationError(
+                f"Plan {plan_id} is not approved and cannot be executed"
+            )
+        if not plan.candidate.steps:
+            raise OrchestrationError(f"Plan {plan_id} has no executable steps")
+        if plan.missing_inputs:
+            raise OrchestrationError(
+                f"Plan {plan_id} is missing inputs: {plan.missing_inputs}"
+            )
+        plan.status = "running"
+        plan.events.append(
+            PlanEvent(
+                timestamp=_now(),
+                type="plan_started",
+                message="Plan execution started.",
+            )
+        )
+        self.store.save(plan)
+        return PlanExecutionAccepted(
+            plan_id=plan.plan_id,
+            step_jobs=plan.step_jobs,
+        )
 
     def _execute_job_step(
         self,
+        plan: ExecutionPlan,
+        step_index: int,
         step: WorkflowStep,
-        inputs: dict[str, str],
+        inputs: dict[str, Any],
         approval_id: str | None,
     ) -> dict[str, str]:
         if self.job_service is None:
@@ -492,7 +649,31 @@ class Orchestrator:
                 approval_id=approval_id,
             )
         )
+        plan.step_jobs.append(
+            PlanStepJob(step_index=step_index, job_id=job.job_id, status=job.status)
+        )
+        plan.events.append(
+            PlanEvent(
+                timestamp=_now(),
+                type="step_job_created",
+                message=f"Created job for step {step_index}.",
+                step_index=step_index,
+                job_id=job.job_id,
+            )
+        )
+        self.store.save(plan)
         completed = self.job_service.process_job(job.job_id)
+        plan.step_jobs[-1].status = completed.status
+        plan.events.append(
+            PlanEvent(
+                timestamp=_now(),
+                type="step_job_completed" if completed.status == "completed" else "step_job_stopped",
+                message=f"Step {step_index} job stopped with status {completed.status}.",
+                step_index=step_index,
+                job_id=job.job_id,
+            )
+        )
+        self.store.save(plan)
         if completed.status != "completed":
             raise OrchestrationError(
                 f"Step {step.capability} stopped with status {completed.status}"
@@ -514,12 +695,13 @@ class Orchestrator:
         self,
         plan_id: str,
         executor: Callable[
-            [WorkflowStep, dict[str, str], str | None], dict[str, str]
+            [ExecutionPlan, int, WorkflowStep, dict[str, Any], str | None],
+            dict[str, str],
         ],
     ) -> PlanExecutionResult:
         plan = self.store.load(plan_id)
         self._refresh_approval_status(plan)
-        if plan.status != "approved":
+        if plan.status not in {"approved", "running"}:
             raise OrchestrationError(
                 f"Plan {plan_id} is not approved and cannot be executed"
             )
@@ -531,10 +713,13 @@ class Orchestrator:
             )
 
         artifacts: dict[str, str] = {}
+        available: dict[str, Any] = dict(plan.inputs)
         try:
             for index, step in enumerate(plan.candidate.steps):
-                resolved = resolve_artifact_inputs(step, artifacts)
+                resolved = resolve_artifact_inputs(step, available)
                 produced = executor(
+                    plan,
+                    index,
                     step,
                     resolved,
                     plan.step_approval_ids.get(str(index)),
@@ -545,9 +730,17 @@ class Orchestrator:
                             f"Step {step.capability} did not produce {output}"
                         )
                 artifacts.update(produced)
+                available.update(produced)
         except Exception as exc:
             plan.status = "failed"
             plan.error = str(exc)
+            plan.events.append(
+                PlanEvent(
+                    timestamp=_now(),
+                    type="plan_failed",
+                    message=str(exc),
+                )
+            )
             self.store.save(plan)
             if isinstance(exc, OrchestrationError):
                 raise
@@ -555,11 +748,39 @@ class Orchestrator:
 
         plan.status = "completed"
         plan.completed_at = _now()
+        plan.artifacts = artifacts
+        plan.events.append(
+            PlanEvent(
+                timestamp=plan.completed_at,
+                type="plan_completed",
+                message="Plan completed.",
+            )
+        )
         self.store.save(plan)
         return PlanExecutionResult(
             plan_id=plan.plan_id,
             status=plan.status,
             artifacts=artifacts,
+        )
+
+    def events(self, plan_id: str) -> PlanEventsResponse:
+        plan = self.store.load(plan_id)
+        events = list(plan.events)
+        if self.job_service is not None:
+            for step_job in plan.step_jobs:
+                for event in self.job_service.store.get_events(step_job.job_id):
+                    events.append(
+                        PlanEvent(
+                            timestamp=event["timestamp"],
+                            type=event["type"],
+                            message=event["message"],
+                            step_index=step_job.step_index,
+                            job_id=step_job.job_id,
+                        )
+                    )
+        return PlanEventsResponse(
+            plan_id=plan_id,
+            events=sorted(events, key=lambda event: event.timestamp),
         )
 
     def explain(self, plan_id: str) -> PlanExplanation:

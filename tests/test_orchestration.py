@@ -138,9 +138,11 @@ def test_workflow_candidate_model_has_reviewable_steps():
     )
 
     assert candidate.model_dump() == {
+        "contract_version": "1.0",
         "goal": "import my wordpress site",
         "steps": [
             {
+                "contract_version": "1.0",
                 "capability": "wordpress_inventory",
                 "version": "",
                 "skill": "",
@@ -164,6 +166,8 @@ def test_plan_reports_missing_inputs_and_produced_artifacts(tmp_path):
     assert preview.candidate.steps[0].version == "1.0.0"
     assert preview.candidate.steps[0].skill == "wordpress_inventory"
     assert preview.candidate.steps[0].provider == "local"
+    assert preview.contract_version == "1.0"
+    assert preview.candidate.steps[0].contract_version == "1.0"
     assert preview.missing_inputs == ["website_url"]
     assert preview.produced_artifacts == ["content.json", "inventory.json"]
 
@@ -196,6 +200,7 @@ def test_approved_plan_is_saved_locally_without_execution(tmp_path):
     )
 
     assert plan.status == "approved"
+    assert plan.contract_version == "1.0"
     assert plan.approved_at is not None
     assert store.load(plan.plan_id) == plan
 
@@ -242,7 +247,7 @@ def test_execute_runs_approved_steps_in_order(tmp_path):
 
     result = orchestrator._execute(
         plan.plan_id,
-        lambda step, inputs, approval_id: calls.append(
+        lambda plan, index, step, inputs, approval_id: calls.append(
             (
                 step.capability,
                 f"{step.skill}.{step.provider}",
@@ -316,7 +321,7 @@ def test_executor_passes_artifact_to_dependent_step(tmp_path):
     plan = orchestrator.create_plan("import my wordpress site", approve=True)
     calls = []
 
-    def executor(step, inputs, approval_id):
+    def executor(plan, index, step, inputs, approval_id):
         calls.append((step.capability, inputs))
         return {output: f"/artifacts/{output}" for output in step.produces}
 
@@ -340,6 +345,8 @@ def test_explain_plan_shows_reasons_io_risk_and_missing_values(tmp_path):
     explanation = orchestrator.explain(plan.plan_id)
 
     assert explanation.status == "draft"
+    assert explanation.contract_version == "1.0"
+    assert explanation.steps[0].contract_version == "1.0"
     assert explanation.steps[0].reason == (
         "produces inventory.json required by wordpress_migration_plan"
     )

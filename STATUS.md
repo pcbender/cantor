@@ -1,6 +1,30 @@
-# Canto v1 Implementation Status
+# Canto Implementation Status
 
-Updated: 2026-06-08
+Updated: 2026-06-10
+
+## Orchestration Contract v1.0
+
+**Canto orchestration contract v1.0 is frozen subject to documented deferred
+items.** The frozen loop is `discover → plan → approve → execute → observe`,
+with Canto-owned execution through `JobService`, the existing `Approval` model,
+and `202 + poll` completion semantics.
+
+Freeze artifacts are checked in at:
+
+- `docs/orchestration-api-contract.md`
+- `docs/openapi.json`
+- `docs/schemas/`
+- `docs/contract-compatibility.md`
+- `docs/contract-freeze-audit.md`
+
+Freeze verification: `.venv/bin/pytest tests import_capability/tests` passes
+159 tests, including OpenAPI/JSON Schema synchronization and the complete HTTP
+orchestration loop.
+
+Deferred contract items are full authentication, non-loopback security
+enforcement, Server-Sent Events, manifest schema-version metadata, and the
+remaining wire-shape gaps listed in the freeze audit. Remote registry, AI
+generation, signing, dependency solving, and webhooks remain out of scope.
 
 This document tracks implementation against `SPEC-v1.MD`. Steps 1-14 are the
 spec's prescribed build order. Steps 15 onward track remaining explicit v1

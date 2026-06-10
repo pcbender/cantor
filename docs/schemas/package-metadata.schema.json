@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "checksum": {
+      "minLength": 1,
+      "title": "Checksum",
+      "type": "string"
+    },
+    "installed": {
+      "title": "Installed",
+      "type": "boolean"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "path": {
+      "minLength": 1,
+      "title": "Path",
+      "type": "string"
+    },
+    "risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Risk",
+      "type": "string"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "installed",
+    "path",
+    "checksum",
+    "risk"
+  ],
+  "title": "RegistryEntry",
+  "type": "object"
+}

@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "artifact_outputs": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Artifact Outputs",
+      "type": "object"
+    },
+    "capability": {
+      "title": "Capability",
+      "type": "string"
+    },
+    "consumes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Consumes",
+      "type": "object"
+    },
+    "contract_version": {
+      "default": "1.0",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "produces": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Produces",
+      "type": "array"
+    },
+    "provider": {
+      "default": "",
+      "title": "Provider",
+      "type": "string"
+    },
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "requires": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Requires",
+      "type": "array"
+    },
+    "skill": {
+      "default": "",
+      "title": "Skill",
+      "type": "string"
+    },
+    "version": {
+      "default": "",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "capability",
+    "reason"
+  ],
+  "title": "WorkflowStep",
+  "type": "object"
+}

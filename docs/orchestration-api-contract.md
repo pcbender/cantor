@@ -1,6 +1,7 @@
-# Canto Orchestration API Contract (Proposed)
+# Canto Orchestration API Contract v1.0
 
-Status: **proposal / design** — no code changes implied by this document.
+Status: **frozen**, subject to the deferred items in
+`docs/contract-freeze-audit.md`.
 Purpose: define the single HTTP contract an external orchestrator uses to talk to Canto,
 spanning **discover → plan → approve → execute → observe**. This is the artifact intended
 for "contract freeze," once the registry unification (`docs/registry-unification-plan.md`)
@@ -276,27 +277,27 @@ originates from a step. See §6 for the streaming form.
 
 ---
 
-## 6. Async & completion semantics (decision required before freeze)
+## 6. Async & completion semantics
 
 The current job model is **fire-and-poll**: `POST /jobs` returns `queued` and the only way to
 learn the result is to poll `GET /jobs/{id}` (`server.py:52–62`). Plans inherit this.
 
-Decision to lock now (changing it later breaks the contract):
+The frozen baseline is:
 
-- **Recommended:** keep `202 + poll` as the baseline, and add **Server-Sent Events** on
-  `GET /plans/{plan_id}/events` and `GET /jobs/{id}/events` (these endpoints already aggregate
-  the event log, so streaming is additive). SSE avoids webhooks/inbound-callback auth while
-  giving orchestrators push updates.
+- Keep `202 + poll` as the completion model.
 - Document the polling contract explicitly: terminal statuses are
   `completed | failed | rejected | cancelled`; clients poll until terminal.
 
-## 7. Authentication (placeholder — must be decided for any non-loopback use)
+Server-Sent Events are deferred. Adding an SSE representation later is
+additive; it does not replace polling in contract v1.0.
+
+## 7. Authentication (placeholder)
 
 There is **no auth today** (`server.py` has none; `requested_by`/`approved_by` are
 unauthenticated free strings — `schemas.py`). The approval model assumes a trusted human
 "Cantor" the API cannot currently authenticate.
 
-For freeze, reserve the contract surface even if only a trivial scheme ships first:
+Contract v1.0 reserves the following surface without implementing authentication:
 - A bearer token (`Authorization: Bearer …`) on all mutating endpoints (`/plans`,
   `/plans/*/approve`, `/plans/*/execute`, `/jobs`, `/approvals/*`).
 - An authenticated identity that populates `requested_by` / `approved_by` server-side,
@@ -304,13 +305,15 @@ For freeze, reserve the contract surface even if only a trivial scheme ships fir
 - Default binding remains `127.0.0.1`; auth is required the moment the bind address is not
   loopback.
 
+The operational boundary and deferred work are documented in
+`docs/auth-placeholder.md`.
+
 ## 8. Versioning & freeze artifacts
 
 - **`contract_version`** on every response body (start at `"1.0"`). Independent of the app
   `__version__` (`0.1.0`) and of capability/manifest versions.
-- **Manifest `schema_version`** — does not exist today (`capability_manifest.py` versions the
-  *capability*, not the schema). Add one so richer manifests (unification Phase 1) are
-  detectable. `extra="allow"` (`capability_manifest.py:21`) remains the forward-compat rule.
+- **Manifest `schema_version`** remains deferred. Capability manifests retain
+  their current forward-compatible optional-field policy.
 - **Published OpenAPI** document generated from the FastAPI app, checked into `docs/`.
 - **Published JSON Schemas** for the capability/skill/provider/tool manifests and for the
   package layout (`docs/capability-manifest.md`, `docs/capability-packaging.md` describe these

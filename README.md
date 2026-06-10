@@ -1,4 +1,4 @@
-# Canto v1
+# Canto
 
 Canto is a deliberately small local execution broker for Echo. It discovers registered skills, providers, and tools from YAML manifests; stores jobs, events, approvals, artifacts, and registry snapshots in Redis; executes registered Python providers with time and output bounds; and keeps artifacts on the local filesystem.
 
@@ -93,12 +93,38 @@ Build a deterministic migration assessment from a completed inventory job:
 - `GET /jobs/{job_id}/artifacts/{artifact_name}`
 - `POST /approvals/{approval_id}/approve`
 - `POST /approvals/{approval_id}/reject`
+- `POST /discover`
+- `POST /plans`
+- `GET /plans/{plan_id}`
+- `GET /plans/{plan_id}/explain`
+- `POST /plans/{plan_id}/approve`
+- `POST /plans/{plan_id}/execute`
+- `GET /plans/{plan_id}/events`
 
 Unknown skills and providers return structured `missing_skill` or `missing_provider` responses with approval-gated scaffold suggestions.
 
+## Orchestration contract freeze
+
+**Canto orchestration contract v1.0 is frozen subject to documented deferred
+items.** The outer loop is `discover → plan → approve → execute → observe`.
+Canto owns execution through `JobService`, and plan execution returns `202` so
+clients poll the plan resource until a terminal status.
+
+Contract artifacts:
+
+- `docs/orchestration-api-contract.md`
+- `docs/openapi.json`
+- `docs/schemas/`
+- `docs/contract-compatibility.md`
+- `docs/contract-freeze-audit.md`
+
+Deferred items include full authentication, non-loopback deployment security,
+Server-Sent Events, manifest schema-version metadata, remote registries, AI
+generation, signing, dependency solving, and webhooks.
+
 ## Security boundaries
 
-Canto only launches entrypoints declared by registered provider manifests. It rejects entrypoints outside their provider directory, enforces subprocess timeouts and output limits, validates policy before launch, and only collects declared artifacts whose resolved paths remain inside the job artifact directory. Credential-like inputs must use `*_ref` fields with local environment references such as `env:CANTO_API_TOKEN`; raw credential values are rejected before job persistence. v1 does not provide a kernel-level filesystem or network sandbox, so manifests and provider code remain trusted local configuration.
+Canto only launches entrypoints declared by registered provider manifests. It rejects entrypoints outside their provider directory, enforces subprocess timeouts and output limits, validates policy before launch, and only collects declared artifacts whose resolved paths remain inside the job artifact directory. Credential-like inputs must use `*_ref` fields with local environment references such as `env:CANTO_API_TOKEN`; raw credential values are rejected before job persistence. Canto does not provide a kernel-level filesystem or network sandbox, so manifests and provider code remain trusted local configuration. The unauthenticated HTTP API is loopback-only by default; see `docs/auth-placeholder.md`.
 
 ## Tests
 
