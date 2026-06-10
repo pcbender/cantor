@@ -1,0 +1,101 @@
+{
+  "$defs": {
+    "PlanStepExplanation": {
+      "properties": {
+        "capability": {
+          "title": "Capability",
+          "type": "string"
+        },
+        "contract_version": {
+          "default": "1.0",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "inputs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Inputs",
+          "type": "array"
+        },
+        "missing_values": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Values",
+          "type": "array"
+        },
+        "outputs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Outputs",
+          "type": "array"
+        },
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "risk": {
+          "title": "Risk",
+          "type": "string"
+        },
+        "skill": {
+          "title": "Skill",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability",
+        "version",
+        "skill",
+        "provider",
+        "reason",
+        "risk"
+      ],
+      "title": "PlanStepExplanation",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "default": "1.0",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "goal": {
+      "title": "Goal",
+      "type": "string"
+    },
+    "plan_id": {
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/PlanStepExplanation"
+      },
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "plan_id",
+    "goal",
+    "status"
+  ],
+  "title": "PlanExplanation",
+  "type": "object"
+}
