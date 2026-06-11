@@ -1,0 +1,79 @@
+from __future__ import annotations
+
+import json
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from canto.core.delegation import DelegationService
+from canto.core.delegation_artifacts import ArtifactCaptureError, DelegationArtifactService
+from canto.core.delegation_workspace import DelegationWorkspaceService, inspect_repository
+from canto.core.state import MemoryStateStore
+from canto.models.delegation import DelegationScope, DelegationTask
+
+
+def git(repository: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(repository), *args], check=True, capture_output=True)
+
+
+def executor_done(tmp_path):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "src").mkdir()
+    (repository / "src" / "app.py").write_text("value = 1\n")
+    (repository / "private").mkdir()
+    (repository / "private" / "secret.txt").write_text("fixture\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+    service = DelegationService(MemoryStateStore())
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.create_task(
+        DelegationTask(
+            task_id="task_1",
+            title="Update app",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"], denied_paths=["private"]),
+        )
+    )
+    service.transition("task_1", "assigned", updates={"executor_id": "manual"})
+    workspace = workspaces.prepare("task_1")
+    service.transition("task_1", "executor_working")
+    service.transition("task_1", "executor_done")
+    return service, workspaces, Path(workspace.path)
+
+
+def test_capture_creates_immutable_hashed_result_revision(tmp_path):
+    service, workspaces, workspace = executor_done(tmp_path)
+    (workspace / "src" / "app.py").write_text("value = 2\n")
+    (workspace / "src" / "new.py").write_text("created = True\n")
+
+    result = DelegationArtifactService(service, workspaces).capture("task_1")
+
+    assert result.revision == 1
+    assert [artifact.name for artifact in result.artifacts] == [
+        "proposal.diff",
+        "changed_files.json",
+        "commands.log",
+        "summary.md",
+    ]
+    artifact_root = workspace.parent / "artifacts"
+    for artifact in result.artifacts:
+        assert len(artifact.sha256) == 64
+        assert (artifact_root / artifact.relative_path).is_file()
+    changed = json.loads((artifact_root / "revision-1" / "changed_files.json").read_text())
+    assert [item["path"] for item in changed] == ["src/app.py", "src/new.py"]
+    assert "src/new.py" in (artifact_root / "revision-1" / "proposal.diff").read_text()
+    assert service.get_task("task_1").status == "reviewing"
+
+
+def test_capture_rejects_denied_path_change(tmp_path):
+    service, workspaces, workspace = executor_done(tmp_path)
+    (workspace / "private").mkdir()
+    (workspace / "private" / "secret.txt").write_text("changed\n")
+
+    with pytest.raises(ArtifactCaptureError, match="Denied path changed"):
+        DelegationArtifactService(service, workspaces).capture("task_1")

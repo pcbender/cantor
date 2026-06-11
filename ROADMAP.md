@@ -422,7 +422,8 @@ implementation sequence begins with CP-1301 and completes before CP-1201.
 - CP-1313 — Documentation and Demo
 - CP-1314 — End-to-End Local Delegated Executor Test
 
-CP-1301 is approved and complete. The next implementation packet is CP-1302.
+CP-1301 through CP-1314 are complete. The delegated executor workspace
+workstream is ready for release review; CP-1201 remains the next roadmap packet.
 
 Recommended work packets — developer experience (formerly v3.2, deferred until
 CP-1314 completes):
