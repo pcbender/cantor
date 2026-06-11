@@ -13,6 +13,7 @@ from canto.core.capability_manifest import CapabilityManifest
 from canto.core.jobs import JobService
 from canto.core.local_registry import Registry, RegistryEntry
 from canto.core.policy import PolicyDenied, evaluate_policy
+from canto.core.state import StateStore
 from canto.models.schemas import Approval, JobRequest, Policy
 
 
@@ -168,12 +169,18 @@ def _now() -> str:
 
 
 class PlanStore:
-    def __init__(self, plans_dir: str | Path):
-        self.plans_dir = Path(plans_dir)
-        self.plans_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, backend: StateStore | str | Path):
+        self.state_store = backend if not isinstance(backend, (str, Path)) else None
+        self.plans_dir = Path(backend) if isinstance(backend, (str, Path)) else None
+        if self.plans_dir is not None:
+            self.plans_dir.mkdir(parents=True, exist_ok=True)
 
     def save(self, plan: ExecutionPlan) -> None:
         self._validate_plan_id(plan.plan_id)
+        if self.state_store is not None:
+            self.state_store.set_plan(plan.plan_id, plan.model_dump(mode="json"))
+            return
+        assert self.plans_dir is not None
         path = self.plans_dir / f"{plan.plan_id}.json"
         temporary = path.with_suffix(".json.tmp")
         try:
@@ -188,6 +195,17 @@ class PlanStore:
 
     def load(self, plan_id: str) -> ExecutionPlan:
         self._validate_plan_id(plan_id)
+        if self.state_store is not None:
+            value = self.state_store.get_plan(plan_id)
+            if value is None:
+                raise OrchestrationError(f"Cannot load plan {plan_id}: not found")
+            try:
+                return ExecutionPlan.model_validate(value)
+            except ValueError as exc:
+                raise OrchestrationError(
+                    f"Cannot load plan {plan_id}: {exc}"
+                ) from exc
+        assert self.plans_dir is not None
         path = self.plans_dir / f"{plan_id}.json"
         try:
             return ExecutionPlan.model_validate_json(path.read_text(encoding="utf-8"))

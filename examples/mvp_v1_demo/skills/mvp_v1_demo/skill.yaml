@@ -1,0 +1,4 @@
+name: mvp_v1_demo
+version: 1.0.0
+description: Verify an installed provider receives a resolved vault reference.
+providers: [local]

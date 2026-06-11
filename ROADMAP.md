@@ -4,7 +4,9 @@ Status: updated after completion of v1.x, v2.0, v2.1 Registry Unification, and v
 
 Canto has moved beyond proof-of-concept. The system can now package capabilities, install them, discover them, compose approved plans, execute those plans through the bounded JobService/runner path, expose orchestration over HTTP, and publish a frozen v1.0 orchestration contract.
 
-The next phase begins with **v3.0 — External Orchestrator Integration**.
+The next phase begins with **MVP v1 — Single-User, Write-Capable (local)**.
+External Orchestrator Integration is scheduled within MVP v2 after the local
+single-user foundation is complete.
 
 ---
 
@@ -333,14 +335,18 @@ observed and audited — with no networked multi-user surface.
 
 Recommended work packets — core (state, credentials, writes, runtime, packaging):
 
+Status: **complete**. CP-5001 through CP-5014 were implemented and verified on
+2026-06-10. Deferred developer-experience packets remain separately scoped
+below.
+
 - CP-5001 — MVP v1 Scope and Design
 - CP-5002 — `SqliteStateStore` System of Record (behind the `StateStore` Protocol)
 - CP-5003 — Redis → SQLite State-Migration Tool
 - CP-5004 — Single-User Credential Vault and Vault-Backed `*_ref` Resolution
 - CP-5005 — Secret Rotation and Redaction Guarantees
+- CP-5008 — Write-Provider Contract and Reference Provider
 - CP-5006 — Guarded Write Execution Path (dry-run → live promotion)
 - CP-5007 — Idempotency and Rollback / Compensation
-- CP-5008 — Write-Provider Contract and Reference Provider
 - CP-5009 — Pre-Write Validation and Post-Write Verification
 - CP-5010 — Multi-Runtime Provider Execution (node / container / binary)
 - CP-5011 — Baseline Resource Limits and Per-Job Egress Allowlist
@@ -651,7 +657,7 @@ Next recommended milestone:
 
 ```text
 MVP v1 — Single-user, write-capable (local)
-  first packet: CP-5002 (SqliteStateStore system of record)
+  first packet: CP-5001 (MVP v1 Scope and Design)
 ```
 
 MVP tiers (forward spine, built in order):

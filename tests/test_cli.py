@@ -12,6 +12,51 @@ from canto.models.schemas import JobRequest
 FIXTURES = Path(__file__).parent / "fixtures" / "capabilities"
 
 
+def test_credential_cli_manages_references_without_printing_values(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("CANTO_HOME", str(tmp_path / ".canto"))
+    runner = CliRunner()
+
+    stored = runner.invoke(
+        cli_module.app,
+        [
+            "credential",
+            "set",
+            "api_token",
+            "--scope",
+            "wordpress",
+            "--value",
+            "cli-secret",
+        ],
+    )
+    listed = runner.invoke(cli_module.app, ["credential", "list"])
+    rotated = runner.invoke(
+        cli_module.app,
+        [
+            "credential",
+            "rotate",
+            "api_token",
+            "--scope",
+            "wordpress",
+            "--value",
+            "new-secret",
+        ],
+    )
+    deleted = runner.invoke(
+        cli_module.app,
+        ["credential", "delete", "api_token", "--scope", "wordpress"],
+    )
+
+    assert stored.exit_code == 0
+    assert "vault:wordpress/api_token" in stored.output
+    assert "cli-secret" not in stored.output
+    assert listed.output.strip() == "vault:wordpress/api_token"
+    assert rotated.exit_code == 0
+    assert "new-secret" not in rotated.output
+    assert deleted.exit_code == 0
+
+
 def test_run_prints_job_id_before_processing(runtime, monkeypatch):
     settings, registry, store, service = runtime
     job = service.create_job(

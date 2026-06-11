@@ -15,6 +15,9 @@ class Settings:
     port: int
     provider_timeout_seconds: int
     max_provider_output_bytes: int
+    max_provider_cpu_seconds: int = 60
+    max_provider_memory_bytes: int = 2_147_483_648
+    max_job_artifact_bytes: int = 104_857_600
 
     @property
     def skills_dir(self) -> Path:
@@ -43,5 +46,13 @@ def get_settings(root_dir: Path | None = None) -> Settings:
         port=int(os.getenv("CANTO_PORT", "8765")),
         provider_timeout_seconds=int(os.getenv("CANTO_PROVIDER_TIMEOUT_SECONDS", "120")),
         max_provider_output_bytes=int(os.getenv("CANTO_MAX_PROVIDER_OUTPUT_BYTES", "1048576")),
+        max_provider_cpu_seconds=int(
+            os.getenv("CANTO_MAX_PROVIDER_CPU_SECONDS", "60")
+        ),
+        max_provider_memory_bytes=int(
+            os.getenv("CANTO_MAX_PROVIDER_MEMORY_BYTES", "2147483648")
+        ),
+        max_job_artifact_bytes=int(
+            os.getenv("CANTO_MAX_JOB_ARTIFACT_BYTES", "104857600")
+        ),
     )
-

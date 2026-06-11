@@ -1,0 +1,22 @@
+version: 1
+capabilities:
+  - skill: check_dependencies
+    provider: manifest_dependency_checker
+    purpose: Inspect declared local provider and tool dependencies without installing them.
+    access: local_read
+    reviewed: true
+  - skill: source_inventory
+    provider: public_html_crawler
+    purpose: Inventory a public website with approved-domain read-only access.
+    access: approved_network_read
+    reviewed: true
+  - skill: migration_report
+    provider: local_markdown_report
+    purpose: Produce a deterministic local migration assessment from inventory artifacts.
+    access: local_read_write_artifacts
+    reviewed: true
+  - skill: managed_json
+    provider: local_document
+    purpose: Demonstrate governed dry-run, promotion, verification, and rollback locally.
+    access: governed_local_write
+    reviewed: true

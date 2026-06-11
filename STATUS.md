@@ -4,6 +4,24 @@ Updated: 2026-06-10
 
 ## Release Preparation
 
+MVP v1 CP-5001 through CP-5014 are complete. Release notes are available at
+`docs/release-notes-mvp-v1.md`; installation, runtime limits, credentials,
+write governance, seed capabilities, and troubleshooting each have dedicated
+documentation. The isolated `scripts/demo-mvp-v1.sh` flow proves local package
+installation, discovery, planning, approval, vault-backed execution, dry run,
+promotion, verification, and rollback without Redis or network access.
+
+MVP v1 verification:
+
+- `git diff --check`
+- `.venv/bin/pip check`
+- `.venv/bin/pytest tests import_capability/tests`
+- `./scripts/quickstart-mvp-v1.sh`
+- `./scripts/demo-mvp-v1.sh`
+
+Final MVP v1 result: `202 passed`, with one existing non-blocking Starlette
+`TestClient` deprecation warning. Both isolated MVP scripts pass.
+
 The v2.2 implementation is merged. Release notes are available at
 `docs/release-notes-v2.2.md`. README quickstart commands and the isolated local
 demonstration flow have been verified before v3 work begins.
@@ -18,11 +36,19 @@ Completed milestones:
   provider bindings, JobService execution, approval objects, and lazy refresh.
 - v2.2: frozen orchestration contract v1.0, HTTP orchestration endpoints,
   polling semantics, OpenAPI, JSON Schemas, and compatibility documentation.
+- MVP v1 CP-5001: approved scope and design.
+- MVP v1 CP-5002: SQLite is the default durable state store for jobs, events,
+  approvals, artifact metadata, registry snapshots, and execution plans.
+- MVP v1 CP-5003 through CP-5014: state migration, encrypted credentials,
+  redaction, governed writes, idempotency/recovery, verification, runtime
+  adapters, resource/egress limits, wheel packaging, quickstarts, reviewed
+  seed capabilities, and release stabilization.
 
 Release-prep verification:
 
 - `pip check`: no broken requirements.
-- Redis and CLI checks: `PONG`, healthy runtime, and expected registry output.
+- SQLite and CLI checks: healthy runtime and expected registry output without a
+  state daemon.
 - API quickstart: focused API and OpenAPI tests pass.
 - `./scripts/demo-v2.2.sh`: pack, validate, install, list, inspect, discover,
   plan, approve, execute, explain, export, and archive revalidation pass using
@@ -43,9 +69,8 @@ Freeze artifacts are checked in at:
 - `docs/contract-compatibility.md`
 - `docs/contract-freeze-audit.md`
 
-Freeze verification: `.venv/bin/pytest tests import_capability/tests` passes
-159 tests, including OpenAPI/JSON Schema synchronization and the complete HTTP
-orchestration loop.
+Freeze verification remains covered by the current full suite, including
+OpenAPI/JSON Schema synchronization and the complete HTTP orchestration loop.
 
 Deferred contract items are full authentication, non-loopback security
 enforcement, Server-Sent Events, manifest schema-version metadata, and the

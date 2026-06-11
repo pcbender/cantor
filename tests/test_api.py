@@ -1,14 +1,30 @@
+import json
+
 from fastapi.testclient import TestClient
 
 from canto.api.server import create_app
 from canto.core.capability_package import pack_capability
 from canto.core.local_registry import Registry as CapabilityRegistry
+from canto.core.state import SqliteStateStore
 
 
 def isolated_app(runtime):
     settings, _, store, _ = runtime
     registry = CapabilityRegistry.local(settings.root_dir / "registry-home")
     return create_app(settings, store, registry)
+
+
+def test_api_defaults_to_sqlite_state_store(runtime):
+    settings, _, _, _ = runtime
+    registry = CapabilityRegistry.local(settings.root_dir / "sqlite-home")
+
+    app = create_app(settings, capability_registry=registry)
+
+    assert isinstance(app.state.store, SqliteStateStore)
+    assert app.state.store.path == (
+        registry.store.paths.root / "state" / "canto.db"
+    ).resolve()
+    assert app.state.orchestrator.store.state_store is app.state.store
 
 
 def orchestration_app(runtime):
@@ -109,6 +125,47 @@ def test_api_approval_and_artifact_read(runtime):
     assert len(listed) == 4
     manifest = client.get(f"/jobs/{job_id}/artifacts/scaffold_manifest").json()
     assert "name: sample_tool" in manifest["content"]
+
+
+def test_api_promotes_completed_write_dry_run(runtime, tmp_path):
+    client = TestClient(isolated_app(runtime))
+    target = tmp_path / "api-target.json"
+    target.write_text("{}\n", encoding="utf-8")
+    created = client.post(
+        "/jobs",
+        json={
+            "skill": "managed_json",
+            "provider": "local_document",
+            "inputs": {
+                "target_path": str(target),
+                "target_id": "local:api",
+                "desired": {"status": "updated"},
+                "idempotency_key": "api-promotion-1",
+            },
+        },
+    )
+    dry_run = client.get(f"/jobs/{created.json()['job_id']}").json()
+
+    promoted = client.post(f"/jobs/{dry_run['job_id']}/promote")
+    approved = client.post(
+        f"/approvals/{promoted.json()['approval_id']}/approve",
+        json={"approved_by": "cantor", "note": "Reviewed"},
+    )
+
+    assert promoted.status_code == 200
+    assert approved.status_code == 200
+    assert approved.json()["status"] == "completed"
+    assert approved.json()["policy"]["mode"] == "live"
+    assert json.loads(target.read_text()) == {"status": "updated"}
+
+    recovery = client.post(f"/jobs/{approved.json()['job_id']}/recover")
+    recovered = client.post(
+        f"/approvals/{recovery.json()['approval_id']}/approve",
+        json={"approved_by": "cantor", "note": "Rollback"},
+    )
+    assert recovery.status_code == 200
+    assert recovered.json()["status"] == "completed"
+    assert json.loads(target.read_text()) == {}
 
 
 def test_api_missing_provider_is_structured(runtime):

@@ -1,0 +1,20 @@
+name: mvp_v1_demo
+version: 1.0.0
+description: Verify local installed capability execution with a vault-backed input.
+skills: [mvp_v1_demo]
+providers: [mvp_v1_demo.local]
+intents: [verify_mvp_v1]
+inputs: [demo_token_ref]
+outputs: [mvp-v1-demo.json]
+execution:
+  providers:
+    - skill: mvp_v1_demo
+      provider: local
+      consumes:
+        demo_token_ref: demo_token_ref
+      produces:
+        demo_file: mvp-v1-demo.json
+risk:
+  level: low
+  requires_approval: false
+artifacts: [mvp-v1-demo.json]

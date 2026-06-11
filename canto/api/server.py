@@ -21,7 +21,7 @@ from canto.core.orchestration import (
     PlanStore,
 )
 from canto.core.registry import Registry
-from canto.core.state import RedisStateStore, StateStore
+from canto.core.state import SqliteStateStore, StateStore
 from canto.models.schemas import ApprovalDecision, JobRequest, RejectionDecision
 
 
@@ -37,11 +37,13 @@ def create_app(
         settings.tools_dir,
         capability_registry=capability_registry,
     )
-    store = store or RedisStateStore(settings.redis_url)
+    store = store or SqliteStateStore(
+        capability_registry.store.paths.root / "state" / "canto.db"
+    )
     service = JobService(settings, registry, store)
     orchestrator = Orchestrator(
         capability_registry,
-        PlanStore(capability_registry.store.paths.plans),
+        PlanStore(store),
         job_service=service,
     )
 
@@ -56,10 +58,15 @@ def create_app(
     @app.get("/health")
     def health() -> dict[str, str]:
         try:
-            redis_status = "ok" if store.ping() else "error"
+            state_status = "ok" if store.ping() else "error"
         except Exception:
-            redis_status = "error"
-        return {"status": "ok" if redis_status == "ok" else "degraded", "redis": redis_status, "version": __version__}
+            state_status = "error"
+        return {
+            "status": "ok" if state_status == "ok" else "degraded",
+            "state": state_status,
+            "redis": "not_required",
+            "version": __version__,
+        }
 
     @app.get("/registry")
     def registry_snapshot() -> dict:
@@ -157,6 +164,22 @@ def create_app(
         if not result:
             raise HTTPException(404, f"Unknown job: {job_id}")
         return result
+
+    @app.post("/jobs/{job_id}/promote")
+    def promote_job(job_id: str) -> dict:
+        try:
+            approval = service.promote(job_id)
+        except JobError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        return approval.model_dump(mode="json")
+
+    @app.post("/jobs/{job_id}/recover")
+    def recover_job(job_id: str) -> dict:
+        try:
+            approval = service.recover(job_id)
+        except JobError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        return approval.model_dump(mode="json")
 
     @app.get("/jobs/{job_id}/events")
     def get_events(job_id: str) -> dict:

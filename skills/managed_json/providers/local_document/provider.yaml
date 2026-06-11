@@ -1,0 +1,40 @@
+name: local_document
+skill: managed_json
+version: 0.1.0
+description: Reference write provider for a local JSON document.
+runner:
+  type: python
+  entrypoint: run.py
+inputs:
+  target_path: {type: string, required: true}
+  target_id: {type: string, required: true}
+  desired: {type: object, required: true}
+  idempotency_key: {type: string, required: true}
+outputs:
+  change_set: {path: change_set.json, type: file, format: json}
+  validation: {path: validation.json, type: file, format: json}
+  verification: {path: verification.json, type: file, format: json}
+  recovery: {path: recovery.json, type: file, format: json}
+dependencies:
+  system: [python3]
+permissions:
+  filesystem_write: true
+  production_access: false
+  destructive: false
+risk_level: 2
+write:
+  modes: [dry_run, live]
+  target:
+    scope: local_json_document
+    identity_input: target_id
+  credential_refs: []
+  artifacts:
+    change_set: change_set
+    validation: validation
+    verification: verification
+    recovery: recovery
+  idempotency:
+    required: true
+    input: idempotency_key
+  recovery:
+    mode: rollback

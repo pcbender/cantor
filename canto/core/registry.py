@@ -6,6 +6,9 @@ from typing import Any, Protocol
 
 import yaml
 
+from canto.core.write_contract import WriteContractError, validate_write_contract
+from canto.core.runner_contract import RunnerContractError, validate_runner_contract
+
 
 class RegistryError(ValueError):
     pass
@@ -100,6 +103,11 @@ class Registry:
                 skills[manifest["name"]] = manifest
             for path in sorted(skills_dir.glob("*/providers/*/provider.yaml")):
                 manifest = self._load_yaml(path)
+                try:
+                    validate_runner_contract(manifest)
+                    validate_write_contract(manifest)
+                except (RunnerContractError, WriteContractError) as exc:
+                    raise RegistryError(f"Invalid provider {path}: {exc}") from exc
                 key = (manifest.get("skill", ""), manifest["name"])
                 if key[0] not in skills:
                     raise RegistryError(f"Provider {path} refers to unknown skill {key[0]}")

@@ -54,6 +54,8 @@ class Job(BaseModel):
     error: dict[str, Any] | None = None
     requires_approval: bool = False
     approval_id: str | None = None
+    promotion: dict[str, Any] | None = None
+    recovery: dict[str, Any] | None = None
 
 
 class ApprovalDecision(BaseModel):
@@ -80,3 +82,5 @@ class Approval(BaseModel):
     updated_at: str
     decided_by: str | None = None
     note: str = ""
+    promotion: dict[str, Any] | None = None
+    recovery: dict[str, Any] | None = None

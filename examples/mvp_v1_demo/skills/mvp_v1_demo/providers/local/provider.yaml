@@ -1,0 +1,16 @@
+name: local
+skill: mvp_v1_demo
+version: 1.0.0
+description: Produce a local proof without persisting the resolved credential.
+runner: {type: python, entrypoint: run.py}
+inputs:
+  demo_token_ref: {type: string, required: true}
+outputs:
+  demo_file: {path: mvp-v1-demo.json, type: file, format: json}
+dependencies: {system: [python3]}
+permissions:
+  network_read: false
+  network_write: false
+  filesystem_write: true
+  destructive: false
+risk_level: 1
