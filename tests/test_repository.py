@@ -10,11 +10,17 @@ from typer.testing import CliRunner
 import canto.cli as cli_module
 from canto.core.local_registry import LocalRegistryError, LocalRegistryPaths, Registry
 from canto.core.repository import (
+    CANTO_AGENTS_MARKER_START,
     RepositoryConfigError,
+    doctor_repository,
     find_repository,
     initialize_repository,
     load_repository,
 )
+from canto.core.delegation import DelegationService
+from canto.core.delegation_workspace import DelegationWorkspaceService, inspect_repository
+from canto.core.state import MemoryStateStore
+from canto.models.delegation import DelegationScope, DelegationTask
 
 
 def git(repository: Path, *args: str) -> str:
@@ -46,10 +52,63 @@ def test_repo_init_creates_non_secret_repo_configuration(repository):
     assert config.repo_id.startswith("repo_")
     assert (repository / ".canto" / "repo.toml").is_file()
     assert (repository / ".canto" / "policy.toml").is_file()
+    assert (repository / ".canto" / "delegate.toml").is_file()
+    assert (repository / ".canto" / "agents" / "shared.md").is_file()
+    assert (repository / ".canto" / "agents" / "orchestrator.md").is_file()
+    assert (repository / ".canto" / "agents" / "executor.md").is_file()
+    assert CANTO_AGENTS_MARKER_START in (repository / "AGENTS.md").read_text()
     content = (repository / ".canto" / "repo.toml").read_text()
     assert "credential" not in content
     assert "task" not in content
     assert load_repository(repository).repo_id == config.repo_id
+
+
+def test_repo_init_preserves_existing_agents_content_and_is_idempotent(repository):
+    original = "# Human Instructions\n\nKeep this section unchanged.\n"
+    (repository / "AGENTS.md").write_text(original)
+
+    first = initialize_repository(repository)
+    once = (repository / "AGENTS.md").read_text()
+    second = initialize_repository(repository)
+
+    assert once.startswith(original)
+    assert once.count(CANTO_AGENTS_MARKER_START) == 1
+    assert (repository / "AGENTS.md").read_text() == once
+    assert second.repo_id == first.repo_id
+
+
+def test_repo_init_refreshes_only_canto_owned_agents_section(repository):
+    human_prefix = "# Human Instructions\n\nKeep before.\n\n"
+    human_suffix = "\n\nKeep after.\n"
+    (repository / "AGENTS.md").write_text(
+        human_prefix
+        + CANTO_AGENTS_MARKER_START
+        + "\nOld generated guidance.\n"
+        + "<!-- canto-agent-instructions:end -->"
+        + human_suffix
+    )
+
+    initialize_repository(repository)
+    content = (repository / "AGENTS.md").read_text()
+
+    assert content.startswith(human_prefix)
+    assert content.endswith(human_suffix)
+    assert "Old generated guidance" not in content
+    assert "Do not bypass Canto delegation" in content
+
+
+def test_repo_init_upgrades_existing_bootstrap_with_agent_files(repository):
+    config = initialize_repository(repository)
+    (repository / ".canto" / "delegate.toml").unlink()
+    (repository / ".canto" / "agents" / "executor.md").unlink()
+    (repository / "AGENTS.md").unlink()
+
+    upgraded = initialize_repository(repository)
+
+    assert upgraded.repo_id == config.repo_id
+    assert (repository / ".canto" / "delegate.toml").is_file()
+    assert (repository / ".canto" / "agents" / "executor.md").is_file()
+    assert (repository / "AGENTS.md").is_file()
 
 
 def test_repo_resolution_searches_from_nested_directory(repository):
@@ -95,6 +154,48 @@ def test_repo_cli_init_and_show_from_nested_directory(repository, monkeypatch):
     assert initialized.exit_code == 0, initialized.output
     assert shown.exit_code == 0, shown.output
     assert '"repo_id": "repo_' in shown.output
+
+
+def test_repo_doctor_requires_instruction_files_in_git_base(repository, monkeypatch):
+    initialize_repository(repository)
+    before = doctor_repository(repository)
+    assert before.valid is False
+    assert next(
+        item for item in before.checks if item.name == "instruction_files_git_state"
+    ).valid is False
+
+    git(repository, "add", "AGENTS.md", ".canto")
+    git(repository, "commit", "-m", "Bootstrap Canto agent instructions")
+    after = doctor_repository(repository)
+    assert after.valid is True
+
+    monkeypatch.chdir(repository / "src")
+    result = CliRunner().invoke(cli_module.app, ["repo", "doctor", "--json"])
+    assert result.exit_code == 0, result.output
+    assert '"valid": true' in result.output
+
+
+def test_delegated_sparse_workspace_includes_committed_role_instructions(repository, tmp_path):
+    initialize_repository(repository)
+    git(repository, "add", "AGENTS.md", ".canto")
+    git(repository, "commit", "-m", "Bootstrap Canto agent instructions")
+    service = DelegationService(MemoryStateStore())
+    service.create_task(
+        DelegationTask(
+            task_id="task_instructions",
+            title="Instruction visibility",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"]),
+        )
+    )
+    service.transition("task_instructions", "assigned", updates={"executor_id": "manual"})
+    workspace = DelegationWorkspaceService(service, tmp_path / "delegations").prepare(
+        "task_instructions"
+    )
+    root = Path(workspace.path)
+    assert (root / "AGENTS.md").is_file()
+    assert (root / ".canto" / "agents" / "shared.md").is_file()
+    assert (root / ".canto" / "agents" / "executor.md").is_file()
 
 
 def test_delegate_create_requires_bootstrap(repository, tmp_path, monkeypatch):

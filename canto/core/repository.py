@@ -32,6 +32,78 @@ class RepositoryPolicy(BaseModel):
     allow_secrets: bool = False
 
 
+class RepositoryDoctorCheck(BaseModel):
+    name: str
+    valid: bool
+    detail: str
+
+
+class RepositoryDoctorResult(BaseModel):
+    valid: bool
+    repository: str
+    checks: list[RepositoryDoctorCheck] = Field(default_factory=list)
+
+
+CANTO_AGENTS_MARKER_START = "<!-- canto-agent-instructions:start -->"
+CANTO_AGENTS_MARKER_END = "<!-- canto-agent-instructions:end -->"
+CANTO_AGENTS_SECTION = f"""{CANTO_AGENTS_MARKER_START}
+## Canto Agent Instructions
+
+This repository is Canto-enabled. Before working, read
+`.canto/agents/shared.md`. Supervising/orchestrator sessions must also read
+`.canto/agents/orchestrator.md`; delegated executor sessions must also read
+`.canto/agents/executor.md`.
+
+Do not bypass Canto delegation, review, artifact, or promotion rules.
+{CANTO_AGENTS_MARKER_END}
+"""
+
+DELEGATE_TOML = """version = 1
+instruction_root = ".canto/agents"
+shared_instructions = ".canto/agents/shared.md"
+orchestrator_instructions = ".canto/agents/orchestrator.md"
+executor_instructions = ".canto/agents/executor.md"
+"""
+
+SHARED_AGENT_INSTRUCTIONS = """# Canto Shared Agent Instructions
+
+- Canto is globally installed; do not install Canto into this repository.
+- Durable state, credentials, artifacts, and workspaces live under `~/.canto`.
+- Repository-local Canto intent and policy live under `.canto/`.
+- Delegated executor work happens only in Canto-managed Git worktrees.
+- Canonical repository changes require Canto review, acceptance, and promotion.
+- Do not commit or push unless the human explicitly instructs you to do so.
+- Do not access secrets, credential vault files, or paths denied by task policy.
+- Sparse checkout limits context but is not a security boundary.
+"""
+
+ORCHESTRATOR_AGENT_INSTRUCTIONS = """# Canto Orchestrator Instructions
+
+You are the supervising Canto orchestrator.
+
+- Define bounded task scope and explicit instructions.
+- Select and assign an executor profile.
+- Inspect dashboards, immutable artifacts, command evidence, and conflicts.
+- Request revisions when evidence or implementation is incomplete.
+- Accept or reject results explicitly; executors cannot accept their own work.
+- Promote only an accepted, verified patch through Canto.
+- Report task, review, conflict, and promotion status to the human operator.
+"""
+
+EXECUTOR_AGENT_INSTRUCTIONS = """# Canto Delegated Executor Instructions
+
+You are a Canto delegated executor.
+
+- Work only in the delegated workspace and within the task's allowed paths.
+- Follow Canto task instructions and revision messages as the source of truth.
+- Do not access secrets or modify denied paths.
+- Run only allowed tests and commands; report relevant results accurately.
+- Do not modify the canonical repository.
+- Do not commit, push, accept, reject, queue, or promote.
+- When complete, leave the workspace ready for `canto delegate capture`.
+"""
+
+
 def _git(repository: Path, *args: str) -> str:
     completed = subprocess.run(
         ["git", "-C", str(repository), *args],
@@ -74,6 +146,82 @@ def _string_list(values: list[str]) -> str:
     return "[" + ", ".join(_toml_string(value) for value in values) + "]"
 
 
+def _write_if_missing(path: Path, content: str) -> None:
+    if path.exists():
+        if not path.is_file():
+            raise RepositoryConfigError(f"Canto bootstrap path is not a file: {path}")
+        return
+    temporary = path.with_name(f"{path.name}.tmp")
+    try:
+        temporary.write_text(content, encoding="utf-8")
+        temporary.replace(path)
+    except OSError as exc:
+        temporary.unlink(missing_ok=True)
+        raise RepositoryConfigError(f"Cannot write Canto bootstrap file {path}: {exc}") from exc
+
+
+def _ensure_agent_entrypoint(repository: Path) -> Path:
+    path = repository / "AGENTS.md"
+    if not path.exists():
+        _write_if_missing(path, "# Agent Instructions\n\n" + CANTO_AGENTS_SECTION)
+        return path
+    if not path.is_file():
+        raise RepositoryConfigError(f"Agent instruction entrypoint is not a file: {path}")
+    content = path.read_text(encoding="utf-8")
+    if CANTO_AGENTS_MARKER_START in content:
+        if CANTO_AGENTS_MARKER_END not in content:
+            raise RepositoryConfigError("Existing AGENTS.md has an incomplete Canto instruction section")
+        start = content.index(CANTO_AGENTS_MARKER_START)
+        end = content.index(CANTO_AGENTS_MARKER_END, start) + len(CANTO_AGENTS_MARKER_END)
+        updated = content[:start] + CANTO_AGENTS_SECTION.rstrip("\n") + content[end:]
+        if updated != content:
+            temporary = path.with_name("AGENTS.md.tmp")
+            try:
+                temporary.write_text(updated, encoding="utf-8")
+                temporary.replace(path)
+            except OSError as exc:
+                temporary.unlink(missing_ok=True)
+                raise RepositoryConfigError(
+                    f"Cannot refresh Canto pointer in {path}: {exc}"
+                ) from exc
+        return path
+    separator = "" if content.endswith("\n\n") else ("\n" if content.endswith("\n") else "\n\n")
+    temporary = path.with_name("AGENTS.md.tmp")
+    try:
+        temporary.write_text(content + separator + CANTO_AGENTS_SECTION, encoding="utf-8")
+        temporary.replace(path)
+    except OSError as exc:
+        temporary.unlink(missing_ok=True)
+        raise RepositoryConfigError(f"Cannot add Canto pointer to {path}: {exc}") from exc
+    return path
+
+
+def _ensure_agent_instructions(repository: Path) -> None:
+    config_dir = repository / ".canto"
+    agents_dir = config_dir / "agents"
+    agents_dir.mkdir(parents=True, exist_ok=True)
+    _write_if_missing(config_dir / "delegate.toml", DELEGATE_TOML)
+    _write_if_missing(agents_dir / "shared.md", SHARED_AGENT_INSTRUCTIONS)
+    _write_if_missing(agents_dir / "orchestrator.md", ORCHESTRATOR_AGENT_INSTRUCTIONS)
+    _write_if_missing(agents_dir / "executor.md", EXECUTOR_AGENT_INSTRUCTIONS)
+    _ensure_agent_entrypoint(repository)
+
+
+def _require_file(repository: Path, relative: str) -> str:
+    if not (repository / relative).is_file():
+        raise RepositoryConfigError(f"Missing repository bootstrap file: {relative}")
+    return "present"
+
+
+def _require_agent_pointer(repository: Path) -> str:
+    path = repository / "AGENTS.md"
+    if not path.is_file():
+        raise RepositoryConfigError("Missing repository bootstrap file: AGENTS.md")
+    if CANTO_AGENTS_MARKER_START not in path.read_text(encoding="utf-8"):
+        raise RepositoryConfigError("AGENTS.md does not reference Canto instructions")
+    return "Canto pointer present"
+
+
 def initialize_repository(path: str | Path) -> RepositoryConfig:
     repository = git_root(path)
     common_dir, head, remotes = _git_metadata(repository)
@@ -82,7 +230,9 @@ def initialize_repository(path: str | Path) -> RepositoryConfig:
     policy_path = config_dir / "policy.toml"
     if repo_path.exists() or policy_path.exists():
         if repo_path.is_file() and policy_path.is_file():
-            return load_repository(repository)
+            config = load_repository(repository)
+            _ensure_agent_instructions(repository)
+            return config
         raise RepositoryConfigError(
             f"Incomplete Canto repository configuration in {config_dir}"
         )
@@ -124,6 +274,7 @@ def initialize_repository(path: str | Path) -> RepositoryConfig:
         policy_temp.write_text("\n".join(policy_lines) + "\n", encoding="utf-8")
         repo_temp.replace(repo_path)
         policy_temp.replace(policy_path)
+        _ensure_agent_instructions(repository)
     except OSError as exc:
         repo_temp.unlink(missing_ok=True)
         policy_temp.unlink(missing_ok=True)
@@ -137,6 +288,44 @@ def initialize_repository(path: str | Path) -> RepositoryConfig:
             f"Cannot initialize Canto repository configuration: {exc}"
         ) from exc
     return config
+
+
+def doctor_repository(path: str | Path) -> RepositoryDoctorResult:
+    repository = git_root(path)
+    checks: list[RepositoryDoctorCheck] = []
+
+    def check(name: str, action) -> None:
+        try:
+            detail = action()
+            checks.append(RepositoryDoctorCheck(name=name, valid=True, detail=str(detail)))
+        except (OSError, RepositoryConfigError, tomllib.TOMLDecodeError, ValidationError) as exc:
+            checks.append(RepositoryDoctorCheck(name=name, valid=False, detail=str(exc)))
+
+    check("repository_identity", lambda: f"repo_id={load_repository(repository).repo_id}")
+    required = [
+        ".canto/repo.toml",
+        ".canto/policy.toml",
+        ".canto/delegate.toml",
+        ".canto/agents/shared.md",
+        ".canto/agents/orchestrator.md",
+        ".canto/agents/executor.md",
+    ]
+    for relative in required:
+        check(relative, lambda relative=relative: _require_file(repository, relative))
+    check("AGENTS.md", lambda: _require_agent_pointer(repository))
+    status = _git(repository, "status", "--porcelain", "--", "AGENTS.md", ".canto")
+    checks.append(
+        RepositoryDoctorCheck(
+            name="instruction_files_git_state",
+            valid=not bool(status),
+            detail="tracked and clean" if not status else "Commit bootstrap instruction files before delegation:\n" + status,
+        )
+    )
+    return RepositoryDoctorResult(
+        valid=all(item.valid for item in checks),
+        repository=str(repository),
+        checks=checks,
+    )
 
 
 def find_repository(path: str | Path) -> Path:

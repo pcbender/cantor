@@ -147,8 +147,13 @@ complete. MVP v1.2 Delegated Executor UX Hardening includes foundation
 packet CP-1315 and CP-1201 through CP-1210. The daily workflow now covers global
 state with repo-local bootstrap, dashboard inspection, reusable profiles,
 isolated prompt comparisons, local Ollama preflight, review summaries, typed
-conflicts, explicit promotion, and a one-command offline demo. The final full
-suite passes 275 tests without network access or downloaded models.
+conflicts, explicit promotion, and a one-command offline demo. The current full
+suite passes 280 tests without network access or downloaded models.
+
+CP-1315 bootstrap now also generates non-secret shared/orchestrator/executor
+manuals, preserves existing `AGENTS.md` guidance while adding a Canto pointer,
+provides `canto repo doctor`, exposes committed manuals inside sparse delegated
+worktrees, and injects explicit executor-role instructions at launch.
 
 Known non-blocking issue: Starlette's current `TestClient` emits a deprecation
 warning recommending a future `httpx2` migration. Runtime behavior and tests

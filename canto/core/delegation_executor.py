@@ -63,6 +63,12 @@ class CodexCliExecutor:
     ) -> str:
         task = self.delegation.get_task(task_id)
         sections = [
+            "You are a Canto delegated executor.",
+            "Read .canto/agents/shared.md and .canto/agents/executor.md before working.",
+            "Work only in this delegated workspace and follow the Canto task instructions below.",
+            "Do not modify the canonical repository or commit, push, accept, reject, queue, or promote.",
+            "When complete, leave the workspace ready for `canto delegate capture`.",
+            "",
             f"Delegation task: {task.title}",
             "",
             task.instructions,
