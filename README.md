@@ -9,9 +9,6 @@ Canto is a deliberately small local execution broker for Echo. It discovers regi
 
 ## Quickstart
 
-Delegated executor workspace documentation and a network-free local demo are
-available in [docs/delegated-executors.md](docs/delegated-executors.md).
-
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e '.[test]'
@@ -69,6 +66,18 @@ Run the complete isolated stability demonstration with:
 ```bash
 ./scripts/demo-mvp-v1.sh
 ```
+
+Run the network-free delegated-executor demonstration with:
+
+```bash
+bash scripts/demo-delegated-executors.sh
+```
+
+The delegated workflow coordinates manual or Codex CLI executors in bounded
+Git worktrees, captures immutable review artifacts, and requires explicit
+acceptance and promotion. See `docs/delegated-executors.md` for the workflow and
+`docs/local-installation.md` for the optional real cloud smoke test using an
+account-authorized model such as `gpt-5.4-mini`.
 
 Local wheel installation and upgrade instructions are in
 `docs/local-installation.md`.
@@ -175,6 +184,11 @@ generation, signing, dependency solving, and webhooks.
 ## Security boundaries
 
 Canto only launches entrypoints declared by registered provider manifests. It rejects entrypoints outside their provider directory, applies resource and output limits, validates policy before launch, and only collects declared artifacts whose resolved paths remain inside the job artifact directory. Credential-like inputs must use `*_ref` fields with `env:NAME` or encrypted `vault:scope/name` references; raw credential values are rejected before job persistence. Canto does not provide hostile-code isolation, so manifests and provider code remain trusted local configuration. The unauthenticated HTTP API is loopback-only by default; see `docs/auth-placeholder.md`.
+
+Delegated executor sparse worktrees limit supplied repository context but are
+not hostile-agent sandboxes. Executors cannot accept or promote their own work;
+promotion applies only the exact reviewed patch after repository, checksum,
+path, command-evidence, and applicability checks.
 
 ## Tests
 

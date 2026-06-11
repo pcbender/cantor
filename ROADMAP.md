@@ -1,15 +1,15 @@
 # Canto Roadmap
 
-Status: updated after completion of MVP v1 and approval of the local delegated
-executor workstream.
+Status: updated after completion and merge of MVP v1 and the local MVP v1.1
+delegated-executor workstream.
 
 Canto has moved beyond proof-of-concept. The system can now package capabilities, install them, discover them, compose approved plans, execute those plans through the bounded JobService/runner path, expose orchestration over HTTP, and publish a frozen v1.0 orchestration contract.
 
-The next phase is **MVP v1.1 — Delegated Executor Workspaces (local
-extension)**. It is implemented before the deferred CP-1201 developer-
-experience workstream. External Orchestrator Integration remains scheduled
-within MVP v2 after the local single-user and delegation foundations are
-complete.
+The next workstream is **CP-1201 — UX/DX Audit and Design**. MVP v1.1 Delegated
+Executor Workspaces is complete, merged, and verified through deterministic
+local tests plus a review-only real cloud Codex smoke test. External
+Orchestrator Integration remains scheduled within MVP v2 after the local
+single-user, delegation, and developer-experience foundations.
 
 ---
 
@@ -269,8 +269,8 @@ Canto owns execution. External orchestrators call Canto through the contract; th
 
 The forward plan has three primary MVP release tiers — **MVP v1** (single-user,
 write-capable, local), **MVP v2** (local team server), and **MVP v3** (public
-server). The local **MVP v1.1 Delegated Executor Workspaces** extension is built
-after MVP v1 and before the deferred developer-experience workstream. Each
+server). The local **MVP v1.1 Delegated Executor Workspaces** extension is
+complete. The developer-experience workstream begins next with CP-1201. Each
 release remains a usable foundation for the next.
 
 How to read this:
@@ -422,11 +422,13 @@ implementation sequence begins with CP-1301 and completes before CP-1201.
 - CP-1313 — Documentation and Demo
 - CP-1314 — End-to-End Local Delegated Executor Test
 
-CP-1301 through CP-1314 are complete. The delegated executor workspace
-workstream is ready for release review; CP-1201 remains the next roadmap packet.
+CP-1301 through CP-1314 are complete and merged. The delegated executor
+workspace workstream passed the full automated suite, the network-free local
+demo, and a review-only real cloud Codex smoke test. CP-1201 is the next roadmap
+packet.
 
-Recommended work packets — developer experience (formerly v3.2, deferred until
-CP-1314 completes):
+Recommended work packets — developer experience (formerly v3.2, next after
+completed CP-1314):
 
 - CP-1201 — UX/DX Audit and Design
 - CP-1202 — `canto demo` Command Family
@@ -722,20 +724,22 @@ The following remain intentionally deferred:
 Current completed milestone:
 
 ```text
-v2.2 — Orchestration Contract Freeze
+MVP v1.1 — Delegated Executor Workspaces
 ```
 
 Next recommended milestone:
 
 ```text
-MVP v1 — Single-user, write-capable (local)
-  first packet: CP-5001 (MVP v1 Scope and Design)
+Orchestrator UX & Developer Experience
+  first packet: CP-1201 (UX/DX Audit and Design)
 ```
 
 MVP tiers (forward spine, built in order):
 
 ```text
-MVP v1 — Single-user, write-capable (local)
+MVP v1 — Single-user, write-capable (local) [complete]
+MVP v1.1 — Delegated Executor Workspaces [complete]
+UX/DX workstream — CP-1201 through CP-1210 [next]
 MVP v2 — Local team server
 MVP v3 — Public server
 ```

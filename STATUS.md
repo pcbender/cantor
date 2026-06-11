@@ -1,6 +1,6 @@
 # Canto Implementation Status
 
-Updated: 2026-06-10
+Updated: 2026-06-11
 
 ## Release Preparation
 
@@ -18,9 +18,25 @@ MVP v1 verification:
 - `.venv/bin/pytest tests import_capability/tests`
 - `./scripts/quickstart-mvp-v1.sh`
 - `./scripts/demo-mvp-v1.sh`
+- `bash scripts/demo-delegated-executors.sh`
 
-Final MVP v1 result: `202 passed`, with one existing non-blocking Starlette
-`TestClient` deprecation warning. Both isolated MVP scripts pass.
+MVP v1.1 Delegated Executor Workspaces CP-1301 through CP-1314 are complete and
+merged. Canto now supports durable delegation tasks, bounded sparse Git
+worktrees, manual and Codex CLI profiles, immutable result revisions,
+review/revision loops, observed command evidence, explicit patch promotion,
+conflict-aware promotion queues, and restart-safe timelines.
+
+Current verification result: `242 passed`, with one existing non-blocking
+Starlette `TestClient` deprecation warning. The MVP v1 scripts and the
+network-free delegated-executor demo pass.
+
+A review-only real cloud smoke test also succeeded with `gpt-5.4-mini`: Canto
+created the sparse worktree, launched the authenticated headless Codex child,
+captured revision 1, and stopped in `reviewing` without modifying the canonical
+repository. The run identified assignment, generated-cache capture, and
+revision-relaunch issues; those fixes are merged and covered by regression
+tests. The reproducible procedure is documented in
+`docs/local-installation.md`.
 
 The v2.2 implementation is merged. Release notes are available at
 `docs/release-notes-v2.2.md`. README quickstart commands and the isolated local
@@ -43,6 +59,10 @@ Completed milestones:
   redaction, governed writes, idempotency/recovery, verification, runtime
   adapters, resource/egress limits, wheel packaging, quickstarts, reviewed
   seed capabilities, and release stabilization.
+- MVP v1.1 CP-1301 through CP-1314: delegated executor architecture and state,
+  sparse workspaces, manual and Codex CLI execution, artifact capture,
+  review/revision, exact-patch promotion, command evidence, parallel status,
+  conflict detection, timelines, documentation, and end-to-end tests.
 
 Release-prep verification:
 
@@ -122,8 +142,9 @@ Status values: `COMPLETE`, `IN PROGRESS`, `NOT STARTED`, `DEFERRED`.
 
 ## Current Result
 
-All numbered SPEC-v1 implementation and audit steps are complete. No blocking
-implementation question remains.
+All numbered SPEC-v1, MVP v1, and MVP v1.1 delegated-executor implementation
+packets are complete. No blocking implementation question remains. The next
+planned workstream is CP-1201, the UX/DX audit and design packet.
 
 Known non-blocking issue: Starlette's current `TestClient` emits a deprecation
 warning recommending a future `httpx2` migration. Runtime behavior and tests
