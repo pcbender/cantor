@@ -1,9 +1,13 @@
 # Canto Delegated Executor Workspaces
 
-Status: proposed
+Status: superseded by approved CP-1301 architecture freeze
 Tier: Local MVP v1 extension
-Proposed workstream: CP-1300
+Workstream: CP-1300
 Purpose: add model-agnostic, tool-agnostic, auditable delegation and promotion across agent sessions.
+
+The normative scope and architecture are now maintained in
+`docs/delegated-executor-scope-and-architecture.md`. This document remains the
+original product proposal and work-packet source.
 
 ---
 

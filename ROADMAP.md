@@ -1,12 +1,15 @@
 # Canto Roadmap
 
-Status: updated after completion of v1.x, v2.0, v2.1 Registry Unification, and v2.2 Contract Freeze.
+Status: updated after completion of MVP v1 and approval of the local delegated
+executor workstream.
 
 Canto has moved beyond proof-of-concept. The system can now package capabilities, install them, discover them, compose approved plans, execute those plans through the bounded JobService/runner path, expose orchestration over HTTP, and publish a frozen v1.0 orchestration contract.
 
-The next phase begins with **MVP v1 — Single-User, Write-Capable (local)**.
-External Orchestrator Integration is scheduled within MVP v2 after the local
-single-user foundation is complete.
+The next phase is **MVP v1.1 — Delegated Executor Workspaces (local
+extension)**. It is implemented before the deferred CP-1201 developer-
+experience workstream. External Orchestrator Integration remains scheduled
+within MVP v2 after the local single-user and delegation foundations are
+complete.
 
 ---
 
@@ -264,18 +267,22 @@ Canto owns execution. External orchestrators call Canto through the contract; th
 
 # Forward Roadmap
 
-The forward plan is three MVP release tiers, built in order — **MVP v1** (single-user,
-write-capable, local), **MVP v2** (local team server), **MVP v3** (public server). Each tier is
-a usable release and the foundation for the next.
+The forward plan has three primary MVP release tiers — **MVP v1** (single-user,
+write-capable, local), **MVP v2** (local team server), and **MVP v3** (public
+server). The local **MVP v1.1 Delegated Executor Workspaces** extension is built
+after MVP v1 and before the deferred developer-experience workstream. Each
+release remains a usable foundation for the next.
 
 How to read this:
 
 - Build the tiers in order. Within a tier, start with its foundation packets (the state store
   first) and work down the list.
-- Workstreams that were previously standalone phases (external integration, MCP adapter, UX,
-  remote registry, signing) are folded into the tier that needs them, shown as labeled
-  work-packet groups under each tier. **AI-Assisted Authoring** and **Advanced Workflow
-  Orchestration** are post-MVP — see the section after the tiers.
+- Workstreams that were previously standalone phases (external integration,
+  MCP adapter, UX, remote registry, signing) are folded into the tier that needs
+  them, shown as labeled work-packet groups under each tier. Delegated executor
+  coordination is the local MVP v1.1 extension and executes before UX/DX.
+  **AI-Assisted Authoring** and **Advanced Workflow Orchestration** are post-MVP
+  — see the section after the tiers.
 - Work-packet IDs (`CP-####`) are stable identifiers carried over from earlier revisions; the
   leading digits reflect the original workstream, not execution order. Sequencing is given by
   list position within a tier, not by the numeric ID.
@@ -295,7 +302,8 @@ Each tier extends the previously frozen contract; every contract-affecting chang
 Goal: a single developer runs Canto locally and uses it end to end to perform real guarded
 target-system writes — the first genuinely usable release.
 
-Folds in: Orchestrator UX & Developer Experience (formerly v3.2).
+Followed by: Delegated Executor Workspaces (MVP v1.1), then Orchestrator UX &
+Developer Experience (formerly v3.2).
 
 Deliverables:
 
@@ -313,9 +321,6 @@ Deliverables:
 - Multi-runtime provider execution (non-Python: node / container / binary) under the same
   policy, bounds, approval, and artifact contract
 - Baseline execution hardening: CPU / memory / disk limits and per-job network egress allowlist
-- Developer experience (formerly v3.2): improved `canto demo` family, human-readable plan
-  display, artifact summary views, plan timeline / event display, better missing-input and
-  missing-capability prompts, a troubleshooting guide, and an `examples/` directory
 - Local install / packaging of Canto itself and a quickstart
 - Seed set of trusted local capabilities, including at least one real write workflow
 - 1.0-single-user stability for contract, manifest, and package formats; release notes
@@ -354,7 +359,73 @@ below.
 - CP-5013 — Seed Trusted Capability Set
 - CP-5014 — MVP v1 Stability, Release Notes, and Documentation
 
-Recommended work packets — developer experience (formerly v3.2):
+---
+
+## MVP v1.1 — Delegated Executor Workspaces (local extension)
+
+Goal: allow an orchestrator to assign bounded implementation work to local
+executor agents in isolated Git worktrees, capture durable review artifacts,
+and promote accepted changes into the canonical workspace through an explicit,
+auditable decision.
+
+Design source: `docs/Canto Delegated Executor Workspaces.md`.
+
+Architecture posture:
+
+- Add delegation concepts beside existing Canto concepts; do not rename or
+  replace Skill, Provider, Tool, Artifact, Job, Approval, Registry, Policy,
+  capability packages, plans, or StateStore.
+- CLI-first and local-only. The frozen orchestration HTTP contract remains
+  unchanged.
+- Implement manual/external executor coordination before automated Codex CLI
+  launch.
+- Use Git worktrees for workspace isolation and patch application for the first
+  promotion mechanism.
+- Treat executor output as untrusted until orchestrator review. Worktree and
+  command-policy controls are safety rails, not hostile-code isolation.
+- Store delegation lifecycle records in StateStore and large artifacts under
+  Canto-managed delegation directories.
+
+Non-goals:
+
+- No autonomous task assignment, approval, or promotion.
+- No direct executor access to canonical project state, secrets, or Canto
+  target-write capabilities.
+- No multi-user server, HTTP/MCP delegation API, remote executor pool, or public
+  sandboxing.
+- No automatic dependency installation or cross-executor communication.
+
+Success condition:
+
+An orchestrator creates a bounded task, a manual or Codex CLI executor edits an
+isolated worktree and records tests/artifacts, the orchestrator requests a
+revision, accepts the result, promotes the reviewed patch, and can inspect the
+complete durable timeline after restart.
+
+Recommended work packets — delegated executor workspaces:
+
+CP-1300 is the workstream identifier, not an implementation packet. The
+implementation sequence begins with CP-1301 and completes before CP-1201.
+
+- CP-1301 — Delegated Executor Scope and Architecture
+- CP-1302 — Delegation Data Models and StateStore Records
+- CP-1303 — Delegation Workspace Lifecycle
+- CP-1304 — Manual Executor Workflow
+- CP-1305 — Codex CLI Executor Profile
+- CP-1306 — Delegation Artifact Capture
+- CP-1307 — Review and Revision Flow
+- CP-1308 — Promotion Flow
+- CP-1309 — Command Recording and Test Result Capture
+- CP-1310 — Executor Pool Status and Parallel Task View
+- CP-1311 — Conflict Detection and Merge Queue
+- CP-1312 — Delegation Events and Timeline
+- CP-1313 — Documentation and Demo
+- CP-1314 — End-to-End Local Delegated Executor Test
+
+CP-1301 is approved and complete. The next implementation packet is CP-1302.
+
+Recommended work packets — developer experience (formerly v3.2, deferred until
+CP-1314 completes):
 
 - CP-1201 — UX/DX Audit and Design
 - CP-1202 — `canto demo` Command Family
