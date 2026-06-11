@@ -11,7 +11,7 @@ from canto.core.capability_package import pack_capability
 from canto.core.jobs import JobService
 from canto.core.local_registry import Registry as CapabilityRegistry
 from canto.core.registry import Registry as RuntimeRegistry
-from canto.core.state import MemoryStateStore
+from canto.core.state import SqliteStateStore
 
 
 def test_v21_registry_unification_end_to_end(tmp_path, monkeypatch):
@@ -95,7 +95,7 @@ print(json.dumps({"status": "completed", "summary": "Demo complete."}))
         max_provider_output_bytes=1_048_576,
     )
     capability_registry = CapabilityRegistry.local(tmp_path / "home")
-    state = MemoryStateStore()
+    state = SqliteStateStore(tmp_path / "home" / ".canto" / "state" / "canto.db")
 
     # Both views are alive before installation; lazy registry refresh must expose it.
     http_app = create_app(settings, state, capability_registry)
@@ -166,4 +166,4 @@ print(json.dumps({"status": "completed", "summary": "Demo complete."}))
     assert explanation["status"] == "completed"
     assert explanation["steps"][0]["skill"] == "demo_skill"
     assert explanation["steps"][0]["provider"] == "local"
-    assert len(state.jobs) == 1
+    assert len(state.get_plan(plan["plan_id"])["step_jobs"]) == 1

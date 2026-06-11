@@ -1,0 +1,5 @@
+name: managed_json
+version: 0.1.0
+description: Plan and apply governed changes to a local JSON document.
+providers:
+  - local_document

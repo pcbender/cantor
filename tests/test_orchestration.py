@@ -20,6 +20,7 @@ from canto.core.orchestration import (
 )
 from canto.core.registry import Registry as RuntimeRegistry
 from canto.core.state import MemoryStateStore
+from canto.core.state import SqliteStateStore
 
 
 def install_fixture_capability(home, source, name, description, intents, inputs, outputs):
@@ -216,7 +217,9 @@ def test_plan_cli_approve_records_approval(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert '"status": "approved"' in result.output
-    assert list(registry.store.paths.plans.glob("plan_*.json"))
+    state = SqliteStateStore(registry.store.paths.root / "state" / "canto.db")
+    plan_id = json.loads(result.output)["plan_id"]
+    assert state.get_plan(plan_id)["status"] == "approved"
 
 
 def test_execute_rejects_unapproved_plan(tmp_path):
@@ -360,7 +363,8 @@ def test_explain_plan_shows_reasons_io_risk_and_missing_values(tmp_path):
 
 def test_explain_cli_does_not_execute(tmp_path, monkeypatch):
     registry = installed_match_registry(tmp_path)
-    orchestrator = Orchestrator(registry, PlanStore(registry.store.paths.plans))
+    state = SqliteStateStore(registry.store.paths.root / "state" / "canto.db")
+    orchestrator = Orchestrator(registry, PlanStore(state))
     plan = orchestrator.create_plan("import my wordpress site")
     monkeypatch.setattr(cli_module, "_capability_registry", lambda: registry)
 
@@ -602,12 +606,14 @@ def test_end_to_end_local_orchestration_cli(tmp_path, monkeypatch):
         settings.tools_dir,
         capability_roots=registry.execution_roots(),
     )
-    state = MemoryStateStore()
-    service = JobService(settings, runtime_registry, state)
+    sqlite_state = SqliteStateStore(
+        registry.store.paths.root / "state" / "canto.db"
+    )
+    service = JobService(settings, runtime_registry, sqlite_state)
     monkeypatch.setattr(
         cli_module,
         "_runtime",
-        lambda: (settings, state, runtime_registry, service),
+        lambda: (settings, sqlite_state, runtime_registry, service),
     )
 
     execute_result = runner.invoke(cli_module.app, ["execute", approved["plan_id"]])

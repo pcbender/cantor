@@ -5,6 +5,7 @@ description: Crawl a public same-domain website and inventory pages, links, titl
 runner:
   type: python
   entrypoint: run.py
+  egress_enforcement: provider_allowlist
 inputs:
   source_url:
     type: string

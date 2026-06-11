@@ -1,12 +1,11 @@
 # Canto
 
-Canto is a deliberately small local execution broker for Echo. It discovers registered skills, providers, and tools from YAML manifests; stores jobs, events, approvals, artifacts, and registry snapshots in Redis; executes registered Python providers with time and output bounds; and keeps artifacts on the local filesystem.
+Canto is a deliberately small local execution broker for Echo. It discovers registered skills, providers, and tools from YAML manifests; stores jobs, events, approvals, artifact metadata, registry snapshots, and plans in SQLite; executes registered providers with policy and bounds; and keeps artifact files on the local filesystem.
 
 ## Requirements
 
 - WSL2 Ubuntu or another Linux environment
 - Python 3.11+
-- Redis 7 running inside WSL2
 
 ## Quickstart
 
@@ -14,9 +13,6 @@ Canto is a deliberately small local execution broker for Echo. It discovers regi
 python3 -m venv .venv
 .venv/bin/pip install -e '.[test]'
 cp .env.example .env
-sudo apt update
-sudo apt install redis-server
-sudo service redis-server start
 .venv/bin/canto serve
 ```
 
@@ -24,12 +20,12 @@ Verify the environment before starting the server:
 
 ```bash
 .venv/bin/pip check
-redis-cli ping
 .venv/bin/canto --help
 .venv/bin/canto health
 ```
 
-Expected results are `PONG` from Redis and an `ok` health status.
+Expected result is an `ok` health status. Local durable state is stored in
+`~/.canto/state/canto.db`; Redis is not required.
 
 The API listens on `http://127.0.0.1:8765` by default. Interactive API
 documentation is at `/docs`. The unauthenticated server is intended for
@@ -58,6 +54,31 @@ Run the deterministic local package and orchestration demonstration with:
 
 The script uses an isolated temporary Canto home, performs no network access,
 and leaves the normal user registry unchanged.
+
+Run the MVP v1 governed-write quickstart with:
+
+```bash
+./scripts/quickstart-mvp-v1.sh
+```
+
+Run the complete isolated stability demonstration with:
+
+```bash
+./scripts/demo-mvp-v1.sh
+```
+
+Local wheel installation and upgrade instructions are in
+`docs/local-installation.md`.
+
+Inspect the reviewed built-in seed set with:
+
+```bash
+.venv/bin/canto seed-capabilities
+```
+
+See `docs/seed-capabilities.md` for its trust boundary and access summary.
+MVP v1 release notes and troubleshooting are available at
+`docs/release-notes-mvp-v1.md` and `docs/troubleshooting.md`.
 
 ## Run a source inventory
 
@@ -111,6 +132,8 @@ Build a deterministic migration assessment from a completed inventory job:
 - `GET /skills/{skill}`
 - `GET /skills/{skill}/providers/{provider}`
 - `POST /jobs`
+- `POST /jobs/{job_id}/promote`
+- `POST /jobs/{job_id}/recover`
 - `GET /jobs/{job_id}`
 - `GET /jobs/{job_id}/events`
 - `GET /jobs/{job_id}/artifacts`
@@ -148,7 +171,7 @@ generation, signing, dependency solving, and webhooks.
 
 ## Security boundaries
 
-Canto only launches entrypoints declared by registered provider manifests. It rejects entrypoints outside their provider directory, enforces subprocess timeouts and output limits, validates policy before launch, and only collects declared artifacts whose resolved paths remain inside the job artifact directory. Credential-like inputs must use `*_ref` fields with local environment references such as `env:CANTO_API_TOKEN`; raw credential values are rejected before job persistence. Canto does not provide a kernel-level filesystem or network sandbox, so manifests and provider code remain trusted local configuration. The unauthenticated HTTP API is loopback-only by default; see `docs/auth-placeholder.md`.
+Canto only launches entrypoints declared by registered provider manifests. It rejects entrypoints outside their provider directory, applies resource and output limits, validates policy before launch, and only collects declared artifacts whose resolved paths remain inside the job artifact directory. Credential-like inputs must use `*_ref` fields with `env:NAME` or encrypted `vault:scope/name` references; raw credential values are rejected before job persistence. Canto does not provide hostile-code isolation, so manifests and provider code remain trusted local configuration. The unauthenticated HTTP API is loopback-only by default; see `docs/auth-placeholder.md`.
 
 ## Tests
 

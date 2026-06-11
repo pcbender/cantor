@@ -116,9 +116,9 @@ Neutral:
 
 ## Notes
 
-- Today's code still uses `RedisStateStore`; this ADR is a forward decision threaded into the MVP
-  v1–v3 roadmap tiers. The README's Redis prerequisite will be updated when `SqliteStateStore`
-  becomes the default in MVP v1.
-- `PlanStore` (today filesystem JSON) folds into the SQL system of record as server-owned state,
-  per the decision above — it is not a client-side store. Artifact *files* remain on the
-  filesystem (metadata only in the store).
+- CP-5002 implemented `SqliteStateStore` as the default local backend. Redis is
+  retained for migration and optional legacy use.
+- Production plan persistence now uses the injected `StateStore`. The
+  filesystem `PlanStore` adapter remains only for legacy migration and focused
+  compatibility tests. Artifact *files* remain on the filesystem; metadata is
+  stored in SQLite.
