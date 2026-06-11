@@ -176,7 +176,7 @@ def delegate_assign(
     task_id: str,
     executor_id: str = typer.Option("manual", "--executor"),
 ) -> None:
-    """Assign a task to a manual executor profile."""
+    """Assign a task to a registered executor profile."""
     try:
         service, _ = _delegation_runtime()
         try:
@@ -190,8 +190,6 @@ def delegate_assign(
                     launch_mode="manual",
                 )
             )
-        if profile.harness != "manual":
-            raise DelegationError("The manual workflow requires a manual executor profile")
         task = service.transition(
             task_id, "assigned", updates={"executor_id": executor_id}
         )

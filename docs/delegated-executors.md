@@ -40,6 +40,7 @@ canto delegate report-command TASK_ID "pytest tests/parser"
 canto delegate done TASK_ID --summary "Parser and tests updated"
 canto delegate capture TASK_ID
 canto delegate revise TASK_ID --note "Add the missing error case"
+# A manual executor resumes explicitly; a Codex profile can be launched again.
 canto delegate resume TASK_ID
 ```
 
@@ -64,6 +65,9 @@ credentials:
 canto delegate add-codex local-codex --executable codex --model MODEL
 canto delegate assign TASK_ID --executor local-codex
 canto delegate prepare TASK_ID
+canto delegate launch TASK_ID
+canto delegate capture TASK_ID
+canto delegate revise TASK_ID --note "Address review feedback"
 canto delegate launch TASK_ID
 canto delegate capture TASK_ID
 ```

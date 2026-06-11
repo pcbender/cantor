@@ -10,6 +10,11 @@ import canto.cli as cli_module
 from canto.core.delegation import DelegationService
 from canto.core.delegation_workspace import DelegationWorkspaceService
 from canto.core.state import SqliteStateStore
+from canto.models.delegation import (
+    DelegationTask,
+    ExecutorProfile,
+    RepositoryIdentity,
+)
 
 
 def git(repository: Path, *args: str) -> None:
@@ -80,3 +85,37 @@ def test_manual_delegation_cli_workflow(tmp_path, monkeypatch):
         "blocker",
         "done",
     ]
+
+
+def test_assign_accepts_registered_codex_profile(tmp_path, monkeypatch):
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.set_executor_profile(
+        ExecutorProfile(
+            executor_id="cloud-codex",
+            name="Cloud Codex",
+            harness="codex_cli",
+            executable="codex",
+            model="gpt-5.4-mini",
+            launch_mode="canto",
+        )
+    )
+    service.create_task(
+        DelegationTask(
+            task_id="task_codex",
+            title="Assign Codex",
+            repository=RepositoryIdentity(canonical_path="/repository"),
+        )
+    )
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        ["delegate", "assign", "task_codex", "--executor", "cloud-codex"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert service.get_task("task_codex").executor_id == "cloud-codex"
+    assert service.get_task("task_codex").status == "assigned"
