@@ -29,6 +29,17 @@ class StateStore(Protocol):
     def get_plan(self, plan_id: str) -> dict[str, Any] | None: ...
     def claim_idempotency(self, key: str, value: dict[str, Any]) -> dict[str, Any] | None: ...
     def set_idempotency(self, key: str, value: dict[str, Any]) -> None: ...
+    def set_delegation_task(self, task_id: str, value: dict[str, Any]) -> None: ...
+    def get_delegation_task(self, task_id: str) -> dict[str, Any] | None: ...
+    def list_delegation_tasks(self) -> list[dict[str, Any]]: ...
+    def transition_delegation_task(self, task_id: str, expected_statuses: set[str], value: dict[str, Any]) -> bool: ...
+    def append_delegation_event(self, task_id: str, value: dict[str, Any]) -> None: ...
+    def get_delegation_events(self, task_id: str) -> list[dict[str, Any]]: ...
+    def set_executor_profile(self, executor_id: str, value: dict[str, Any]) -> None: ...
+    def get_executor_profile(self, executor_id: str) -> dict[str, Any] | None: ...
+    def list_executor_profiles(self) -> list[dict[str, Any]]: ...
+    def append_delegation_record(self, task_id: str, record_type: str, record_id: str, value: dict[str, Any]) -> None: ...
+    def get_delegation_records(self, task_id: str, record_type: str) -> list[dict[str, Any]]: ...
 
 
 class SqliteStateStore:
@@ -103,6 +114,34 @@ class SqliteStateStore:
                         status TEXT NOT NULL,
                         value_json TEXT NOT NULL
                     );
+                    CREATE TABLE IF NOT EXISTS delegation_tasks (
+                        task_id TEXT PRIMARY KEY,
+                        status TEXT NOT NULL,
+                        value_json TEXT NOT NULL
+                    );
+                    CREATE TABLE IF NOT EXISTS delegation_events (
+                        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                        task_id TEXT NOT NULL,
+                        value_json TEXT NOT NULL,
+                        FOREIGN KEY(task_id) REFERENCES delegation_tasks(task_id) ON DELETE CASCADE
+                    );
+                    CREATE INDEX IF NOT EXISTS delegation_events_task_sequence
+                        ON delegation_events(task_id, sequence);
+                    CREATE TABLE IF NOT EXISTS executor_profiles (
+                        executor_id TEXT PRIMARY KEY,
+                        value_json TEXT NOT NULL
+                    );
+                    CREATE TABLE IF NOT EXISTS delegation_records (
+                        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                        task_id TEXT NOT NULL,
+                        record_type TEXT NOT NULL,
+                        record_id TEXT NOT NULL,
+                        value_json TEXT NOT NULL,
+                        UNIQUE(task_id, record_type, record_id),
+                        FOREIGN KEY(task_id) REFERENCES delegation_tasks(task_id) ON DELETE CASCADE
+                    );
+                    CREATE INDEX IF NOT EXISTS delegation_records_task_type_sequence
+                        ON delegation_records(task_id, record_type, sequence);
                     """
                 )
                 connection.execute(
@@ -293,6 +332,104 @@ class SqliteStateStore:
                 (key, value["status"], self._dump(value)),
             )
 
+    def set_delegation_task(self, task_id: str, value: dict[str, Any]) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """INSERT INTO delegation_tasks(task_id, status, value_json)
+                VALUES (?, ?, ?) ON CONFLICT(task_id) DO UPDATE SET
+                    status=excluded.status, value_json=excluded.value_json""",
+                (task_id, value["status"], self._dump(value)),
+            )
+
+    def get_delegation_task(self, task_id: str) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT value_json FROM delegation_tasks WHERE task_id = ?", (task_id,)
+            ).fetchone()
+        return self._load(row[0]) if row else None
+
+    def list_delegation_tasks(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT value_json FROM delegation_tasks ORDER BY task_id"
+            ).fetchall()
+        return [self._load(row[0]) for row in rows]
+
+    def transition_delegation_task(
+        self, task_id: str, expected_statuses: set[str], value: dict[str, Any]
+    ) -> bool:
+        if not expected_statuses:
+            return False
+        placeholders = ",".join("?" for _ in expected_statuses)
+        with self._connect() as connection:
+            cursor = connection.execute(
+                f"""UPDATE delegation_tasks SET status = ?, value_json = ?
+                WHERE task_id = ? AND status IN ({placeholders})""",
+                (value["status"], self._dump(value), task_id, *sorted(expected_statuses)),
+            )
+        return cursor.rowcount == 1
+
+    def append_delegation_event(self, task_id: str, value: dict[str, Any]) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                "INSERT INTO delegation_events(task_id, value_json) VALUES (?, ?)",
+                (task_id, self._dump(value)),
+            )
+
+    def get_delegation_events(self, task_id: str) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """SELECT value_json FROM delegation_events
+                WHERE task_id = ? ORDER BY sequence""",
+                (task_id,),
+            ).fetchall()
+        return [self._load(row[0]) for row in rows]
+
+    def set_executor_profile(self, executor_id: str, value: dict[str, Any]) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """INSERT INTO executor_profiles(executor_id, value_json) VALUES (?, ?)
+                ON CONFLICT(executor_id) DO UPDATE SET value_json=excluded.value_json""",
+                (executor_id, self._dump(value)),
+            )
+
+    def get_executor_profile(self, executor_id: str) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT value_json FROM executor_profiles WHERE executor_id = ?",
+                (executor_id,),
+            ).fetchone()
+        return self._load(row[0]) if row else None
+
+    def list_executor_profiles(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT value_json FROM executor_profiles ORDER BY executor_id"
+            ).fetchall()
+        return [self._load(row[0]) for row in rows]
+
+    def append_delegation_record(
+        self, task_id: str, record_type: str, record_id: str, value: dict[str, Any]
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """INSERT INTO delegation_records(
+                    task_id, record_type, record_id, value_json
+                ) VALUES (?, ?, ?, ?)""",
+                (task_id, record_type, record_id, self._dump(value)),
+            )
+
+    def get_delegation_records(
+        self, task_id: str, record_type: str
+    ) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """SELECT value_json FROM delegation_records
+                WHERE task_id = ? AND record_type = ? ORDER BY sequence""",
+                (task_id, record_type),
+            ).fetchall()
+        return [self._load(row[0]) for row in rows]
+
 
 class RedisStateStore:
     def __init__(self, url: str):
@@ -400,6 +537,86 @@ class RedisStateStore:
     def set_idempotency(self, key: str, value: dict[str, Any]) -> None:
         self.client.set(f"canto:idempotency:{key}", json.dumps(value))
 
+    def set_delegation_task(self, task_id: str, value: dict[str, Any]) -> None:
+        self.client.set(f"canto:delegation:{task_id}", json.dumps(value))
+        self.client.sadd("canto:delegations", task_id)
+
+    def get_delegation_task(self, task_id: str) -> dict[str, Any] | None:
+        value = self.client.get(f"canto:delegation:{task_id}")
+        return json.loads(value) if value else None
+
+    def list_delegation_tasks(self) -> list[dict[str, Any]]:
+        return [
+            value
+            for task_id in sorted(self.client.smembers("canto:delegations"))
+            if (value := self.get_delegation_task(task_id)) is not None
+        ]
+
+    def transition_delegation_task(
+        self, task_id: str, expected_statuses: set[str], value: dict[str, Any]
+    ) -> bool:
+        key = f"canto:delegation:{task_id}"
+        while True:
+            with self.client.pipeline() as pipe:
+                try:
+                    pipe.watch(key)
+                    current = pipe.get(key)
+                    if not current or json.loads(current).get("status") not in expected_statuses:
+                        pipe.unwatch()
+                        return False
+                    pipe.multi()
+                    pipe.set(key, json.dumps(value))
+                    pipe.sadd("canto:delegations", task_id)
+                    pipe.execute()
+                    return True
+                except WatchError:
+                    continue
+
+    def append_delegation_event(self, task_id: str, value: dict[str, Any]) -> None:
+        self.client.rpush(f"canto:delegation:{task_id}:events", json.dumps(value))
+
+    def get_delegation_events(self, task_id: str) -> list[dict[str, Any]]:
+        return [
+            json.loads(value)
+            for value in self.client.lrange(
+                f"canto:delegation:{task_id}:events", 0, -1
+            )
+        ]
+
+    def set_executor_profile(self, executor_id: str, value: dict[str, Any]) -> None:
+        self.client.set(f"canto:executor:{executor_id}", json.dumps(value))
+        self.client.sadd("canto:executors", executor_id)
+
+    def get_executor_profile(self, executor_id: str) -> dict[str, Any] | None:
+        value = self.client.get(f"canto:executor:{executor_id}")
+        return json.loads(value) if value else None
+
+    def list_executor_profiles(self) -> list[dict[str, Any]]:
+        return [
+            value
+            for executor_id in sorted(self.client.smembers("canto:executors"))
+            if (value := self.get_executor_profile(executor_id)) is not None
+        ]
+
+    def append_delegation_record(
+        self, task_id: str, record_type: str, record_id: str, value: dict[str, Any]
+    ) -> None:
+        key = f"canto:delegation:{task_id}:records:{record_type}"
+        ids_key = f"{key}:ids"
+        if not self.client.sadd(ids_key, record_id):
+            raise ValueError(f"Delegation record already exists: {record_id}")
+        self.client.rpush(key, json.dumps(value))
+
+    def get_delegation_records(
+        self, task_id: str, record_type: str
+    ) -> list[dict[str, Any]]:
+        return [
+            json.loads(value)
+            for value in self.client.lrange(
+                f"canto:delegation:{task_id}:records:{record_type}", 0, -1
+            )
+        ]
+
 
 class MemoryStateStore:
     def __init__(self):
@@ -410,6 +627,13 @@ class MemoryStateStore:
         self.registry: dict[str, Any] = {}
         self.plans: dict[str, dict[str, Any]] = {}
         self.idempotency: dict[str, dict[str, Any]] = {}
+        self.delegation_tasks: dict[str, dict[str, Any]] = {}
+        self.delegation_events: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self.executor_profiles: dict[str, dict[str, Any]] = {}
+        self.delegation_records: dict[
+            tuple[str, str], list[dict[str, Any]]
+        ] = defaultdict(list)
+        self.delegation_record_ids: set[tuple[str, str, str]] = set()
         self.lock = RLock()
 
     def ping(self) -> bool:
@@ -497,3 +721,73 @@ class MemoryStateStore:
     def set_idempotency(self, key: str, value: dict[str, Any]) -> None:
         with self.lock:
             self.idempotency[key] = json.loads(json.dumps(value))
+
+    def set_delegation_task(self, task_id: str, value: dict[str, Any]) -> None:
+        with self.lock:
+            self.delegation_tasks[task_id] = json.loads(json.dumps(value))
+
+    def get_delegation_task(self, task_id: str) -> dict[str, Any] | None:
+        with self.lock:
+            value = self.delegation_tasks.get(task_id)
+            return json.loads(json.dumps(value)) if value else None
+
+    def list_delegation_tasks(self) -> list[dict[str, Any]]:
+        with self.lock:
+            return [
+                json.loads(json.dumps(self.delegation_tasks[task_id]))
+                for task_id in sorted(self.delegation_tasks)
+            ]
+
+    def transition_delegation_task(
+        self, task_id: str, expected_statuses: set[str], value: dict[str, Any]
+    ) -> bool:
+        with self.lock:
+            current = self.delegation_tasks.get(task_id)
+            if not current or current.get("status") not in expected_statuses:
+                return False
+            self.delegation_tasks[task_id] = json.loads(json.dumps(value))
+            return True
+
+    def append_delegation_event(self, task_id: str, value: dict[str, Any]) -> None:
+        with self.lock:
+            self.delegation_events[task_id].append(json.loads(json.dumps(value)))
+
+    def get_delegation_events(self, task_id: str) -> list[dict[str, Any]]:
+        with self.lock:
+            return json.loads(json.dumps(self.delegation_events[task_id]))
+
+    def set_executor_profile(self, executor_id: str, value: dict[str, Any]) -> None:
+        with self.lock:
+            self.executor_profiles[executor_id] = json.loads(json.dumps(value))
+
+    def get_executor_profile(self, executor_id: str) -> dict[str, Any] | None:
+        with self.lock:
+            value = self.executor_profiles.get(executor_id)
+            return json.loads(json.dumps(value)) if value else None
+
+    def list_executor_profiles(self) -> list[dict[str, Any]]:
+        with self.lock:
+            return [
+                json.loads(json.dumps(self.executor_profiles[executor_id]))
+                for executor_id in sorted(self.executor_profiles)
+            ]
+
+    def append_delegation_record(
+        self, task_id: str, record_type: str, record_id: str, value: dict[str, Any]
+    ) -> None:
+        with self.lock:
+            identity = (task_id, record_type, record_id)
+            if identity in self.delegation_record_ids:
+                raise ValueError(f"Delegation record already exists: {record_id}")
+            self.delegation_record_ids.add(identity)
+            self.delegation_records[(task_id, record_type)].append(
+                json.loads(json.dumps(value))
+            )
+
+    def get_delegation_records(
+        self, task_id: str, record_type: str
+    ) -> list[dict[str, Any]]:
+        with self.lock:
+            return json.loads(
+                json.dumps(self.delegation_records[(task_id, record_type)])
+            )

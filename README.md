@@ -9,6 +9,9 @@ Canto is a deliberately small local execution broker for Echo. It discovers regi
 
 ## Quickstart
 
+Delegated executor workspace documentation and a network-free local demo are
+available in [docs/delegated-executors.md](docs/delegated-executors.md).
+
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e '.[test]'

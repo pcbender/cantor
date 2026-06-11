@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import typer
 import uvicorn
@@ -20,6 +21,23 @@ from canto.core.capability_scaffold import (
     scaffold_capability_structure,
 )
 from canto.core.credentials import CredentialError, CredentialVault
+from canto.core.delegation import DelegationError, DelegationService
+from canto.core.delegation_workspace import (
+    DelegationWorkspaceService,
+    WorkspaceError,
+    inspect_repository,
+)
+from canto.core.delegation_executor import CodexCliExecutor, ExecutorError
+from canto.core.delegation_artifacts import (
+    ArtifactCaptureError,
+    DelegationArtifactService,
+)
+from canto.core.delegation_review import DelegationReviewService, ReviewError
+from canto.core.delegation_promotion import DelegationPromotionService, PromotionError
+from canto.core.delegation_commands import CommandError, DelegationCommandService
+from canto.core.delegation_pool import DelegationPoolService
+from canto.core.delegation_queue import DelegationPromotionQueue, QueueError
+from canto.core.delegation_timeline import DelegationTimelineService
 from canto.core.jobs import JobError, JobService
 from canto.core.local_registry import (
     LocalRegistryError,
@@ -37,6 +55,13 @@ from canto.core.state import SqliteStateStore
 from canto.core.state import RedisStateStore
 from canto.core.state_migration import StateMigrationError, migrate_legacy_state
 from canto.models.schemas import JobRequest, Policy
+from canto.models.delegation import (
+    DelegationMessage,
+    DelegationScope,
+    DelegationTask,
+    ExecutorProfile,
+    ExecutorSession,
+)
 
 app = typer.Typer(help="Canto local orchestration broker")
 skill_app = typer.Typer(help="Inspect skills")
@@ -44,11 +69,13 @@ provider_app = typer.Typer(help="Inspect providers")
 job_app = typer.Typer(help="Inspect jobs")
 capability_app = typer.Typer(help="Manage capability manifests")
 credential_app = typer.Typer(help="Manage local encrypted credentials")
+delegate_app = typer.Typer(help="Coordinate delegated executor workspaces")
 app.add_typer(skill_app, name="skill")
 app.add_typer(provider_app, name="provider")
 app.add_typer(job_app, name="job")
 app.add_typer(capability_app, name="capability")
 app.add_typer(credential_app, name="credential")
+app.add_typer(delegate_app, name="delegate")
 
 
 def _credential_vault() -> CredentialVault:
@@ -71,6 +98,16 @@ def _runtime() -> tuple:
 
 def _capability_registry() -> CapabilityRegistry:
     return CapabilityRegistry.local()
+
+
+def _delegation_runtime() -> tuple[DelegationService, DelegationWorkspaceService]:
+    registry = _capability_registry()
+    store = SqliteStateStore(registry.store.paths.root / "state" / "canto.db")
+    service = DelegationService(store)
+    workspaces = DelegationWorkspaceService(
+        service, registry.store.paths.root / "work" / "delegations"
+    )
+    return service, workspaces
 
 
 def _orchestrator(job_service: JobService | None = None) -> Orchestrator:
@@ -102,6 +139,439 @@ def _parse_inputs(items: list[str]) -> dict[str, Any]:
         except json.JSONDecodeError:
             result[key] = value
     return result
+
+
+def _delegation_error(exc: Exception) -> None:
+    typer.echo(f"Error: {exc}", err=True)
+    raise typer.Exit(1) from exc
+
+
+@delegate_app.command("create")
+def delegate_create(
+    title: str,
+    repository: Path = typer.Option(Path("."), "--repository", "--repo"),
+    allow: list[str] = typer.Option(..., "--allow"),
+    deny: list[str] = typer.Option([], "--deny"),
+    instruction: str = typer.Option("", "--instruction"),
+) -> None:
+    """Create a draft delegation task for a bounded Git repository scope."""
+    try:
+        service, _ = _delegation_runtime()
+        task = DelegationTask(
+            task_id=f"task_{uuid4().hex}",
+            title=title,
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=allow, denied_paths=deny),
+            instructions=instruction,
+            created_by="cli",
+        )
+        service.create_task(task)
+    except (DelegationError, WorkspaceError) as exc:
+        _delegation_error(exc)
+    _print(task.model_dump(mode="json"))
+
+
+@delegate_app.command("assign")
+def delegate_assign(
+    task_id: str,
+    executor_id: str = typer.Option("manual", "--executor"),
+) -> None:
+    """Assign a task to a manual executor profile."""
+    try:
+        service, _ = _delegation_runtime()
+        try:
+            profile = service.get_executor_profile(executor_id)
+        except DelegationError:
+            profile = service.set_executor_profile(
+                ExecutorProfile(
+                    executor_id=executor_id,
+                    name=executor_id,
+                    harness="manual",
+                    launch_mode="manual",
+                )
+            )
+        if profile.harness != "manual":
+            raise DelegationError("The manual workflow requires a manual executor profile")
+        task = service.transition(
+            task_id, "assigned", updates={"executor_id": executor_id}
+        )
+        service.append_record(
+            task_id,
+            "messages",
+            DelegationMessage(
+                message_id=f"message_{uuid4().hex}",
+                task_id=task_id,
+                sender="orchestrator",
+                kind="assignment",
+                body=task.instructions or task.title,
+            ),
+        )
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print(task.model_dump(mode="json"))
+
+
+@delegate_app.command("prepare")
+def delegate_prepare(task_id: str) -> None:
+    """Create the assigned task's bounded sparse Git worktree."""
+    try:
+        _, workspaces = _delegation_runtime()
+        workspace = workspaces.prepare(task_id)
+    except (DelegationError, WorkspaceError) as exc:
+        _delegation_error(exc)
+    _print(workspace.model_dump(mode="json"))
+
+
+@delegate_app.command("start")
+def delegate_start(task_id: str) -> None:
+    """Mark a prepared manual executor session as working."""
+    try:
+        service, _ = _delegation_runtime()
+        task = service.get_task(task_id)
+        if not task.executor_id:
+            raise DelegationError("Delegation task has no assigned executor")
+        session = ExecutorSession(
+            session_id=f"session_{uuid4().hex}",
+            task_id=task_id,
+            executor_id=task.executor_id,
+            status="running",
+            enforcement="manual_unverified",
+            started_at=task.updated_at,
+        )
+        service.append_record(task_id, "sessions", session)
+        task = service.transition(
+            task_id,
+            "executor_working",
+            details={"session_id": session.session_id, "enforcement": session.enforcement},
+        )
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print(task.model_dump(mode="json"))
+
+
+def _executor_message(task_id: str, kind: str, body: str) -> None:
+    service, _ = _delegation_runtime()
+    service.append_record(
+        task_id,
+        "messages",
+        DelegationMessage(
+            message_id=f"message_{uuid4().hex}",
+            task_id=task_id,
+            sender="executor",
+            kind=kind,
+            body=body,
+        ),
+    )
+
+
+@delegate_app.command("message")
+def delegate_message(task_id: str, body: str) -> None:
+    """Record executor-reported progress without treating it as observed evidence."""
+    try:
+        _executor_message(task_id, "progress", body)
+    except DelegationError as exc:
+        _delegation_error(exc)
+    typer.echo("Message recorded.")
+
+
+@delegate_app.command("block")
+def delegate_block(task_id: str, reason: str) -> None:
+    """Record a blocker and pause a working manual executor."""
+    try:
+        _executor_message(task_id, "blocker", reason)
+        task = _delegation_runtime()[0].transition(task_id, "executor_blocked")
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print(task.model_dump(mode="json"))
+
+
+@delegate_app.command("resume")
+def delegate_resume(task_id: str) -> None:
+    """Return a blocked or revision-requested task to executor work."""
+    try:
+        task = _delegation_runtime()[0].transition(task_id, "executor_working")
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print(task.model_dump(mode="json"))
+
+
+@delegate_app.command("done")
+def delegate_done(
+    task_id: str,
+    summary: str = typer.Option("Ready for review", "--summary"),
+) -> None:
+    """Record the executor's unverified done-for-review assertion."""
+    try:
+        _executor_message(task_id, "done", summary)
+        task = _delegation_runtime()[0].transition(task_id, "executor_done")
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print(task.model_dump(mode="json"))
+
+
+@delegate_app.command("show")
+def delegate_show(task_id: str) -> None:
+    """Show a delegation task and its durable manual workflow records."""
+    try:
+        service, _ = _delegation_runtime()
+        task = service.get_task(task_id)
+        value = task.model_dump(mode="json")
+        value["messages"] = service.get_records(task_id, "messages")
+        value["sessions"] = service.get_records(task_id, "sessions")
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print(value)
+
+
+@delegate_app.command("list")
+def delegate_list() -> None:
+    """List local delegation tasks."""
+    try:
+        tasks = _delegation_runtime()[0].list_tasks()
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print([task.model_dump(mode="json") for task in tasks])
+
+
+@delegate_app.command("add-codex")
+def delegate_add_codex(
+    executor_id: str,
+    executable: str = typer.Option("codex", "--executable"),
+    model: str | None = typer.Option(None, "--model"),
+) -> None:
+    """Register a local Codex CLI executor profile without credentials."""
+    try:
+        service, workspaces = _delegation_runtime()
+        profile = ExecutorProfile(
+            executor_id=executor_id,
+            name=executor_id,
+            harness="codex_cli",
+            executable=executable,
+            model=model,
+            launch_mode="canto",
+            permissions={"command_enforcement": "canto_observed"},
+        )
+        CodexCliExecutor(service, workspaces).available(profile)
+        service.set_executor_profile(profile)
+    except (DelegationError, ExecutorError) as exc:
+        _delegation_error(exc)
+    _print(profile.model_dump(mode="json"))
+
+
+@delegate_app.command("launch")
+def delegate_launch(task_id: str) -> None:
+    """Launch the assigned Codex CLI profile in its prepared worktree."""
+    try:
+        service, workspaces = _delegation_runtime()
+        launch = CodexCliExecutor(service, workspaces).launch(task_id)
+    except (DelegationError, ExecutorError) as exc:
+        _delegation_error(exc)
+    _print(launch.model_dump(mode="json"))
+
+
+@delegate_app.command("capture")
+def delegate_capture(task_id: str) -> None:
+    """Capture an immutable review artifact revision from executor changes."""
+    try:
+        service, workspaces = _delegation_runtime()
+        result = DelegationArtifactService(service, workspaces).capture(task_id)
+    except (DelegationError, ArtifactCaptureError) as exc:
+        _delegation_error(exc)
+    _print(result.model_dump(mode="json"))
+
+
+@delegate_app.command("accept")
+def delegate_accept(
+    task_id: str,
+    reviewer: str = typer.Option("cantor", "--reviewer"),
+    note: str = typer.Option("", "--note"),
+) -> None:
+    """Accept the latest checksum-bound result revision."""
+    try:
+        service, workspaces = _delegation_runtime()
+        review = DelegationReviewService(service, workspaces).accept(
+            task_id, reviewer, note
+        )
+    except (DelegationError, ReviewError) as exc:
+        _delegation_error(exc)
+    _print(review.model_dump(mode="json"))
+
+
+@delegate_app.command("revise")
+def delegate_revise(
+    task_id: str,
+    note: str = typer.Option(..., "--note"),
+    reviewer: str = typer.Option("cantor", "--reviewer"),
+) -> None:
+    """Request another executor revision while preserving prior evidence."""
+    try:
+        service, workspaces = _delegation_runtime()
+        review = DelegationReviewService(service, workspaces).request_revision(
+            task_id, reviewer, note
+        )
+    except (DelegationError, ReviewError) as exc:
+        _delegation_error(exc)
+    _print(review.model_dump(mode="json"))
+
+
+@delegate_app.command("reject")
+def delegate_reject(
+    task_id: str,
+    note: str = typer.Option(..., "--note"),
+    reviewer: str = typer.Option("cantor", "--reviewer"),
+) -> None:
+    """Reject the latest result revision."""
+    try:
+        service, workspaces = _delegation_runtime()
+        review = DelegationReviewService(service, workspaces).reject(
+            task_id, reviewer, note
+        )
+    except (DelegationError, ReviewError) as exc:
+        _delegation_error(exc)
+    _print(review.model_dump(mode="json"))
+
+
+@delegate_app.command("promote")
+def delegate_promote(
+    task_id: str,
+    decided_by: str = typer.Option("cantor", "--decided-by"),
+    note: str = typer.Option("", "--note"),
+) -> None:
+    """Apply the exact accepted patch to the clean canonical repository."""
+    try:
+        service, workspaces = _delegation_runtime()
+        result = DelegationPromotionService(service, workspaces).promote(
+            task_id, decided_by, note
+        )
+    except (DelegationError, PromotionError) as exc:
+        _delegation_error(exc)
+    _print(result.model_dump(mode="json"))
+
+
+@delegate_app.command("run-command")
+def delegate_run_command(
+    task_id: str,
+    command: str,
+    cwd: str = typer.Option(".", "--cwd"),
+) -> None:
+    """Run and record an allowed command in the delegation workspace."""
+    try:
+        service, workspaces = _delegation_runtime()
+        record = DelegationCommandService(service, workspaces).run(
+            task_id, command, cwd
+        )
+    except (DelegationError, CommandError) as exc:
+        _delegation_error(exc)
+    _print(record.model_dump(mode="json"))
+
+
+@delegate_app.command("report-command")
+def delegate_report_command(task_id: str, command: str) -> None:
+    """Record a manual executor command assertion as unverified."""
+    try:
+        service, workspaces = _delegation_runtime()
+        record = DelegationCommandService(service, workspaces).report(
+            task_id, command
+        )
+    except (DelegationError, CommandError) as exc:
+        _delegation_error(exc)
+    _print(record.model_dump(mode="json"))
+
+
+@delegate_app.command("waive-command")
+def delegate_waive_command(
+    task_id: str,
+    command: str,
+    reason: str = typer.Option(..., "--reason"),
+) -> None:
+    """Waive a required command with an explicit orchestrator rationale."""
+    try:
+        service, workspaces = _delegation_runtime()
+        record = DelegationCommandService(service, workspaces).waive(
+            task_id, command, reason
+        )
+    except (DelegationError, CommandError) as exc:
+        _delegation_error(exc)
+    _print(record.model_dump(mode="json"))
+
+
+@delegate_app.command("pool")
+def delegate_pool() -> None:
+    """Show executor availability and active assignments without scheduling."""
+    service, _ = _delegation_runtime()
+    _print(
+        [
+            entry.model_dump(mode="json")
+            for entry in DelegationPoolService(service).executors()
+        ]
+    )
+
+
+@delegate_app.command("status")
+def delegate_status(active: bool = typer.Option(False, "--active")) -> None:
+    """Show durable delegation task status across parallel workspaces."""
+    service, _ = _delegation_runtime()
+    _print(
+        [
+            item.model_dump(mode="json")
+            for item in DelegationPoolService(service).tasks(active_only=active)
+        ]
+    )
+
+
+@delegate_app.command("queue-add")
+def delegate_queue_add(
+    task_id: str,
+    enqueued_by: str = typer.Option("cantor", "--enqueued-by"),
+) -> None:
+    """Add an accepted result to the explicit local promotion queue."""
+    try:
+        service, workspaces = _delegation_runtime()
+        entry = DelegationPromotionQueue(service, workspaces).enqueue(
+            task_id, enqueued_by
+        )
+    except (DelegationError, QueueError) as exc:
+        _delegation_error(exc)
+    _print(entry.model_dump(mode="json"))
+
+
+@delegate_app.command("queue")
+def delegate_queue() -> None:
+    """Show pending promotion order and detected blockers."""
+    service, workspaces = _delegation_runtime()
+    _print(
+        [
+            entry.model_dump(mode="json")
+            for entry in DelegationPromotionQueue(service, workspaces).list()
+        ]
+    )
+
+
+@delegate_app.command("queue-promote")
+def delegate_queue_promote(
+    task_id: str,
+    decided_by: str = typer.Option("cantor", "--decided-by"),
+) -> None:
+    """Explicitly promote one unblocked queued result; never runs automatically."""
+    try:
+        service, workspaces = _delegation_runtime()
+        result = DelegationPromotionQueue(service, workspaces).promote(
+            task_id, decided_by
+        )
+    except (DelegationError, QueueError, PromotionError) as exc:
+        _delegation_error(exc)
+    _print(result.model_dump(mode="json"))
+
+
+@delegate_app.command("timeline")
+def delegate_timeline(task_id: str) -> None:
+    """Show the restart-safe durable delegation timeline."""
+    try:
+        service, _ = _delegation_runtime()
+        items = DelegationTimelineService(service).timeline(task_id)
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print([item.model_dump(mode="json") for item in items])
 
 
 @app.command()

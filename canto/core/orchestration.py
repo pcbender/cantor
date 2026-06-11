@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Iterable, Any, Literal
 
@@ -166,6 +166,17 @@ class OrchestrationError(ValueError):
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _next_plan_timestamp(plan: ExecutionPlan) -> str:
+    now = datetime.now(timezone.utc)
+    if plan.events:
+        previous = datetime.fromisoformat(
+            plan.events[-1].timestamp.replace("Z", "+00:00")
+        )
+        if now <= previous:
+            now = previous + timedelta(microseconds=1)
+    return now.isoformat().replace("+00:00", "Z")
 
 
 class PlanStore:
@@ -518,7 +529,7 @@ class Orchestrator:
         for approval_id in plan.step_approval_ids.values():
             self.job_service.approve(approval_id, approved_by, note)
         self._refresh_approval_status(plan)
-        plan.approved_at = _now()
+        plan.approved_at = _next_plan_timestamp(plan)
         plan.events.append(
             PlanEvent(
                 timestamp=plan.approved_at,
