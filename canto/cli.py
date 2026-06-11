@@ -64,6 +64,7 @@ from canto.core.orchestration import (
 from canto.core.registry import Registry
 from canto.core.repository import (
     RepositoryConfigError,
+    doctor_repository,
     initialize_repository,
     load_repository,
     load_repository_policy,
@@ -204,6 +205,27 @@ def repo_show(
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
     _print(config.model_dump(mode="json"))
+
+
+@repo_app.command("doctor")
+def repo_doctor(
+    repository: Path = typer.Option(Path("."), "--repository", "--repo"),
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Verify repository identity, agent instructions, and Git readiness."""
+    try:
+        result = doctor_repository(repository)
+    except RepositoryConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    if json_output:
+        _print(result.model_dump(mode="json"))
+    else:
+        typer.echo(f"Repository: {result.repository}")
+        for check in result.checks:
+            typer.echo(f"{'OK' if check.valid else 'FAIL'} {check.name}: {check.detail}")
+    if not result.valid:
+        raise typer.Exit(1)
 
 
 @demo_app.command("delegation")

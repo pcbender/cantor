@@ -61,6 +61,11 @@ Run `canto repo init` from a Git repository with at least one commit. Use
 common directory, initial HEAD, and remote metadata. Canto refuses moved or
 mismatched repository identity instead of silently rewriting it.
 
+Run `canto repo doctor` to verify `.canto/delegate.toml`, all role manuals, the
+`AGENTS.md` pointer, and Git readiness. If it reports uncommitted instruction
+files, review and commit them before delegation; worktrees are created from
+committed Git bases.
+
 ## A delegated executor or Ollama model is unavailable
 
 Run `canto delegate profile check PROFILE`. Cloud Codex requires an available,

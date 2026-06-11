@@ -139,6 +139,16 @@ class DelegationWorkspaceService:
                 patterns.extend((f"/{path}", f"/{path}/**"))
             for path in denied:
                 patterns.extend((f"!/{path}", f"!/{path}/**"))
+            # Role manuals are read context, not task scope. Capture still rejects
+            # modifications because these paths are not in allowed_paths.
+            patterns.extend(
+                (
+                    "/AGENTS.md",
+                    "/.canto/delegate.toml",
+                    "/.canto/agents",
+                    "/.canto/agents/**",
+                )
+            )
             _git(workspace_path, "sparse-checkout", "set", "--no-cone", "--stdin", input_text="\n".join(patterns) + "\n")
         except Exception:
             if workspace_path.exists():

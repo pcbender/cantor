@@ -74,6 +74,11 @@ def test_codex_cli_launch_is_supervised_and_records_provenance(tmp_path):
     assert launch.exit_code == 0
     assert launch.argv[1:4] == ["exec", "--sandbox", "workspace-write"]
     assert Path(launch.stdout_path).read_text() == "executor complete\n"
+    prompt = Path(launch.prompt_path).read_text()
+    assert "You are a Canto delegated executor." in prompt
+    assert "Read .canto/agents/shared.md and .canto/agents/executor.md" in prompt
+    assert "Do not modify the canonical repository" in prompt
+    assert "ready for `canto delegate capture`" in prompt
     assert Path(workspaces.get("task_1").path, "src", "app.py").read_text() == "value = 2\n"
     assert service.get_task("task_1").status == "executor_done"
     assert service.get_records("task_1", "sessions")[0]["enforcement"] == "canto_observed"

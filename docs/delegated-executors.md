@@ -12,6 +12,8 @@ no HTTP endpoints and does not change orchestration `contract_version: 1.0`.
 
 - A sparse worktree limits supplied repository context; it is not a security
   sandbox for a process running as the same operating-system user.
+- Committed Canto role manuals are included as read context in sparse
+  worktrees, but remain outside mutable task scope.
 - Denied paths override allowed paths and block artifact capture or promotion.
 - Manual command claims are `manual_unverified` and do not satisfy required
   command gates.
@@ -28,7 +30,16 @@ Bootstrap repository intent once before creating tasks:
 ```bash
 cd /path/to/repository
 canto repo init
+git add AGENTS.md .canto
+git commit -m "Bootstrap Canto agent instructions"
+canto repo doctor
 ```
+
+`AGENTS.md` is the agent-facing entrypoint. Common rules live in
+`.canto/agents/shared.md`; supervising sessions also read `orchestrator.md`, and
+delegated executors also read `executor.md`. Canto injects the executor role and
+file references into every supervised launch prompt rather than relying on file
+discovery alone.
 
 ```bash
 canto delegate create "Update parser" \

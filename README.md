@@ -34,11 +34,15 @@ Bootstrap a Git repository before running repo-scoped delegation commands:
 cd /path/to/repository
 canto repo init
 canto repo show
+canto repo doctor
 ```
 
-This creates non-secret `.canto/repo.toml` and `.canto/policy.toml` files. Canto
-remains globally installed; durable state, credentials, capabilities, and
-delegation workspaces remain under `~/.canto`.
+This creates non-secret repo identity/policy files, `.canto/delegate.toml`,
+role manuals under `.canto/agents/`, and a short Canto pointer in `AGENTS.md`.
+Review and commit these files so delegated worktrees receive them from their
+recorded Git base. `repo doctor` verifies identity, files, pointer, and Git
+readiness. Canto remains globally installed; durable state, credentials,
+capabilities, and delegation workspaces remain under `~/.canto`.
 
 The API listens on `http://127.0.0.1:8765` by default. Interactive API
 documentation is at `/docs`. The unauthenticated server is intended for

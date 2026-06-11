@@ -35,10 +35,18 @@ Canto uses global user state and repo-local intent:
 ~/.canto/work/
 <repo>/.canto/repo.toml
 <repo>/.canto/policy.toml
+<repo>/.canto/delegate.toml
+<repo>/.canto/agents/shared.md
+<repo>/.canto/agents/orchestrator.md
+<repo>/.canto/agents/executor.md
+<repo>/AGENTS.md
 ```
 
 Run `canto repo init` once in each Git repository used for repo-scoped
-delegation. Repository files contain no secrets or durable task records.
+delegation. Review and commit the generated files, then run
+`canto repo doctor`. Repository files contain no secrets or durable task
+records. If `AGENTS.md` already exists, Canto preserves its content and adds one
+idempotent, delimited pointer section.
 Existing `~/.canto/state/canto.db` is migrated to `~/.canto/state.sqlite` when
 the current state file does not already exist. If both files exist, Canto stops
 and requires explicit operator reconciliation.

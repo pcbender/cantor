@@ -510,11 +510,12 @@ Acceptance:
 - No code is required; approved product decisions are recorded for subsequent
   packets.
 
-### CP-1315 — Repo Bootstrap and Repo-Scoped Configuration
+### CP-1315 — Repo Bootstrap, Repo-Scoped Configuration, and Agent Instructions
 
 Status: **complete**. Global state, legacy SQLite migration, repository
-bootstrap/configuration, identity binding, CLI diagnostics, tests, and docs are
-implemented.
+bootstrap/configuration, identity binding, agent-facing role manuals,
+`AGENTS.md` integration, `repo doctor`, launch-time role prompts, tests, and
+docs are implemented.
 
 Implement the approved rule: **Canto is globally installed and repo-aware;
 repositories are bootstrapped, not installed into.**
@@ -523,6 +524,11 @@ Behavior:
 
 - Add `canto repo init` to create `.canto/repo.toml` and
   `.canto/policy.toml` in the canonical Git repository.
+- Create `.canto/delegate.toml`, role manuals under `.canto/agents/`, and an
+  idempotent Canto pointer in top-level `AGENTS.md` without clobbering existing
+  human guidance.
+- Add `canto repo doctor` and inject executor role/manual references into
+  supervised launch prompts.
 - Resolve repo-scoped commands by searching upward from the working directory
   or from an explicit `--repo` path.
 - Keep durable state, credentials, installed capabilities, executor profiles,
