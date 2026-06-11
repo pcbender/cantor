@@ -21,9 +21,7 @@ def test_api_defaults_to_sqlite_state_store(runtime):
     app = create_app(settings, capability_registry=registry)
 
     assert isinstance(app.state.store, SqliteStateStore)
-    assert app.state.store.path == (
-        registry.store.paths.root / "state" / "canto.db"
-    ).resolve()
+    assert app.state.store.path == registry.store.paths.state_file.resolve()
     assert app.state.orchestrator.store.state_store is app.state.store
 
 

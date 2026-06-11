@@ -54,13 +54,25 @@ class CodexCliExecutor:
         command.append("-")
         return command
 
-    def prompt(self, task_id: str) -> str:
+    def prompt(
+        self,
+        task_id: str,
+        *,
+        variant_name: str | None = None,
+        supplement: str | None = None,
+    ) -> str:
         task = self.delegation.get_task(task_id)
         sections = [
             f"Delegation task: {task.title}",
             "",
             task.instructions,
         ]
+        effective_variant = variant_name or task.variant_name
+        effective_supplement = supplement or task.prompt_supplement
+        if effective_variant:
+            sections.extend(["", f"Prompt variant: {effective_variant}"])
+        if effective_supplement:
+            sections.extend(["", "Supplemental instruction:", effective_supplement])
         reviews = self.delegation.get_records(task_id, "reviews")
         revision_reviews = [
             review
@@ -90,7 +102,13 @@ class CodexCliExecutor:
         )
         return "\n".join(sections).strip() + "\n"
 
-    def launch(self, task_id: str) -> ExecutorLaunch:
+    def launch(
+        self,
+        task_id: str,
+        *,
+        variant_name: str | None = None,
+        supplement: str | None = None,
+    ) -> ExecutorLaunch:
         task = self.delegation.get_task(task_id)
         if task.status not in {"workspace_ready", "revision_requested"}:
             raise ExecutorError(
@@ -109,7 +127,13 @@ class CodexCliExecutor:
         prompt_path = artifact_dir / f"{launch_id}.prompt.md"
         stdout_path = artifact_dir / f"{launch_id}.stdout.log"
         stderr_path = artifact_dir / f"{launch_id}.stderr.log"
-        prompt = self.prompt(task_id)
+        effective_variant = variant_name or task.variant_name
+        effective_supplement = supplement or task.prompt_supplement
+        prompt = self.prompt(
+            task_id,
+            variant_name=effective_variant,
+            supplement=effective_supplement,
+        )
         prompt_path.write_text(prompt, encoding="utf-8")
 
         session_id = f"session_{uuid4().hex}"
@@ -138,6 +162,8 @@ class CodexCliExecutor:
             prompt_path=str(prompt_path),
             stdout_path=str(stdout_path),
             stderr_path=str(stderr_path),
+            prompt_variant=effective_variant,
+            prompt_supplement=effective_supplement,
         )
         environment = {
             key: os.environ[key]

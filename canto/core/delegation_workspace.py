@@ -6,6 +6,7 @@ from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 from canto.core.delegation import DelegationError, DelegationService
+from canto.core.repository import RepositoryConfigError, load_repository
 from canto.models.delegation import DelegationWorkspace, RepositoryIdentity
 from canto.models.schemas import utc_now
 
@@ -43,7 +44,14 @@ def inspect_repository(repository: str | Path) -> RepositoryIdentity:
     for name in _git(root, "remote").splitlines():
         if name:
             remotes[name] = _git(root, "remote", "get-url", name)
+    repo_id = None
+    if (root / ".canto" / "repo.toml").is_file():
+        try:
+            repo_id = load_repository(root).repo_id
+        except RepositoryConfigError as exc:
+            raise WorkspaceError(str(exc)) from exc
     return RepositoryIdentity(
+        repo_id=repo_id,
         canonical_path=str(root),
         git_common_dir=str(common_dir.resolve()),
         initial_head=_git(root, "rev-parse", "HEAD"),
@@ -53,6 +61,8 @@ def inspect_repository(repository: str | Path) -> RepositoryIdentity:
 
 def verify_repository_identity(expected: RepositoryIdentity) -> RepositoryIdentity:
     current = inspect_repository(expected.canonical_path)
+    if expected.repo_id and current.repo_id != expected.repo_id:
+        raise WorkspaceError("Canto repository identity changed")
     if expected.git_common_dir and current.git_common_dir != expected.git_common_dir:
         raise WorkspaceError("Repository Git common-dir identity changed")
     if expected.initial_head and current.initial_head != expected.initial_head:

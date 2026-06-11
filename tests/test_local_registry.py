@@ -64,6 +64,8 @@ def test_local_registry_paths_use_canto_directory(tmp_path):
     assert paths.registry == tmp_path / ".canto" / "registry"
     assert paths.installed == tmp_path / ".canto" / "installed"
     assert paths.cache == tmp_path / ".canto" / "cache"
+    assert paths.state_file == tmp_path / ".canto" / "state.sqlite"
+    assert paths.work == tmp_path / ".canto" / "work"
 
 
 def test_create_local_registry_layout_creates_directories(tmp_path):

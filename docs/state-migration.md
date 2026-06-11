@@ -13,7 +13,7 @@ Optional overrides:
 canto migrate-state \
   --redis-url redis://localhost:6379/0 \
   --plans-dir ~/.canto/plans \
-  --sqlite-path ~/.canto/state/canto.db
+  --sqlite-path ~/.canto/state.sqlite
 ```
 
 The command copies jobs, ordered events, approval objects, artifact metadata,

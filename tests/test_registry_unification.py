@@ -95,7 +95,7 @@ print(json.dumps({"status": "completed", "summary": "Demo complete."}))
         max_provider_output_bytes=1_048_576,
     )
     capability_registry = CapabilityRegistry.local(tmp_path / "home")
-    state = SqliteStateStore(tmp_path / "home" / ".canto" / "state" / "canto.db")
+    state = SqliteStateStore(capability_registry.store.paths.state_file)
 
     # Both views are alive before installation; lazy registry refresh must expose it.
     http_app = create_app(settings, state, capability_registry)

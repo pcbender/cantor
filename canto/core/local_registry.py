@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import sqlite3
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -62,6 +64,26 @@ class LocalRegistryPaths:
     cache: Path
 
     @property
+    def state_file(self) -> Path:
+        return self.root / "state.sqlite"
+
+    @property
+    def legacy_state_file(self) -> Path:
+        return self.root / "state" / "canto.db"
+
+    @property
+    def work(self) -> Path:
+        return self.root / "work"
+
+    @property
+    def config(self) -> Path:
+        return self.root / "config"
+
+    @property
+    def vault(self) -> Path:
+        return self.root / "vault"
+
+    @property
     def plans(self) -> Path:
         return self.root / "plans"
 
@@ -71,7 +93,11 @@ class LocalRegistryPaths:
 
     @classmethod
     def from_home(cls, home: Path | None = None) -> LocalRegistryPaths:
-        root = (home or Path.home()).expanduser() / ".canto"
+        if home is None:
+            configured = os.getenv("CANTO_HOME")
+            root = Path(configured).expanduser() if configured else Path.home() / ".canto"
+        else:
+            root = Path(home).expanduser() / ".canto"
         return cls(
             root=root,
             registry=root / "registry",
@@ -80,8 +106,46 @@ class LocalRegistryPaths:
         )
 
     def create(self) -> None:
-        for path in (self.registry, self.installed, self.cache, self.plans):
+        for path in (
+            self.registry,
+            self.installed,
+            self.cache,
+            self.plans,
+            self.work,
+            self.config,
+        ):
             path.mkdir(parents=True, exist_ok=True)
+        self._migrate_legacy_state()
+
+    def _migrate_legacy_state(self) -> None:
+        legacy = self.legacy_state_file
+        target = self.state_file
+        if legacy.exists() and target.exists():
+            raise LocalRegistryError(
+                "Both legacy and current SQLite state files exist; refusing to choose: "
+                f"{legacy} and {target}"
+            )
+        if not legacy.exists():
+            return
+        temporary = target.with_suffix(".sqlite.tmp")
+        temporary.unlink(missing_ok=True)
+        try:
+            with sqlite3.connect(legacy) as source, sqlite3.connect(temporary) as destination:
+                source.backup(destination)
+            temporary.chmod(0o600)
+            temporary.replace(target)
+            legacy.unlink()
+            legacy.with_name(f"{legacy.name}-wal").unlink(missing_ok=True)
+            legacy.with_name(f"{legacy.name}-shm").unlink(missing_ok=True)
+            try:
+                legacy.parent.rmdir()
+            except OSError:
+                pass
+        except (OSError, sqlite3.Error) as exc:
+            temporary.unlink(missing_ok=True)
+            raise LocalRegistryError(
+                f"Cannot migrate legacy SQLite state {legacy} to {target}: {exc}"
+            ) from exc
 
 
 class RegistryStore:

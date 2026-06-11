@@ -27,6 +27,7 @@ DelegationStatus = Literal[
 
 
 class RepositoryIdentity(BaseModel):
+    repo_id: str | None = None
     canonical_path: str
     git_common_dir: str | None = None
     initial_head: str | None = None
@@ -49,6 +50,9 @@ class DelegationTask(BaseModel):
     repository: RepositoryIdentity
     scope: DelegationScope = Field(default_factory=DelegationScope)
     instructions: str = ""
+    comparison_id: str | None = None
+    variant_name: str | None = None
+    prompt_supplement: str | None = None
     created_by: str = "cantor"
     executor_id: str | None = None
     workspace_id: str | None = None
@@ -114,6 +118,9 @@ class ExecutorLaunch(BaseModel):
     prompt_path: str
     stdout_path: str
     stderr_path: str
+    prompt_variant: str | None = None
+    prompt_supplement: str | None = None
+    token_usage: dict[str, int] | None = None
     exit_code: int | None = None
     timed_out: bool = False
     started_at: str = Field(default_factory=utc_now)
@@ -144,6 +151,9 @@ class DelegationResult(BaseModel):
     workspace_patch_sha256: str
     artifacts: list[DelegationArtifact] = Field(default_factory=list)
     executor_summary: str = ""
+    producing_session_id: str | None = None
+    producing_launch_id: str | None = None
+    prompt_variant: str | None = None
     created_at: str = Field(default_factory=utc_now)
 
 
@@ -241,3 +251,113 @@ class DelegationTimelineItem(BaseModel):
     record_id: str
     summary: str
     data: dict[str, Any] = Field(default_factory=dict)
+
+
+class DelegationDashboardTask(BaseModel):
+    task_id: str
+    title: str
+    status: DelegationStatus
+    attention: Literal["working", "review", "blocked", "ready", "terminal"]
+    executor_id: str | None = None
+    harness: str | None = None
+    repository: str
+    latest_result_revision: int = 0
+    accepted_result_revision: int | None = None
+    next_action: str
+    updated_at: str
+
+
+class DelegationDashboardDetail(BaseModel):
+    task: DelegationDashboardTask
+    repository: RepositoryIdentity
+    scope: DelegationScope
+    workspace: dict[str, Any] | None = None
+    executor: dict[str, Any] | None = None
+    sessions: list[dict[str, Any]] = Field(default_factory=list)
+    launches: list[dict[str, Any]] = Field(default_factory=list)
+    latest_result: dict[str, Any] | None = None
+    reviews: list[dict[str, Any]] = Field(default_factory=list)
+    commands: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
+    queue: dict[str, Any] | None = None
+    next_actions: list[str] = Field(default_factory=list)
+    artifact_root: str | None = None
+
+
+class DelegationVariant(BaseModel):
+    name: str
+    prompt_supplement: str = ""
+
+
+class DelegationComparisonItem(BaseModel):
+    task_id: str
+    variant_name: str
+    base_commit: str
+    status: DelegationStatus
+    result_revision: int | None = None
+    changed_files: list[str] = Field(default_factory=list)
+    patch_additions: int = 0
+    patch_deletions: int = 0
+    commands: list[dict[str, Any]] = Field(default_factory=list)
+    exit_code: int | None = None
+    timed_out: bool = False
+    runtime_seconds: float | None = None
+    token_usage: dict[str, int] | None = None
+    session_id: str | None = None
+    launch_id: str | None = None
+
+
+class DelegationComparison(BaseModel):
+    comparison_id: str
+    repository: RepositoryIdentity
+    base_commit: str
+    variants: list[DelegationComparisonItem] = Field(default_factory=list)
+
+
+class DelegationReviewSummary(BaseModel):
+    task_id: str
+    status: DelegationStatus
+    result_revision: int
+    producing_session_id: str | None = None
+    producing_launch_id: str | None = None
+    executor_id: str | None = None
+    prompt_variant: str | None = None
+    changed_files: list[str] = Field(default_factory=list)
+    patch_additions: int = 0
+    patch_deletions: int = 0
+    commands: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
+    missing_commands: list[str] = Field(default_factory=list)
+    artifact_checksums_valid: bool
+    scope_checks_passed: bool = True
+    canonical_head: str | None = None
+    base_commit: str
+    canonical_clean_for_changed_files: bool = False
+    acceptance_ready: bool = False
+    promotion_ready: bool = False
+    blockers: list[str] = Field(default_factory=list)
+
+
+class DelegationBlocker(BaseModel):
+    code: Literal[
+        "queue_overlap",
+        "stale_base",
+        "dirty_worktree",
+        "artifact_checksum",
+        "workspace_changed",
+        "promotion_failure",
+    ]
+    message: str
+    repository: str
+    task_id: str
+    result_revision: int | None = None
+    conflicting_task_id: str | None = None
+    overlapping_paths: list[str] = Field(default_factory=list)
+    expected_base: str | None = None
+    actual_head: str | None = None
+    rollback_attempted: bool = False
+    rollback_succeeded: bool | None = None
+    safe_actions: list[str] = Field(default_factory=list)
+
+
+class DelegationConflictReport(BaseModel):
+    task_id: str
+    blockers: list[DelegationBlocker] = Field(default_factory=list)

@@ -10,6 +10,7 @@ import canto.cli as cli_module
 from canto.core.delegation import DelegationService
 from canto.core.delegation_workspace import DelegationWorkspaceService
 from canto.core.state import SqliteStateStore
+from canto.core.repository import initialize_repository
 from canto.models.delegation import (
     DelegationTask,
     ExecutorProfile,
@@ -35,6 +36,7 @@ def test_manual_delegation_cli_workflow(tmp_path, monkeypatch):
     (repository / "private" / "secret.txt").write_text("fixture\n")
     git(repository, "add", ".")
     git(repository, "commit", "-m", "initial")
+    initialize_repository(repository)
 
     store = SqliteStateStore(tmp_path / "state" / "canto.db")
     service = DelegationService(store)

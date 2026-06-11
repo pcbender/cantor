@@ -142,10 +142,13 @@ Status values: `COMPLETE`, `IN PROGRESS`, `NOT STARTED`, `DEFERRED`.
 
 ## Current Result
 
-All numbered SPEC-v1, MVP v1, and MVP v1.1 delegated-executor implementation
-packets are complete. No blocking implementation question remains. The next
-planned workstream is MVP v1.2 Delegated Executor UX Hardening, beginning with
-CP-1201, the delegated executor UX architecture and design packet.
+All numbered SPEC-v1, MVP v1, MVP v1.1, and MVP v1.2 implementation packets are
+complete. MVP v1.2 Delegated Executor UX Hardening includes foundation
+packet CP-1315 and CP-1201 through CP-1210. The daily workflow now covers global
+state with repo-local bootstrap, dashboard inspection, reusable profiles,
+isolated prompt comparisons, local Ollama preflight, review summaries, typed
+conflicts, explicit promotion, and a one-command offline demo. The final full
+suite passes 275 tests without network access or downloaded models.
 
 Known non-blocking issue: Starlette's current `TestClient` emits a deprecation
 warning recommending a future `httpx2` migration. Runtime behavior and tests

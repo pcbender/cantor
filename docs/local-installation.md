@@ -26,6 +26,23 @@ packages, and the encrypted credential vault. Back up that directory before a
 release upgrade. CP-5003 documents migration from legacy Redis/filesystem
 state.
 
+Canto uses global user state and repo-local intent:
+
+```text
+~/.canto/state.sqlite
+~/.canto/vault/
+~/.canto/installed/
+~/.canto/work/
+<repo>/.canto/repo.toml
+<repo>/.canto/policy.toml
+```
+
+Run `canto repo init` once in each Git repository used for repo-scoped
+delegation. Repository files contain no secrets or durable task records.
+Existing `~/.canto/state/canto.db` is migrated to `~/.canto/state.sqlite` when
+the current state file does not already exist. If both files exist, Canto stops
+and requires explicit operator reconciliation.
+
 Verify the complete local write workflow without network access:
 
 ```bash
@@ -62,6 +79,7 @@ printf 'before delegation\n' > src/message.txt
 printf 'before delegation\n' > tests/expected.txt
 git add src/message.txt tests/expected.txt
 git commit -m "Initialize delegation smoke test"
+canto repo init
 ```
 
 Register the cloud executor profile, create the bounded task, and copy the
@@ -120,6 +138,7 @@ Expected results:
 - The child launch exits successfully and the task reaches `reviewing`.
 - `changed_files.json` contains only `src/message.txt` and
   `tests/expected.txt`.
+
 - The canonical files still contain `before delegation`.
 - Generated untracked Python and pytest cache files are excluded from capture.
 - No commit, push, acceptance, or promotion occurs automatically.
@@ -137,3 +156,21 @@ logs, and produces immutable revision 2. Only after reviewing the exact patch
 should an operator use `canto delegate accept`, `queue-add`, and
 `queue-promote`. Delete the disposable repository and its delegation work files
 when the test is no longer needed.
+
+## Optional Local Ollama Smoke Test
+
+Use only a model already installed in the local Ollama runtime:
+
+```bash
+codex --version
+ollama list
+canto delegate profile save local-ollama \
+  --preset codex-ollama \
+  --model qwen3:8b
+canto delegate profile check local-ollama
+```
+
+Then follow the disposable repository and task flow above, assigning
+`local-ollama` instead of the cloud profile. Stop after `capture` and inspect
+`canto delegate review-summary TASK_ID`. Canto does not download models, use a
+cloud fallback, accept the result, or promote it automatically.

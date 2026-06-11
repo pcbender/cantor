@@ -38,6 +38,18 @@ from canto.core.delegation_commands import CommandError, DelegationCommandServic
 from canto.core.delegation_pool import DelegationPoolService
 from canto.core.delegation_queue import DelegationPromotionQueue, QueueError
 from canto.core.delegation_timeline import DelegationTimelineService
+from canto.core.delegation_dashboard import DelegationDashboardService
+from canto.core.delegation_comparison import (
+    ComparisonError,
+    DelegationComparisonService,
+)
+from canto.core.executor_profiles import ExecutorProfileError, ExecutorProfileManager
+from canto.core.delegation_review_summary import (
+    DelegationReviewSummaryService,
+    ReviewSummaryError,
+)
+from canto.core.delegation_conflicts import DelegationConflictService
+from canto.core.delegation_demo import DelegationDemoError, run_delegation_demo
 from canto.core.jobs import JobError, JobService
 from canto.core.local_registry import (
     LocalRegistryError,
@@ -50,6 +62,12 @@ from canto.core.orchestration import (
     PlanStore,
 )
 from canto.core.registry import Registry
+from canto.core.repository import (
+    RepositoryConfigError,
+    initialize_repository,
+    load_repository,
+    load_repository_policy,
+)
 from canto.core.seed_capabilities import SeedCapabilityError, audit_seed_capabilities
 from canto.core.state import SqliteStateStore
 from canto.core.state import RedisStateStore
@@ -61,6 +79,7 @@ from canto.models.delegation import (
     DelegationTask,
     ExecutorProfile,
     ExecutorSession,
+    DelegationVariant,
 )
 
 app = typer.Typer(help="Canto local orchestration broker")
@@ -70,12 +89,20 @@ job_app = typer.Typer(help="Inspect jobs")
 capability_app = typer.Typer(help="Manage capability manifests")
 credential_app = typer.Typer(help="Manage local encrypted credentials")
 delegate_app = typer.Typer(help="Coordinate delegated executor workspaces")
+repo_app = typer.Typer(help="Bootstrap and inspect repository-local Canto intent")
+demo_app = typer.Typer(help="Run isolated local Canto demonstrations")
+delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
+delegate_profile_app = typer.Typer(help="Manage local executor profiles")
 app.add_typer(skill_app, name="skill")
 app.add_typer(provider_app, name="provider")
 app.add_typer(job_app, name="job")
 app.add_typer(capability_app, name="capability")
 app.add_typer(credential_app, name="credential")
 app.add_typer(delegate_app, name="delegate")
+app.add_typer(repo_app, name="repo")
+app.add_typer(demo_app, name="demo")
+delegate_app.add_typer(delegate_compare_app, name="compare")
+delegate_app.add_typer(delegate_profile_app, name="profile")
 
 
 def _credential_vault() -> CredentialVault:
@@ -86,7 +113,7 @@ def _runtime() -> tuple:
     settings = get_settings()
     capability_registry = _capability_registry()
     store = SqliteStateStore(
-        capability_registry.store.paths.root / "state" / "canto.db"
+        capability_registry.store.paths.state_file
     )
     registry = Registry(
         settings.skills_dir,
@@ -102,7 +129,7 @@ def _capability_registry() -> CapabilityRegistry:
 
 def _delegation_runtime() -> tuple[DelegationService, DelegationWorkspaceService]:
     registry = _capability_registry()
-    store = SqliteStateStore(registry.store.paths.root / "state" / "canto.db")
+    store = SqliteStateStore(registry.store.paths.state_file)
     service = DelegationService(store)
     workspaces = DelegationWorkspaceService(
         service, registry.store.paths.root / "work" / "delegations"
@@ -115,7 +142,7 @@ def _orchestrator(job_service: JobService | None = None) -> Orchestrator:
     store = (
         job_service.store
         if job_service is not None
-        else SqliteStateStore(registry.store.paths.root / "state" / "canto.db")
+        else SqliteStateStore(registry.store.paths.state_file)
     )
     return Orchestrator(
         registry,
@@ -146,6 +173,63 @@ def _delegation_error(exc: Exception) -> None:
     raise typer.Exit(1) from exc
 
 
+def _profile_manager() -> ExecutorProfileManager:
+    service, _ = _delegation_runtime()
+    return ExecutorProfileManager(
+        service, _capability_registry().store.paths.config / "executors.yaml"
+    )
+
+
+@repo_app.command("init")
+def repo_init(
+    repository: Path = typer.Option(Path("."), "--repository", "--repo"),
+) -> None:
+    """Bootstrap non-secret Canto intent in a canonical Git repository."""
+    try:
+        config = initialize_repository(repository)
+    except RepositoryConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    _print(config.model_dump(mode="json"))
+
+
+@repo_app.command("show")
+def repo_show(
+    repository: Path = typer.Option(Path("."), "--repository", "--repo"),
+) -> None:
+    """Inspect repository-local Canto identity from this directory or a child."""
+    try:
+        config = load_repository(repository)
+    except RepositoryConfigError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    _print(config.model_dump(mode="json"))
+
+
+@demo_app.command("delegation")
+def demo_delegation(
+    mode: str = typer.Option("scripted", "--mode"),
+    model: str | None = typer.Option(None, "--model"),
+    promote: bool = typer.Option(False, "--promote"),
+    keep: bool = typer.Option(False, "--keep"),
+) -> None:
+    """Run an isolated delegated-executor workflow; scripted mode is offline."""
+    if mode not in {"scripted", "cloud", "ollama"}:
+        raise typer.BadParameter("Mode must be scripted, cloud, or ollama")
+    if mode != "scripted":
+        typer.echo(
+            f"Warning: {mode} mode invokes a configured external model runtime and may consume quota/resources.",
+            err=True,
+        )
+    try:
+        result = run_delegation_demo(
+            mode=mode, model=model, promote=promote, keep=keep
+        )
+    except DelegationDemoError as exc:
+        _delegation_error(exc)
+    _print(result.model_dump(mode="json"))
+
+
 @delegate_app.command("create")
 def delegate_create(
     title: str,
@@ -157,16 +241,39 @@ def delegate_create(
     """Create a draft delegation task for a bounded Git repository scope."""
     try:
         service, _ = _delegation_runtime()
+        repo_config = load_repository(repository)
+        policy = load_repository_policy(repository)
+        if policy.allowed_paths:
+            outside_policy = [
+                path
+                for path in allow
+                if not any(
+                    path == root or path.startswith(f"{root}/")
+                    for root in policy.allowed_paths
+                )
+            ]
+            if outside_policy:
+                raise RepositoryConfigError(
+                    "Task paths are outside repository policy: "
+                    + ", ".join(outside_policy)
+                )
         task = DelegationTask(
             task_id=f"task_{uuid4().hex}",
             title=title,
-            repository=inspect_repository(repository),
-            scope=DelegationScope(allowed_paths=allow, denied_paths=deny),
+            repository=inspect_repository(repo_config.canonical_path),
+            scope=DelegationScope(
+                allowed_paths=allow,
+                denied_paths=sorted(set(policy.denied_paths) | set(deny)),
+                allowed_commands=policy.allowed_commands,
+                required_commands=policy.required_commands,
+                allow_network=False,
+                allow_secrets=False,
+            ),
             instructions=instruction,
             created_by="cli",
         )
         service.create_task(task)
-    except (DelegationError, WorkspaceError) as exc:
+    except (DelegationError, WorkspaceError, RepositoryConfigError) as exc:
         _delegation_error(exc)
     _print(task.model_dump(mode="json"))
 
@@ -356,15 +463,117 @@ def delegate_add_codex(
     _print(profile.model_dump(mode="json"))
 
 
+@delegate_profile_app.command("list")
+def delegate_profile_list() -> None:
+    """List saved profiles and available preset names."""
+    try:
+        manager = _profile_manager()
+        value = {
+            "presets": sorted(manager.presets()),
+            "profiles": [
+                profile.model_dump(mode="json")
+                for profile in manager.delegation.list_executor_profiles()
+            ],
+        }
+    except ExecutorProfileError as exc:
+        _delegation_error(exc)
+    _print(value)
+
+
+@delegate_profile_app.command("show")
+def delegate_profile_show(executor_id: str) -> None:
+    """Show one saved executor profile."""
+    try:
+        profile = _profile_manager().delegation.get_executor_profile(executor_id)
+    except DelegationError as exc:
+        _delegation_error(exc)
+    _print(profile.model_dump(mode="json"))
+
+
+@delegate_profile_app.command("save")
+def delegate_profile_save(
+    executor_id: str,
+    preset: str = typer.Option("manual", "--preset"),
+    executable: str | None = typer.Option(None, "--executable"),
+    model: str | None = typer.Option(None, "--model"),
+    extra_args: list[str] = typer.Option([], "--extra-arg"),
+) -> None:
+    """Resolve and save a credential-free named executor profile."""
+    try:
+        manager = _profile_manager()
+        if preset not in manager.presets():
+            raise ExecutorProfileError(f"Executor preset not found: {preset}")
+        override: dict[str, Any] = {"executable": executable, "model": model}
+        if extra_args:
+            override["configuration"] = {"extra_args": extra_args}
+        profile = manager.resolve(executor_id, preset=preset, cli_override=override)
+        check = manager.check(profile)
+        if not check["available"]:
+            raise ExecutorProfileError(check["detail"])
+        manager.save(profile)
+    except (DelegationError, ExecutorProfileError) as exc:
+        _delegation_error(exc)
+    _print(profile.model_dump(mode="json"))
+
+
+@delegate_profile_app.command("check")
+def delegate_profile_check(executor_id: str) -> None:
+    """Check a saved profile without mutating task state."""
+    try:
+        manager = _profile_manager()
+        profile = manager.delegation.get_executor_profile(executor_id)
+        value = {"profile": profile.model_dump(mode="json"), **manager.check(profile)}
+    except (DelegationError, ExecutorProfileError) as exc:
+        _delegation_error(exc)
+    _print(value)
+
+
 @delegate_app.command("launch")
-def delegate_launch(task_id: str) -> None:
+def delegate_launch(
+    task_id: str,
+    variant: str | None = typer.Option(None, "--variant"),
+    instruction: str | None = typer.Option(None, "--instruction"),
+) -> None:
     """Launch the assigned Codex CLI profile in its prepared worktree."""
     try:
         service, workspaces = _delegation_runtime()
-        launch = CodexCliExecutor(service, workspaces).launch(task_id)
+        launch = CodexCliExecutor(service, workspaces).launch(
+            task_id, variant_name=variant, supplement=instruction
+        )
     except (DelegationError, ExecutorError) as exc:
         _delegation_error(exc)
     _print(launch.model_dump(mode="json"))
+
+
+@delegate_compare_app.command("create")
+def delegate_compare_create(
+    task_id: str,
+    variants: list[str] = typer.Option(..., "--variant"),
+) -> None:
+    """Create isolated sibling tasks from NAME=SUPPLEMENT variant values."""
+    try:
+        parsed = []
+        for value in variants:
+            name, separator, supplement = value.partition("=")
+            if not separator:
+                raise ComparisonError("Variant must use NAME=SUPPLEMENT syntax")
+            parsed.append(DelegationVariant(name=name, prompt_supplement=supplement))
+        service, _ = _delegation_runtime()
+        tasks = DelegationComparisonService(service).create_variants(task_id, parsed)
+    except (DelegationError, ComparisonError) as exc:
+        _delegation_error(exc)
+    _print([task.model_dump(mode="json") for task in tasks])
+
+
+@delegate_compare_app.command("show")
+def delegate_compare_show(comparison_id: str) -> None:
+    """Compare immutable evidence from sibling task variants."""
+    try:
+        service, _ = _delegation_runtime()
+        comparison = DelegationComparisonService(service).compare(comparison_id)
+    except (DelegationError, ComparisonError) as exc:
+        _delegation_error(exc)
+    _print(comparison.model_dump(mode="json"))
 
 
 @delegate_app.command("capture")
@@ -393,6 +602,57 @@ def delegate_accept(
     except (DelegationError, ReviewError) as exc:
         _delegation_error(exc)
     _print(review.model_dump(mode="json"))
+
+
+@delegate_app.command("review-summary")
+def delegate_review_summary(
+    task_id: str,
+    revision: int | None = typer.Option(None, "--revision"),
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Show immutable review evidence and readiness without changing state."""
+    try:
+        service, workspaces = _delegation_runtime()
+        summary = DelegationReviewSummaryService(service, workspaces).summarize(
+            task_id, revision
+        )
+    except (DelegationError, ReviewSummaryError) as exc:
+        _delegation_error(exc)
+    if json_output:
+        _print(summary.model_dump(mode="json"))
+        return
+    typer.echo(f"Task: {summary.task_id} ({summary.status})")
+    typer.echo(f"Result: revision {summary.result_revision}")
+    typer.echo(f"Executor: {summary.executor_id or '-'}; variant: {summary.prompt_variant or '-'}")
+    typer.echo(f"Patch: +{summary.patch_additions} -{summary.patch_deletions}")
+    typer.echo("Changed: " + (", ".join(summary.changed_files) or "none"))
+    typer.echo(f"Checksums: {'valid' if summary.artifact_checksums_valid else 'invalid'}")
+    typer.echo(f"Acceptance ready: {str(summary.acceptance_ready).lower()}")
+    typer.echo(f"Promotion ready: {str(summary.promotion_ready).lower()}")
+    for blocker in summary.blockers:
+        typer.echo(f"BLOCKED: {blocker}")
+
+
+@delegate_app.command("conflict")
+def delegate_conflict(
+    task_id: str,
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Explain delegation conflicts and safe recovery options without acting."""
+    try:
+        service, workspaces = _delegation_runtime()
+        report = DelegationConflictService(service, workspaces).explain(task_id)
+    except DelegationError as exc:
+        _delegation_error(exc)
+    if json_output:
+        _print(report.model_dump(mode="json"))
+        return
+    if not report.blockers:
+        typer.echo(f"No active conflicts for {task_id}.")
+        return
+    for blocker in report.blockers:
+        typer.echo(f"{blocker.code}: {blocker.message}")
+        typer.echo("Safe actions: " + ", ".join(blocker.safe_actions))
 
 
 @delegate_app.command("revise")
@@ -572,6 +832,54 @@ def delegate_timeline(task_id: str) -> None:
     _print([item.model_dump(mode="json") for item in items])
 
 
+@delegate_app.command("dashboard")
+def delegate_dashboard(
+    task_id: str | None = typer.Argument(None),
+    active: bool = typer.Option(False, "--active"),
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Show a human-readable delegation dashboard or one task detail view."""
+    try:
+        service, workspaces = _delegation_runtime()
+        dashboard = DelegationDashboardService(service, workspaces)
+        if task_id:
+            detail = dashboard.detail(task_id)
+            if json_output:
+                _print(detail.model_dump(mode="json"))
+                return
+            typer.echo(f"{detail.task.task_id}  {detail.task.status}  {detail.task.title}")
+            typer.echo(
+                f"Attention: {detail.task.attention} | Executor: "
+                f"{detail.task.executor_id or '-'} | Repository: {detail.task.repository}"
+            )
+            typer.echo(
+                f"Revision: {detail.task.latest_result_revision} | Accepted: "
+                f"{detail.task.accepted_result_revision or '-'}"
+            )
+            typer.echo("Next: " + (", ".join(detail.next_actions) or "none"))
+            if detail.queue and detail.queue.get("blockers"):
+                typer.echo("Blockers: " + "; ".join(detail.queue["blockers"]))
+            if detail.artifact_root:
+                typer.echo(f"Artifacts: {detail.artifact_root}")
+            return
+        rows = dashboard.list(active_only=active)
+        if json_output:
+            _print([row.model_dump(mode="json") for row in rows])
+            return
+        if not rows:
+            typer.echo("No delegation tasks.")
+            return
+        typer.echo("ATTENTION\tSTATUS\tTASK\tEXECUTOR\tREV\tNEXT\tTITLE")
+        for row in rows:
+            typer.echo(
+                f"{row.attention}\t{row.status}\t{row.task_id}\t"
+                f"{row.executor_id or '-'}\t{row.latest_result_revision}\t"
+                f"{row.next_action}\t{row.title}"
+            )
+    except DelegationError as exc:
+        _delegation_error(exc)
+
+
 @app.command()
 def serve() -> None:
     """Run the local FastAPI server."""
@@ -654,9 +962,7 @@ def migrate_state(
     """Copy legacy Redis and filesystem-plan state into SQLite."""
     settings = get_settings()
     registry = _capability_registry()
-    target_path = sqlite_path or (
-        registry.store.paths.root / "state" / "canto.db"
-    )
+    target_path = sqlite_path or registry.store.paths.state_file
     legacy_plans = plans_dir or registry.store.paths.plans
     try:
         result = migrate_legacy_state(

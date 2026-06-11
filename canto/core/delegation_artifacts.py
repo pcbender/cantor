@@ -144,6 +144,8 @@ class DelegationArtifactService:
         messages = self.delegation.get_records(task_id, "messages")
         done_messages = [message for message in messages if message.get("kind") == "done"]
         summary = done_messages[-1]["body"] if done_messages else "Executor reported completion."
+        launches = self.delegation.get_records(task_id, "launches")
+        launch = launches[-1] if launches else None
         (revision_root / "proposal.diff").write_text(patch, encoding="utf-8")
         (revision_root / "changed_files.json").write_text(
             json.dumps(changes, indent=2) + "\n", encoding="utf-8"
@@ -169,6 +171,9 @@ class DelegationArtifactService:
             workspace_patch_sha256=hashlib.sha256(patch.encode("utf-8")).hexdigest(),
             artifacts=artifacts,
             executor_summary=summary,
+            producing_session_id=launch.get("session_id") if launch else None,
+            producing_launch_id=launch.get("launch_id") if launch else None,
+            prompt_variant=(launch.get("prompt_variant") if launch else task.variant_name),
         )
         self.delegation.append_record(task_id, "results", result)
         self.delegation.transition(

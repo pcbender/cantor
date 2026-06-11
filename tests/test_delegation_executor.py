@@ -79,6 +79,26 @@ def test_codex_cli_launch_is_supervised_and_records_provenance(tmp_path):
     assert service.get_records("task_1", "sessions")[0]["enforcement"] == "canto_observed"
 
 
+def test_codex_cli_launch_preserves_named_prompt_variant(tmp_path):
+    executable = tmp_path / "codex"
+    executable.write_text("#!/bin/sh\ncat >/dev/null\nprintf 'value = 2\\n' > src/app.py\n")
+    executable.chmod(0o755)
+    service, workspaces = prepared_task(tmp_path, executable)
+
+    launch = CodexCliExecutor(service, workspaces, timeout_seconds=10).launch(
+        "task_1", variant_name="concise", supplement="Use the smallest edit."
+    )
+
+    prompt = Path(launch.prompt_path).read_text()
+    assert launch.prompt_variant == "concise"
+    assert "Prompt variant: concise" in prompt
+    assert "Use the smallest edit." in prompt
+    result = DelegationArtifactService(service, workspaces).capture("task_1")
+    assert result.producing_session_id == launch.session_id
+    assert result.producing_launch_id == launch.launch_id
+    assert result.prompt_variant == "concise"
+
+
 def test_codex_cli_profile_requires_available_executable(tmp_path):
     profile = ExecutorProfile(
         executor_id="missing",
@@ -90,6 +110,23 @@ def test_codex_cli_profile_requires_available_executable(tmp_path):
 
     with pytest.raises(ExecutorError, match="unavailable"):
         CodexCliExecutor.available(profile)
+
+
+def test_ollama_profile_command_has_no_cloud_fallback(tmp_path, monkeypatch):
+    profile = ExecutorProfile(
+        executor_id="ollama",
+        name="Ollama",
+        harness="codex_cli",
+        executable="codex",
+        model_provider="ollama",
+        model="qwen3:8b",
+        launch_mode="canto",
+        configuration={"extra_args": ["--oss", "--local-provider", "ollama"]},
+    )
+    monkeypatch.setattr(CodexCliExecutor, "available", lambda *args: "/usr/bin/codex")
+    command = CodexCliExecutor(None, None).command(profile, tmp_path)
+    assert "--oss" in command
+    assert command[command.index("--local-provider") + 1] == "ollama"
 
 
 def test_codex_cli_relaunches_with_revision_feedback_and_preserves_logs(tmp_path):

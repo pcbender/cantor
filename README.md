@@ -25,7 +25,20 @@ Verify the environment before starting the server:
 ```
 
 Expected result is an `ok` health status. Local durable state is stored in
-`~/.canto/state/canto.db`; Redis is not required.
+`~/.canto/state.sqlite`; Redis is not required. Existing
+`~/.canto/state/canto.db` state is migrated automatically when unambiguous.
+
+Bootstrap a Git repository before running repo-scoped delegation commands:
+
+```bash
+cd /path/to/repository
+canto repo init
+canto repo show
+```
+
+This creates non-secret `.canto/repo.toml` and `.canto/policy.toml` files. Canto
+remains globally installed; durable state, credentials, capabilities, and
+delegation workspaces remain under `~/.canto`.
 
 The API listens on `http://127.0.0.1:8765` by default. Interactive API
 documentation is at `/docs`. The unauthenticated server is intended for
@@ -70,7 +83,7 @@ Run the complete isolated stability demonstration with:
 Run the network-free delegated-executor demonstration with:
 
 ```bash
-bash scripts/demo-delegated-executors.sh
+canto demo delegation
 ```
 
 The delegated workflow coordinates manual or Codex CLI executors in bounded
@@ -78,6 +91,10 @@ Git worktrees, captures immutable review artifacts, and requires explicit
 acceptance and promotion. See `docs/delegated-executors.md` for the workflow and
 `docs/local-installation.md` for the optional real cloud smoke test using an
 account-authorized model such as `gpt-5.4-mini`.
+
+MVP v1.2 delegated-executor UX hardening is complete. It includes repo
+bootstrap, task dashboards, executor presets, prompt comparisons, Ollama
+preflight, deterministic review/conflict summaries, and the isolated demo.
 
 Local wheel installation and upgrade instructions are in
 `docs/local-installation.md`.

@@ -37,9 +37,7 @@ def create_app(
         settings.tools_dir,
         capability_registry=capability_registry,
     )
-    store = store or SqliteStateStore(
-        capability_registry.store.paths.root / "state" / "canto.db"
-    )
+    store = store or SqliteStateStore(capability_registry.store.paths.state_file)
     service = JobService(settings, registry, store)
     orchestrator = Orchestrator(
         capability_registry,

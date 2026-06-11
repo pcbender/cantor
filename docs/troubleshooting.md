@@ -3,7 +3,7 @@
 ## Health is degraded
 
 Run `canto health` and confirm `state` is `ok`. SQLite lives at
-`~/.canto/state/canto.db`; check that `~/.canto` is writable by the current
+`~/.canto/state.sqlite`; check that `~/.canto` is writable by the current
 user. Redis is not required. Legacy state migration is documented in
 `docs/state-migration.md`.
 
@@ -53,3 +53,37 @@ Install the local build/test extras with `pip install -e '.[test]'`, then run
 `pip check`. Wheel and upgrade instructions are in
 `docs/local-installation.md`. Capability package installation remains explicit
 and local; there is no remote registry or automatic dependency installation.
+
+## Delegation cannot find a repository or base commit
+
+Run `canto repo init` from a Git repository with at least one commit. Use
+`canto repo show` from a nested directory to verify the canonical path, Git
+common directory, initial HEAD, and remote metadata. Canto refuses moved or
+mismatched repository identity instead of silently rewriting it.
+
+## A delegated executor or Ollama model is unavailable
+
+Run `canto delegate profile check PROFILE`. Cloud Codex requires an available,
+authenticated Codex CLI; verify login with `codex login status`. Ollama also
+requires `ollama list` to succeed and the requested model to be installed.
+Canto stores no login credentials, pulls no model, and provides no cloud
+fallback for an Ollama profile.
+
+## Sparse or denied paths reject capture
+
+Inspect `canto delegate dashboard TASK_ID --json`. Scope paths must be
+repository-relative, non-symlink paths and may not overlap denied paths.
+Generated `__pycache__` and `.pytest_cache` content is excluded, but real
+out-of-scope edits must be revised in the delegated worktree.
+
+## Review, conflict, or promotion is blocked
+
+Run `canto delegate review-summary TASK_ID` and
+`canto delegate conflict TASK_ID`. They distinguish failed or missing command
+evidence, changed checksums, stale canonical HEAD, dirty affected paths, queue
+overlap, and failed-promotion rollback state. Canto does not automatically
+merge, rebase, reset, retry, or clean up.
+
+Prompts, stdout/stderr, command logs, and immutable result artifacts live under
+`~/.canto/work/delegations/TASK_ID/artifacts/`. Revision feedback remains a
+review decision and is separate from optional prompt variants.

@@ -217,7 +217,7 @@ def test_plan_cli_approve_records_approval(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert '"status": "approved"' in result.output
-    state = SqliteStateStore(registry.store.paths.root / "state" / "canto.db")
+    state = SqliteStateStore(registry.store.paths.state_file)
     plan_id = json.loads(result.output)["plan_id"]
     assert state.get_plan(plan_id)["status"] == "approved"
 
@@ -363,7 +363,7 @@ def test_explain_plan_shows_reasons_io_risk_and_missing_values(tmp_path):
 
 def test_explain_cli_does_not_execute(tmp_path, monkeypatch):
     registry = installed_match_registry(tmp_path)
-    state = SqliteStateStore(registry.store.paths.root / "state" / "canto.db")
+    state = SqliteStateStore(registry.store.paths.state_file)
     orchestrator = Orchestrator(registry, PlanStore(state))
     plan = orchestrator.create_plan("import my wordpress site")
     monkeypatch.setattr(cli_module, "_capability_registry", lambda: registry)
@@ -606,9 +606,7 @@ def test_end_to_end_local_orchestration_cli(tmp_path, monkeypatch):
         settings.tools_dir,
         capability_roots=registry.execution_roots(),
     )
-    sqlite_state = SqliteStateStore(
-        registry.store.paths.root / "state" / "canto.db"
-    )
+    sqlite_state = SqliteStateStore(registry.store.paths.state_file)
     service = JobService(settings, runtime_registry, sqlite_state)
     monkeypatch.setattr(
         cli_module,

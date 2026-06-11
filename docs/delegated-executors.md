@@ -23,6 +23,13 @@ no HTTP endpoints and does not change orchestration `contract_version: 1.0`.
 
 ## Manual Workflow
 
+Bootstrap repository intent once before creating tasks:
+
+```bash
+cd /path/to/repository
+canto repo init
+```
+
 ```bash
 canto delegate create "Update parser" \
   --repo /path/to/repository \
@@ -62,7 +69,8 @@ Registering a profile checks only local executable availability and stores no
 credentials:
 
 ```bash
-canto delegate add-codex local-codex --executable codex --model MODEL
+canto delegate profile save local-codex --preset codex-cloud --model MODEL
+canto delegate profile check local-codex
 canto delegate assign TASK_ID --executor local-codex
 canto delegate prepare TASK_ID
 canto delegate launch TASK_ID
@@ -71,6 +79,40 @@ canto delegate revise TASK_ID --note "Address review feedback"
 canto delegate launch TASK_ID
 canto delegate capture TASK_ID
 ```
+
+`canto delegate add-codex` remains available for compatibility.
+
+## Dashboard and Prompt Comparisons
+
+```bash
+canto delegate dashboard --active
+canto delegate dashboard TASK_ID
+canto delegate dashboard TASK_ID --json
+
+canto delegate compare create TASK_ID \
+  --variant concise="Make the smallest correct edit." \
+  --variant documented="Include concise maintenance comments."
+canto delegate compare show COMPARISON_ID
+```
+
+Comparison variants are isolated sibling tasks from one recorded Git base.
+Assign, prepare, launch, and capture each sibling independently. A one-off
+launch may use `--variant NAME --instruction TEXT`. Canto stores the exact
+prompt and producing session/launch; comparison reports evidence but never
+chooses or accepts a winner.
+
+## Local Ollama Profile
+
+```bash
+canto delegate profile save local-qwen \
+  --preset codex-ollama \
+  --model qwen3:8b
+canto delegate profile check local-qwen
+```
+
+This uses Codex CLI with `--oss --local-provider ollama`. The check requires
+`codex`, `ollama`, a responsive local runtime, and an already-installed model.
+Canto does not pull models or fall back to cloud execution.
 
 Launch uses `codex exec --sandbox workspace-write --cd WORKTREE -`, sends the
 bounded task prompt on standard input, applies a timeout, and records stdout,
@@ -101,6 +143,8 @@ canto delegate list
 canto delegate status --active
 canto delegate pool
 canto delegate timeline TASK_ID
+canto delegate review-summary TASK_ID
+canto delegate conflict TASK_ID
 ```
 
 The timeline is reconstructed from durable StateStore records and survives a
@@ -112,8 +156,21 @@ SQLite restart. Large patches, logs, and summaries live under
 Run the network-free disposable demo:
 
 ```bash
-bash scripts/demo-delegated-executors.sh
+canto demo delegation
+canto demo delegation --promote
+canto demo delegation --keep
 ```
 
-It proves one manual workflow and one supervised scripted-Codex workflow. The
-script uses temporary repositories and does not modify the Canto checkout.
+The default is deterministic, offline, isolated from normal `~/.canto`, and
+stops at review. Successful runs clean themselves unless `--keep` is supplied;
+failed runs preserve evidence and print its location. `--mode cloud` and
+`--mode ollama` are explicit external-runtime opt-ins. The existing shell demo
+remains available.
+
+## Safe Cleanup
+
+Artifacts are intentionally read-only. Prefer the demo command's cleanup. For
+retained or failed work, inspect the printed root first, remove any Git
+worktree through the canonical repository when applicable, then restore owner
+write permission only inside that disposable root before deleting it. Canto
+never resets or removes a canonical repository automatically.

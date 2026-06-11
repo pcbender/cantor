@@ -5,7 +5,7 @@
 The database is stored at:
 
 ```text
-~/.canto/state/canto.db
+~/.canto/state.sqlite
 ```
 
 It contains jobs, ordered job events, approval objects, artifact metadata,
