@@ -34,6 +34,16 @@ def _matches(path: str, roots: list[str]) -> bool:
     return any(path == root or path.startswith(f"{root}/") for root in roots)
 
 
+def _is_generated_cache(path: str) -> bool:
+    parts = PurePosixPath(path).parts
+    name = parts[-1] if parts else ""
+    return (
+        "__pycache__" in parts
+        or ".pytest_cache" in parts
+        or name.endswith((".pyc", ".pyo"))
+    )
+
+
 def _changed_files(workspace: Path) -> list[dict[str, str]]:
     output = subprocess.run(
         ["git", "-C", str(workspace), "status", "--porcelain=v1", "-z", "--untracked-files=all"],
@@ -54,6 +64,8 @@ def _changed_files(workspace: Path) -> list[dict[str, str]]:
             source = os.fsdecode(entries[index]).replace(os.sep, "/")
             index += 1
             changed.append({"path": source, "status": "D "})
+        if status == "??" and _is_generated_cache(path):
+            continue
         changed.append({"path": path, "status": status})
     return sorted(changed, key=lambda item: item["path"])
 

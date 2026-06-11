@@ -56,11 +56,27 @@ class CodexCliExecutor:
 
     def prompt(self, task_id: str) -> str:
         task = self.delegation.get_task(task_id)
-        return "\n".join(
+        sections = [
+            f"Delegation task: {task.title}",
+            "",
+            task.instructions,
+        ]
+        reviews = self.delegation.get_records(task_id, "reviews")
+        revision_reviews = [
+            review
+            for review in reviews
+            if review.get("decision") == "revision_requested"
+        ]
+        if task.status == "revision_requested" and revision_reviews:
+            sections.extend(
+                [
+                    "",
+                    "Revision feedback:",
+                    revision_reviews[-1].get("note", "Address the requested revision."),
+                ]
+            )
+        sections.extend(
             [
-                f"Delegation task: {task.title}",
-                "",
-                task.instructions,
                 "",
                 "Allowed repository paths:",
                 *[f"- {path}" for path in task.scope.allowed_paths],
@@ -71,12 +87,15 @@ class CodexCliExecutor:
                 "Do not access credentials, publish changes, commit, push, or modify denied paths.",
                 "Complete the requested work in this worktree and report a concise summary.",
             ]
-        ).strip() + "\n"
+        )
+        return "\n".join(sections).strip() + "\n"
 
     def launch(self, task_id: str) -> ExecutorLaunch:
         task = self.delegation.get_task(task_id)
-        if task.status != "workspace_ready":
-            raise ExecutorError("Codex CLI launch requires a workspace_ready task")
+        if task.status not in {"workspace_ready", "revision_requested"}:
+            raise ExecutorError(
+                "Codex CLI launch requires a workspace_ready or revision_requested task"
+            )
         if not task.executor_id:
             raise ExecutorError("Delegation task has no assigned executor")
         profile = self.delegation.get_executor_profile(task.executor_id)
@@ -86,9 +105,10 @@ class CodexCliExecutor:
         workspace_path = Path(workspace.path)
         artifact_dir = workspace_path.parent / "artifacts"
         artifact_dir.mkdir(parents=True, exist_ok=True)
-        prompt_path = artifact_dir / "executor-prompt.md"
-        stdout_path = artifact_dir / "executor.stdout.log"
-        stderr_path = artifact_dir / "executor.stderr.log"
+        launch_id = f"launch_{uuid4().hex}"
+        prompt_path = artifact_dir / f"{launch_id}.prompt.md"
+        stdout_path = artifact_dir / f"{launch_id}.stdout.log"
+        stderr_path = artifact_dir / f"{launch_id}.stderr.log"
         prompt = self.prompt(task_id)
         prompt_path.write_text(prompt, encoding="utf-8")
 
@@ -109,7 +129,7 @@ class CodexCliExecutor:
         )
         argv = self.command(profile, workspace_path)
         launch = ExecutorLaunch(
-            launch_id=f"launch_{uuid4().hex}",
+            launch_id=launch_id,
             task_id=task_id,
             session_id=session_id,
             executor_id=profile.executor_id,

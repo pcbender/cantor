@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 
 from canto.core.delegation import DelegationService
+from canto.core.delegation_artifacts import DelegationArtifactService
 from canto.core.delegation_executor import CodexCliExecutor, ExecutorError
+from canto.core.delegation_review import DelegationReviewService
 from canto.core.delegation_workspace import DelegationWorkspaceService, inspect_repository
 from canto.core.state import MemoryStateStore
 from canto.models.delegation import (
@@ -88,3 +90,38 @@ def test_codex_cli_profile_requires_available_executable(tmp_path):
 
     with pytest.raises(ExecutorError, match="unavailable"):
         CodexCliExecutor.available(profile)
+
+
+def test_codex_cli_relaunches_with_revision_feedback_and_preserves_logs(tmp_path):
+    executable = tmp_path / "codex"
+    executable.write_text(
+        "#!/bin/sh\n"
+        "cat >/dev/null\n"
+        "printf 'value = 2\\n' > src/app.py\n"
+        "printf 'first launch\\n'\n"
+    )
+    executable.chmod(0o755)
+    service, workspaces = prepared_task(tmp_path, executable)
+    executor = CodexCliExecutor(service, workspaces, timeout_seconds=10)
+
+    first_launch = executor.launch("task_1")
+    DelegationArtifactService(service, workspaces).capture("task_1")
+    DelegationReviewService(service, workspaces).request_revision(
+        "task_1", "reviewer", "Use value 3 instead"
+    )
+    executable.write_text(
+        "#!/bin/sh\n"
+        "cat >/dev/null\n"
+        "printf 'value = 3\\n' > src/app.py\n"
+        "printf 'second launch\\n'\n"
+    )
+    executable.chmod(0o755)
+
+    second_launch = executor.launch("task_1")
+
+    assert first_launch.stdout_path != second_launch.stdout_path
+    assert Path(first_launch.stdout_path).read_text() == "first launch\n"
+    assert Path(second_launch.stdout_path).read_text() == "second launch\n"
+    assert "Use value 3 instead" in Path(second_launch.prompt_path).read_text()
+    assert service.get_task("task_1").status == "executor_done"
+    assert len(service.get_records("task_1", "launches")) == 2
