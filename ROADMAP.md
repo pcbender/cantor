@@ -5,11 +5,12 @@ delegated-executor workstream.
 
 Canto has moved beyond proof-of-concept. The system can now package capabilities, install them, discover them, compose approved plans, execute those plans through the bounded JobService/runner path, expose orchestration over HTTP, and publish a frozen v1.0 orchestration contract.
 
-The next workstream is **CP-1201 — UX/DX Audit and Design**. MVP v1.1 Delegated
-Executor Workspaces is complete, merged, and verified through deterministic
-local tests plus a review-only real cloud Codex smoke test. External
-Orchestrator Integration remains scheduled within MVP v2 after the local
-single-user, delegation, and developer-experience foundations.
+The next workstream is **MVP v1.2 — Delegated Executor UX Hardening**, beginning
+with **CP-1201 — Delegated Executor UX Architecture and Design**. MVP v1.1
+Delegated Executor Workspaces is complete, merged, and verified through
+deterministic local tests plus a review-only real cloud Codex smoke test.
+External Orchestrator Integration remains scheduled within MVP v2 after the
+local single-user, delegation, and developer-experience foundations.
 
 ---
 
@@ -270,8 +271,8 @@ Canto owns execution. External orchestrators call Canto through the contract; th
 The forward plan has three primary MVP release tiers — **MVP v1** (single-user,
 write-capable, local), **MVP v2** (local team server), and **MVP v3** (public
 server). The local **MVP v1.1 Delegated Executor Workspaces** extension is
-complete. The developer-experience workstream begins next with CP-1201. Each
-release remains a usable foundation for the next.
+complete. **MVP v1.2 Delegated Executor UX Hardening** begins next with CP-1201.
+Each release remains a usable foundation for the next.
 
 How to read this:
 
@@ -427,19 +428,268 @@ workspace workstream passed the full automated suite, the network-free local
 demo, and a review-only real cloud Codex smoke test. CP-1201 is the next roadmap
 packet.
 
-Recommended work packets — developer experience (formerly v3.2, next after
-completed CP-1314):
+---
 
-- CP-1201 — UX/DX Audit and Design
-- CP-1202 — `canto demo` Command Family
-- CP-1203 — Human-Readable Plan Display
-- CP-1204 — Artifact Summary Views
-- CP-1205 — Plan Timeline / Event Display
-- CP-1206 — Improved Missing-Input Prompts
-- CP-1207 — Improved Missing-Capability Suggestions
-- CP-1208 — Troubleshooting Guide
-- CP-1209 — `examples/` Workflow Directory
-- CP-1210 — Developer-Experience Documentation Pass
+## MVP v1.2 — Delegated Executor UX Hardening (local extension)
+
+Goal: make the completed delegated-executor architecture comfortable and clear
+enough for daily local use without adding a second lifecycle, execution path,
+approval model, or promotion mechanism.
+
+Design posture:
+
+- Keep `DelegationService`, `StateStore`, Git worktrees, immutable result
+  revisions, reviews, command evidence, and exact-patch promotion as the
+  canonical implementation.
+- Prefer a coherent CLI workflow over a new local web application. A dashboard
+  in MVP v1.2 means a human-readable terminal view unless CP-1201 proves a
+  stronger need.
+- Keep executor selection explicit. Presets reduce repeated configuration but
+  never assign, launch, accept, or promote autonomously.
+- Treat cloud Codex, local Ollama, and future harnesses as executor profiles
+  behind the same delegation lifecycle. Model/provider identity remains
+  provenance, not Canto execution identity.
+- Make review evidence understandable without weakening checksum, scope,
+  command, conflict, or canonical-repository checks.
+
+Non-goals:
+
+- No delegation HTTP/MCP endpoints, multi-user task board, browser dashboard,
+  remote executor pool, or server-side scheduler.
+- No autonomous task assignment, prompt optimization, acceptance, queueing, or
+  promotion.
+- No AI-generated provider code installation, credential injection, target
+  writes, remote registry, dependency solving, or package signing.
+- No replacement of the frozen orchestration contract or JobService execution
+  path.
+
+Hard rules:
+
+- Do not introduce a second delegation lifecycle, executor launch path,
+  acceptance decision, or promotion implementation.
+- Do not let UX defaults weaken allowed/denied paths, command requirements,
+  artifact checksums, repository identity, or explicit promotion authority.
+- Do not claim hostile-agent isolation from sparse checkout or local process
+  controls.
+- Do not require network access, cloud quota, Ollama, or a downloaded model for
+  the automated test suite.
+- Do not add remote registry, AI generation, credential handling, target
+  writes, or autonomous scheduling to this workstream.
+
+Success condition:
+
+A developer can configure a known executor once, create and launch a bounded
+task with minimal flags, compare or revise executor sessions, understand the
+patch/tests/conflicts at a glance, and run a complete disposable demo through
+review without manually querying raw SQLite records or artifact JSON.
+
+Recommended work packets — delegated executor UX hardening:
+
+### CP-1201 — Delegated Executor UX Architecture and Design
+
+Audit the current `canto delegate` workflow and define the MVP v1.2 interaction
+model before changing code.
+
+Include:
+
+- current command journey from profile setup through promotion;
+- canonical task-detail and task-list views;
+- dashboard information hierarchy and terminal output conventions;
+- executor preset configuration and precedence;
+- session/prompt revision and A/B comparison semantics;
+- local Ollama harness boundary and offline test strategy;
+- promotion review-summary and conflict-explanation contracts;
+- one-command demo behavior, cleanup, and safety boundaries;
+- compatibility and migration impact for existing delegation records.
+
+Acceptance:
+
+- Architecture continues to use the existing delegation lifecycle and durable
+  records.
+- The design explicitly distinguishes task, result revision, executor session,
+  review, queue entry, and promotion.
+- No code is required; unresolved product decisions are listed before CP-1202.
+
+### CP-1202 — Delegation Task Dashboard
+
+Add a concise terminal dashboard for active and recent delegation tasks.
+
+Behavior:
+
+- Show task status, executor/profile, workspace, latest revision, review state,
+  command evidence, queue blockers, and next valid operator actions.
+- Support a compact list and detailed single-task view.
+- Read durable state only; do not schedule, launch, review, or promote.
+
+Acceptance:
+
+- Multiple concurrent tasks are understandable without raw JSON.
+- Terminal output remains deterministic and has a machine-readable option.
+- Existing `show`, `status`, `pool`, and `timeline` compatibility is preserved.
+
+### CP-1203 — Session Prompt and A/B Comparison Workflow
+
+Make repeated executor sessions and prompt variants explicit and reviewable.
+
+Behavior:
+
+- Allow an orchestrator to supply a named prompt variant or supplemental
+  instruction for a launch.
+- Preserve the exact rendered prompt and output per session.
+- Run compared variants from the same recorded Git base in isolated workspace
+  state so one session's edits cannot influence the other.
+- Compare two sessions/results by changed files, patch summary, commands, exit
+  state, and token/runtime metadata when available.
+- Comparison never selects a winner or changes acceptance automatically.
+
+Acceptance:
+
+- A/B sessions remain attached to one task and immutable result revisions.
+- Comparison rejects sessions with incompatible bases instead of guessing.
+- Reviewers can identify which prompt/session produced each result.
+- Revision feedback remains distinct from optional prompt variants.
+
+### CP-1204 — Executor Profile Presets
+
+Reduce repeated executor setup with local named presets.
+
+Behavior:
+
+- Provide conservative built-in or generated examples for manual, cloud Codex,
+  and local Ollama profiles.
+- Store executable, model/provider provenance, launch mode, safe extra args,
+  timeout, and default permissions without storing credentials.
+- Define explicit precedence among preset, saved profile, task override, and
+  command-line override.
+
+Acceptance:
+
+- A known profile can be reused without re-entering model/executable flags.
+- Invalid or unavailable executables/models fail clearly before task mutation.
+- Presets cannot weaken task scope, denied paths, or promotion requirements.
+
+### CP-1205 — Local Ollama Executor and Smoke Test
+
+Add and verify a local Ollama-backed executor profile through the same Codex CLI
+or approved local harness boundary defined by CP-1201.
+
+Behavior:
+
+- Local-only model execution; no cloud fallback.
+- Detect unavailable Ollama/runtime/model state with actionable diagnostics.
+- Use a disposable Git fixture and stop at review by default.
+
+Acceptance:
+
+- Automated tests use a scripted/mock executable and require no downloaded
+  model.
+- An optional documented smoke test proves a configured local model.
+- Local Ollama results use the same artifacts, reviews, command evidence, and
+  promotion path as cloud Codex results.
+
+### CP-1206 — Promotion Review Summary
+
+Add a human-readable pre-acceptance and pre-promotion summary derived from
+immutable evidence.
+
+Show:
+
+- result revision and producing session/profile;
+- changed files and patch statistics;
+- observed, failed, reported, missing, and waived commands;
+- denied/out-of-scope checks and artifact checksum state;
+- canonical base/HEAD state and promotion readiness;
+- explicit reasons acceptance or promotion is blocked.
+
+Acceptance:
+
+- Summary generation is read-only and deterministic.
+- It does not replace artifact checksum verification at acceptance/promotion.
+- Operators can review routine changes without opening raw JSON first.
+
+### CP-1207 — Rich Conflict and Recovery Explanations
+
+Make overlap, stale-base, dirty-worktree, checksum, and failed-promotion states
+actionable.
+
+Behavior:
+
+- Identify the conflicting task/revision, repository, and overlapping paths.
+- Distinguish queue overlap from canonical divergence and local dirty changes.
+- Show safe operator options such as revise, recapture, dequeue, retry, reject,
+  or manual reconciliation without performing them automatically.
+- Surface rollback-attempt and partial-state details for promotion failures.
+
+Acceptance:
+
+- Explanations are structured as well as human-readable.
+- No automatic merge, rebase, reset, cleanup, or destructive recovery is added.
+- Cross-repository tasks never report false path conflicts.
+
+### CP-1208 — One-Command Delegated Executor Demo
+
+Add a `canto demo delegation`-style command consistent with CP-1201 design.
+
+Behavior:
+
+- Create a disposable repository and isolated Canto state.
+- Run the complete scripted local workflow through review and optionally an
+  explicitly requested promotion demonstration.
+- Support a no-network default; cloud Codex and local Ollama modes are explicit
+  opt-ins with quota/runtime warnings.
+- Print artifact, workspace, timeline, and cleanup locations.
+
+Acceptance:
+
+- Default demo is deterministic, offline, and leaves normal `~/.canto` state
+  unchanged.
+- Failure preserves useful evidence and prints cleanup instructions.
+- Existing shell demo remains valid until the command fully replaces it.
+
+### CP-1209 — Delegated Executor Troubleshooting and Examples
+
+Add task-oriented examples and diagnostics for manual, cloud Codex, and local
+Ollama workflows.
+
+Cover:
+
+- missing Git base commit, executable, login, model, or local runtime;
+- sparse-path and denied-path mistakes;
+- failed tests and generated cache files;
+- revision relaunch, stale base, conflict queue, and promotion failure;
+- artifact/log locations and safe cleanup.
+
+Acceptance:
+
+- Documentation matches implemented commands and defaults.
+- Examples use disposable repositories and no real credentials.
+- Cloud examples stop at review unless promotion is explicitly requested.
+
+### CP-1210 — MVP v1.2 End-to-End UX Validation
+
+Prove the daily-use workflow across the completed UX surface.
+
+Must cover:
+
+- reusable profile preset;
+- task creation and dashboard visibility;
+- two prompt/session variants or a revision cycle;
+- review summary and command evidence;
+- conflict explanation;
+- explicit acceptance and promotion in a disposable repository;
+- restart-safe inspection;
+- one-command offline demo;
+- optional cloud Codex and local Ollama smoke-test documentation.
+
+Acceptance:
+
+- Full existing suite passes without network or downloaded models.
+- No regression to manifests, packages, registry, jobs, approvals,
+  orchestration, writes, or delegated promotion.
+- MVP v1.2 release/status documentation records exact verification results.
+
+Stop after CP-1210. Delegation HTTP/MCP exposure and multi-user executor
+coordination remain MVP v2 work.
 
 ---
 
@@ -730,8 +980,8 @@ MVP v1.1 — Delegated Executor Workspaces
 Next recommended milestone:
 
 ```text
-Orchestrator UX & Developer Experience
-  first packet: CP-1201 (UX/DX Audit and Design)
+MVP v1.2 — Delegated Executor UX Hardening
+  first packet: CP-1201 (Delegated Executor UX Architecture and Design)
 ```
 
 MVP tiers (forward spine, built in order):
@@ -739,7 +989,7 @@ MVP tiers (forward spine, built in order):
 ```text
 MVP v1 — Single-user, write-capable (local) [complete]
 MVP v1.1 — Delegated Executor Workspaces [complete]
-UX/DX workstream — CP-1201 through CP-1210 [next]
+MVP v1.2 — Delegated Executor UX Hardening [next]
 MVP v2 — Local team server
 MVP v3 — Public server
 ```
