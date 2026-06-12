@@ -63,13 +63,15 @@ class CodexCliExecutor:
     ) -> str:
         task = self.delegation.get_task(task_id)
         sections = [
-            "You are a Canto delegated executor.",
+            "You are a Canto delegated Worker.",
             "Read .canto/agents/shared.md and .canto/agents/executor.md before working.",
-            "Work only in this delegated workspace and follow the Canto task instructions below.",
-            "Do not modify the canonical repository or commit, push, accept, reject, queue, or promote.",
-            "When complete, leave the workspace ready for `canto delegate capture`.",
+            "The executor.md filename is retained for compatibility; its public role is Worker.",
+            "Work only in this delegated Workspace and follow the Canto assignment instructions below.",
+            "Do not modify the canonical repository.",
+            "Do not self-assign, broaden scope, commit, push, accept, reject, queue, or Apply a Result.",
+            "When complete, leave the Workspace ready for `canto delegate capture` so Canto can record an immutable Result for Developer review.",
             "",
-            f"Delegation task: {task.title}",
+            f"Delegated assignment: {task.title}",
             "",
             task.instructions,
         ]
@@ -103,7 +105,7 @@ class CodexCliExecutor:
                 *[f"- {path}" for path in task.scope.denied_paths],
                 "",
                 "Do not access credentials, publish changes, commit, push, or modify denied paths.",
-                "Complete the requested work in this worktree and report a concise summary.",
+                "Complete the assigned work in this worktree and report a concise Result summary.",
             ]
         )
         return "\n".join(sections).strip() + "\n"

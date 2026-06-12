@@ -15,9 +15,11 @@ Rules:
 ## Canto Agent Instructions
 
 This repository is Canto-enabled. Before working, read
-`.canto/agents/shared.md`. Supervising/orchestrator sessions must also read
-`.canto/agents/orchestrator.md`; delegated executor sessions must also read
-`.canto/agents/executor.md`.
+`.canto/agents/shared.md`. Developer sessions supervising governed work must
+also read `.canto/agents/orchestrator.md`; delegated Worker sessions must also
+read `.canto/agents/executor.md`. The filenames retain internal compatibility
+terms while the manuals define the public roles.
 
-Do not bypass Canto delegation, review, artifact, or promotion rules.
+Do not bypass Canto assignment, Guardrail, review, Result, Approval, or Apply
+rules.
 <!-- canto-agent-instructions:end -->

@@ -1,6 +1,6 @@
 # Architecture Language Sprint
 
-Status: in progress; CP-1401 approved, CP-1402 through CP-1404 complete
+Status: complete; CP-1401 through CP-1407 complete
 
 ## Goal
 
@@ -128,6 +128,10 @@ Acceptance:
 - Existing persisted delegation models and commands remain compatible.
 - A disposable bootstrapped repository demonstrates the generated language.
 
+Status: complete. Generated manuals and launch prompts use Developer and Worker
+authority language while retaining compatibility filenames, model names,
+statuses, commands, and JSON fields.
+
 ### CP-1406 — Compatibility and Contract Audit
 
 Verify that the language migration did not rename or reinterpret frozen or
@@ -144,6 +148,8 @@ Acceptance:
 - Internal execution and provenance identities remain unchanged.
 - Full tests and documentation command checks pass.
 
+Status: complete. See `docs/architecture-language-compatibility-audit.md`.
+
 ### CP-1407 — Language Freeze and Adoption Record
 
 Record the final vocabulary, exceptions, verification results, and rules for
@@ -158,8 +164,10 @@ Acceptance:
   compatibility review.
 - Verification results and known deferred alias work are recorded.
 
+Status: complete. See `docs/architecture-language-freeze.md`.
+
 ## Implementation Gate
 
-No code or command alias implementation begins until CP-1402 completes and
-CP-1404 is approved. Documentation-only wording changes may proceed through
-CP-1403 where they do not alter command, schema, or contract meaning.
+The design gate is satisfied. CP-1404 approves only the future additive `find`
+alias; its implementation remains a separate packet. No generic Apply alias is
+approved.

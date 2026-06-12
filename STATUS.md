@@ -1,6 +1,6 @@
 # Canto Implementation Status
 
-Updated: 2026-06-11
+Updated: 2026-06-12
 
 ## Release Preparation
 
@@ -148,18 +148,25 @@ packet CP-1315 and CP-1201 through CP-1210. The daily workflow now covers global
 state with repo-local bootstrap, dashboard inspection, reusable profiles,
 isolated prompt comparisons, local Ollama preflight, review summaries, typed
 conflicts, explicit promotion, and a one-command offline demo. The current full
-suite passes 280 tests without network access or downloaded models.
+suite passes 281 tests without network access or downloaded models.
 
-CP-1315 bootstrap now also generates non-secret shared/orchestrator/executor
-manuals, preserves existing `AGENTS.md` guidance while adding a Canto pointer,
-provides `canto repo doctor`, exposes committed manuals inside sparse delegated
-worktrees, and injects explicit executor-role instructions at launch.
+CP-1315 bootstrap now also generates non-secret shared, Developer, and Worker
+manuals at compatibility paths, preserves existing `AGENTS.md` guidance while
+adding a Canto pointer, provides `canto repo doctor`, exposes committed manuals
+inside sparse delegated worktrees, and injects explicit Worker-role
+instructions at launch.
 
-The Architecture Language Sprint is in progress. CP-1401 freezes the public
-model around Developer, Worker, Toolbox, Operation, Run, Result, Guardrails,
-Catalog, and qualified Apply actions. CP-1402 completed the public terminology
-audit. Internal identifiers and the frozen orchestration contract remain
-unchanged while current user guidance migrates to the public vocabulary.
+The Architecture Language Sprint CP-1401 through CP-1407 is complete. Public
+language is frozen around Developer, Worker, Toolbox, Operation, Run, Result,
+Guardrails, Catalog, Review, and qualified Apply actions. Generated role
+manuals and Worker launch prompts enforce the authority split. Internal
+identifiers, existing commands and JSON fields, and orchestration
+`contract_version: 1.0` remain unchanged. The freeze and exceptions are
+recorded in `docs/architecture-language-freeze.md`.
+
+Architecture Language verification: focused bootstrap and Worker launch tests
+pass 21 tests; the full `tests import_capability/tests` suite passes 281 tests
+with the existing non-blocking Starlette `TestClient` deprecation warning.
 
 Known non-blocking issue: Starlette's current `TestClient` emits a deprecation
 warning recommending a future `httpx2` migration. Runtime behavior and tests

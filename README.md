@@ -10,6 +10,19 @@ Internally, Canto retains precise Capability, Skill, Provider, Job, Artifact,
 Registry, Policy, and Approval models. Canonical execution identity is
 `(skill, provider)`; package and provenance identity is `capability@version`.
 
+## Product language
+
+Canto's public workflow is `Find → Plan → Approve → Run → Review`. Canto assigns
+an approved Toolbox and bounded Operation to a Worker; the Worker performs the
+work under Guardrails; Canto records the Result; and the Developer decides
+whether that exact Result may be Applied.
+
+Review means human judgment. Passive inspection uses Status, Timeline, or
+Events. Apply is never a bare action: it must name the exact Result and target.
+See `docs/architecture-language-lexicon.md` and
+`docs/architecture-language-freeze.md` for the frozen vocabulary, internal
+mappings, and compatibility exceptions.
+
 ## Requirements
 
 - WSL2 Ubuntu or another Linux environment

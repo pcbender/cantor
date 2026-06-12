@@ -1,7 +1,7 @@
 # Canto Architecture Language Lexicon
 
-Status: approved for freeze after the Architecture Language Sprint terminology
-audit.
+Status: frozen on June 12, 2026. See
+`docs/architecture-language-freeze.md` for adoption rules and exceptions.
 
 ## Purpose
 

@@ -66,11 +66,12 @@ The script uses an isolated temporary home, checks health, performs a managed
 JSON dry run, approves its live promotion, verifies the write, approves
 rollback, and verifies restoration. It does not alter the normal user registry.
 
-## Real Cloud Delegation Smoke Test
+## Real Cloud Delegated Worker Smoke Test
 
-This optional test verifies the MVP v1.1 delegated-executor path against a real
+This optional test verifies the MVP v1.1 delegated-Worker path against a real
 Codex cloud model. It consumes account quota and requires an authenticated
-Codex CLI. Model availability depends on the account running the test.
+Codex CLI. Model availability depends on the account running the test. The CLI
+retains internal `executor` profile and `task_id` terminology for compatibility.
 
 Confirm the prerequisites:
 
@@ -81,7 +82,7 @@ canto delegate --help
 ```
 
 Create a disposable canonical repository with an initial commit. Canto requires
-the commit so it can bind the delegated result to an exact Git base:
+the commit so it can bind the delegated Result to an exact Git base:
 
 ```bash
 mkdir -p ~/canto-delegation-smoke/src ~/canto-delegation-smoke/tests
@@ -95,8 +96,8 @@ git commit -m "Initialize delegation smoke test"
 canto repo init
 ```
 
-Register the cloud executor profile, create the bounded task, and copy the
-`task_id` printed by `create` into `TASK_ID`:
+Register the cloud Worker profile, create the bounded assignment, and copy the
+internal `task_id` printed by `create` into `TASK_ID`:
 
 ```bash
 canto delegate add-codex cloud-mini \
@@ -125,8 +126,9 @@ codex exec --sandbox workspace-write --cd DELEGATED_WORKTREE \
 ```
 
 The child is not a second GUI window. Canto records its argv, prompt, stdout,
-stderr, exit code, model provenance, and workspace. A successful capture leaves
-the task in `reviewing`; it does not accept or promote the result.
+stderr, exit code, model provenance, and Workspace. A successful capture leaves
+the assignment in `reviewing`; it does not accept the Result or Apply it to the
+canonical repository.
 
 Verify that the canonical checkout is unchanged and inspect the durable review
 evidence:
@@ -148,15 +150,15 @@ cat "$ARTIFACT_DIR"/*.stderr.log
 
 Expected results:
 
-- The child launch exits successfully and the task reaches `reviewing`.
+- The child launch exits successfully and the assignment reaches `reviewing`.
 - `changed_files.json` contains only `src/message.txt` and
   `tests/expected.txt`.
 
 - The canonical files still contain `before delegation`.
 - Generated untracked Python and pytest cache files are excluded from capture.
-- No commit, push, acceptance, or promotion occurs automatically.
+- No commit, push, acceptance, or Apply occurs automatically.
 
-To exercise revision handling without promotion:
+To exercise revision handling without Apply:
 
 ```bash
 canto delegate revise "$TASK_ID" --note "Use different reviewed text"
@@ -165,9 +167,10 @@ canto delegate capture "$TASK_ID"
 ```
 
 The second launch receives the revision note, creates separate prompt/output
-logs, and produces immutable revision 2. Only after reviewing the exact patch
-should an operator use `canto delegate accept`, `queue-add`, and
-`queue-promote`. Delete the disposable repository and its delegation work files
+logs, and produces immutable Result revision 2. Only after reviewing the exact
+patch should the Developer use `canto delegate accept`, `queue-add`, and the
+compatibility command `queue-promote` to authorize and perform the qualified
+Apply action. Delete the disposable repository and its delegation work files
 when the test is no longer needed.
 
 ## Optional Local Ollama Smoke Test
@@ -183,7 +186,7 @@ canto delegate profile save local-ollama \
 canto delegate profile check local-ollama
 ```
 
-Then follow the disposable repository and task flow above, assigning
+Then follow the disposable repository and assignment flow above, assigning
 `local-ollama` instead of the cloud profile. Stop after `capture` and inspect
 `canto delegate review-summary TASK_ID`. Canto does not download models, use a
-cloud fallback, accept the result, or promote it automatically.
+cloud fallback, accept the Result, or Apply it automatically.

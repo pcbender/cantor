@@ -57,6 +57,13 @@ def test_repo_init_creates_non_secret_repo_configuration(repository):
     assert (repository / ".canto" / "agents" / "orchestrator.md").is_file()
     assert (repository / ".canto" / "agents" / "executor.md").is_file()
     assert CANTO_AGENTS_MARKER_START in (repository / "AGENTS.md").read_text()
+    assert "Developer sessions" in (repository / "AGENTS.md").read_text()
+    assert "# Canto Developer Instructions" in (
+        repository / ".canto" / "agents" / "orchestrator.md"
+    ).read_text()
+    assert "# Canto Delegated Worker Instructions" in (
+        repository / ".canto" / "agents" / "executor.md"
+    ).read_text()
     content = (repository / ".canto" / "repo.toml").read_text()
     assert "credential" not in content
     assert "task" not in content
@@ -94,7 +101,7 @@ def test_repo_init_refreshes_only_canto_owned_agents_section(repository):
     assert content.startswith(human_prefix)
     assert content.endswith(human_suffix)
     assert "Old generated guidance" not in content
-    assert "Do not bypass Canto delegation" in content
+    assert "Do not bypass Canto assignment" in content
 
 
 def test_repo_init_upgrades_existing_bootstrap_with_agent_files(repository):
@@ -109,6 +116,21 @@ def test_repo_init_upgrades_existing_bootstrap_with_agent_files(repository):
     assert (repository / ".canto" / "delegate.toml").is_file()
     assert (repository / ".canto" / "agents" / "executor.md").is_file()
     assert (repository / "AGENTS.md").is_file()
+
+
+def test_repo_init_refreshes_canto_owned_role_manuals(repository):
+    initialize_repository(repository)
+    developer_manual = repository / ".canto" / "agents" / "orchestrator.md"
+    worker_manual = repository / ".canto" / "agents" / "executor.md"
+    developer_manual.write_text("Old orchestrator language.\n")
+    worker_manual.write_text("Old executor language.\n")
+
+    initialize_repository(repository)
+
+    assert "# Canto Developer Instructions" in developer_manual.read_text()
+    assert "Authorize Canto to Apply" in developer_manual.read_text()
+    assert "# Canto Delegated Worker Instructions" in worker_manual.read_text()
+    assert "Do not self-assign" in worker_manual.read_text()
 
 
 def test_repo_resolution_searches_from_nested_directory(repository):
