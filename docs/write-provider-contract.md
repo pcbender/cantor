@@ -1,5 +1,11 @@
 # Write-Provider Contract
 
+Publicly, a governed write is a Run that produces an exact reviewable Result.
+The Developer authorizes applying that Result to the named target; Canto then
+performs the qualified Apply action after verification. This document retains
+the precise Provider, Job, Artifact, and promotion terms required by the
+implementation contract.
+
 Write-capable providers remain ordinary Canto providers identified by
 `(skill, provider)`. They add a `write` mapping that declares:
 

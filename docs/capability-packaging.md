@@ -1,5 +1,9 @@
 # Canto Capability Packaging Design
 
+Packaging creates a distributable Toolbox. This document retains Capability
+and manifest terminology because those names define the `.canto` archive and
+its package/provenance identity.
+
 This document describes the implemented local `.canto` package format.
 
 ## Package format

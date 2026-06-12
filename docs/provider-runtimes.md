@@ -1,5 +1,10 @@
 # Provider Runtimes
 
+Providers are the internal implementations that perform public Operations.
+This document uses the precise Provider, Job, Artifact, and Policy terms because
+it specifies the runtime boundary behind user-facing Runs, Results, and
+Guardrails.
+
 Provider manifests select one runner type while retaining the same Canto
 request/result protocol:
 

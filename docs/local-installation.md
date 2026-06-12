@@ -1,9 +1,14 @@
 # Local Installation and Upgrade
 
+Canto is installed globally for one user and becomes repository-aware through
+repo-local configuration. Installed Toolboxes, durable Runs and Results,
+credentials, and Worker workspaces remain under the user's Canto home; the
+repository stores only non-secret intent, Guardrails, and role instructions.
+
 MVP v1 supports a trusted, single-user Linux or WSL2 installation from a local
 source checkout or wheel. Python 3.11 or newer and `prlimit` are required. Node
-and Docker/Podman are optional and only needed by providers that declare those
-runtimes.
+and Docker/Podman are optional and only needed by Provider implementations that
+declare those runtimes.
 
 Development install:
 

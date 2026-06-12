@@ -781,6 +781,38 @@ coordination remain MVP v2 work.
 
 ---
 
+## Architecture Language Sprint
+
+Goal: freeze an intuitive public vocabulary before the next implementation
+workstream while preserving Canto's established internal architecture and
+frozen orchestration contract.
+
+Public language centers on Developer, Worker, Toolbox, Operation, Run, Result,
+Guardrails, Catalog, and qualified Apply actions. Internal concepts remain
+Capability, Skill, Provider, Tool, Plan, Job, Registry, Policy, and Approval.
+
+The approved lexicon and packet boundaries are defined in:
+
+- `docs/architecture-language-lexicon.md`
+- `docs/architecture-language-sprint.md`
+
+Work packets:
+
+- CP-1401 — Public Architecture Lexicon (approved)
+- CP-1402 — Public Terminology Audit (complete)
+- CP-1403 — Public Documentation Migration (complete)
+- CP-1404 — CLI, Help, and Message Language Design (complete)
+- CP-1405 — Agent and Delegation Language Migration
+- CP-1406 — Compatibility and Contract Audit
+- CP-1407 — Language Freeze and Adoption Record
+
+This is a presentation and compatibility workstream. It does not rename
+persisted models, manifest fields, canonical identifiers, or frozen HTTP
+contract fields. CLI aliases remain additive and require CP-1404 approval
+before implementation.
+
+---
+
 ## MVP v2 — Local Team Server
 
 Goal: deploy one Canto instance on an internal network that a team of humans and AI

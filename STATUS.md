@@ -155,6 +155,12 @@ manuals, preserves existing `AGENTS.md` guidance while adding a Canto pointer,
 provides `canto repo doctor`, exposes committed manuals inside sparse delegated
 worktrees, and injects explicit executor-role instructions at launch.
 
+The Architecture Language Sprint is in progress. CP-1401 freezes the public
+model around Developer, Worker, Toolbox, Operation, Run, Result, Guardrails,
+Catalog, and qualified Apply actions. CP-1402 completed the public terminology
+audit. Internal identifiers and the frozen orchestration contract remain
+unchanged while current user guidance migrates to the public vocabulary.
+
 Known non-blocking issue: Starlette's current `TestClient` emits a deprecation
 warning recommending a future `httpx2` migration. Runtime behavior and tests
 remain successful under the versions pinned in `pyproject.toml`.

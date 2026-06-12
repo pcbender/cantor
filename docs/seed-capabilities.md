@@ -1,6 +1,8 @@
 # Reviewed Seed Capabilities
 
-MVP v1 ships a small explicit catalogue of trusted built-in providers. List
+MVP v1 ships a small explicit Catalog of trusted built-in Operations and their
+Provider implementations. This advanced inventory retains exact
+`(skill, provider)` execution identities. List
 the machine-readable review metadata with:
 
 ```bash
@@ -14,7 +16,7 @@ The seed set is:
 | `check_dependencies.manifest_dependency_checker` | Inspect declared dependencies without installing them. | Local read |
 | `source_inventory.public_html_crawler` | Inventory public sites within approved domains. | Approved network read |
 | `migration_report.local_markdown_report` | Create local migration assessment artifacts. | Local artifact read/write |
-| `managed_json.local_document` | Demonstrate governed dry run, promotion, verification, and rollback. | Governed local write |
+| `managed_json.local_document` | Demonstrate governed dry run, qualified Apply, verification, and rollback. | Governed local write |
 
 The catalogue is checked in at `canto/seed-capabilities.yaml`, included in the
 wheel, and audited against the runtime registry in tests. “Trusted” means the

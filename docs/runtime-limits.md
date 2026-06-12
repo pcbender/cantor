@@ -1,5 +1,9 @@
 # Runtime Limits and Egress
 
+Runtime limits are part of the Guardrails visible to a Developer and Worker.
+This document retains precise Provider, Policy, Job, and Artifact terminology
+for configuration and diagnostics.
+
 Canto applies global ceilings with optional lower per-provider `limits` values:
 
 ```yaml
