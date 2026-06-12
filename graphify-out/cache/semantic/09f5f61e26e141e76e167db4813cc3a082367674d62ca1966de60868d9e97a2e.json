@@ -1,0 +1,1 @@
+{"nodes": [{"id": "manifest_dependency_checker_provider", "label": "manifest_dependency_checker", "file_type": "code", "source_file": "skills/check_dependencies/providers/manifest_dependency_checker/provider.yaml", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

@@ -1,0 +1,1 @@
+{"nodes": [{"id": "tests_fixtures_capabilities_invalid_risk_level", "label": "source_inventory Capability", "file_type": "code", "source_file": "tests/fixtures/capabilities/invalid_risk_level.yaml", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}
