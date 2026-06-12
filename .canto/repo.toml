@@ -1,0 +1,8 @@
+version = 1
+repo_id = "repo_55b3b21e37fa4bd99211d780ac1b044b"
+canonical_path = "/home/mrose/canto"
+git_common_dir = "/home/mrose/canto/.git"
+initial_head = "4b1a121a33b2b483e023a03d26205f5abb4cdc4c"
+
+[remotes]
+"origin" = "https://github.com/pcbender/cantor.git"

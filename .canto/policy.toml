@@ -1,0 +1,7 @@
+version = 1
+allowed_paths = []
+denied_paths = []
+allowed_commands = []
+required_commands = []
+allow_network = false
+allow_secrets = false

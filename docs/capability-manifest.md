@@ -1,5 +1,9 @@
 # Canto v1.1 Capability Manifest
 
+A capability package is presented to most users as an installed Toolbox. This
+document uses the precise Capability, Skill, Provider, and Tool terms because
+it defines package-authoring fields and validation behavior.
+
 A capability manifest describes the contents and metadata of a reusable Canto
 capability package. It is the package-level description for existing Canto
 skills, providers, tools, dependencies, risk metadata, and expected artifacts.

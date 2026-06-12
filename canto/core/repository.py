@@ -50,11 +50,13 @@ CANTO_AGENTS_SECTION = f"""{CANTO_AGENTS_MARKER_START}
 ## Canto Agent Instructions
 
 This repository is Canto-enabled. Before working, read
-`.canto/agents/shared.md`. Supervising/orchestrator sessions must also read
-`.canto/agents/orchestrator.md`; delegated executor sessions must also read
-`.canto/agents/executor.md`.
+`.canto/agents/shared.md`. Developer sessions supervising governed work must
+also read `.canto/agents/orchestrator.md`; delegated Worker sessions must also
+read `.canto/agents/executor.md`. The filenames retain internal compatibility
+terms while the manuals define the public roles.
 
-Do not bypass Canto delegation, review, artifact, or promotion rules.
+Do not bypass Canto assignment, Guardrail, review, Result, Approval, or Apply
+rules.
 {CANTO_AGENTS_MARKER_END}
 """
 
@@ -68,39 +70,47 @@ executor_instructions = ".canto/agents/executor.md"
 SHARED_AGENT_INSTRUCTIONS = """# Canto Shared Agent Instructions
 
 - Canto is globally installed; do not install Canto into this repository.
-- Durable state, credentials, artifacts, and workspaces live under `~/.canto`.
-- Repository-local Canto intent and policy live under `.canto/`.
-- Delegated executor work happens only in Canto-managed Git worktrees.
-- Canonical repository changes require Canto review, acceptance, and promotion.
+- Durable state, credentials, Results, and Workspaces live under `~/.canto`.
+- Repository-local Canto intent and Guardrails live under `.canto/`.
+- Delegated Worker activity happens only in Canto-managed Git worktrees.
+- Canonical repository changes require Developer review and acceptance before
+  Canto may Apply the exact accepted Result.
 - Do not commit or push unless the human explicitly instructs you to do so.
-- Do not access secrets, credential vault files, or paths denied by task policy.
+- Do not access secrets, credential vault files, or paths denied by Guardrails.
 - Sparse checkout limits context but is not a security boundary.
 """
 
-ORCHESTRATOR_AGENT_INSTRUCTIONS = """# Canto Orchestrator Instructions
+ORCHESTRATOR_AGENT_INSTRUCTIONS = """# Canto Developer Instructions
 
-You are the supervising Canto orchestrator.
+You are the Developer supervising governed Canto work. The compatibility
+filename is `orchestrator.md`; the public authority is Developer.
 
-- Define bounded task scope and explicit instructions.
-- Select and assign an executor profile.
-- Inspect dashboards, immutable artifacts, command evidence, and conflicts.
+- Define bounded work, Guardrails, and explicit instructions.
+- Select and assign an approved Worker profile.
+- Inspect dashboards, immutable Results, command evidence, and conflicts.
 - Request revisions when evidence or implementation is incomplete.
-- Accept or reject results explicitly; executors cannot accept their own work.
-- Promote only an accepted, verified patch through Canto.
-- Report task, review, conflict, and promotion status to the human operator.
+- Accept or reject Results explicitly; Workers cannot accept their own work.
+- Authorize Canto to Apply only the exact accepted and verified Result to the
+  named target.
+- Report assignment, review, conflict, and Apply status to the human operator.
 """
 
-EXECUTOR_AGENT_INSTRUCTIONS = """# Canto Delegated Executor Instructions
+EXECUTOR_AGENT_INSTRUCTIONS = """# Canto Delegated Worker Instructions
 
-You are a Canto delegated executor.
+You are a Canto delegated Worker. The compatibility filename is `executor.md`;
+the public role is Worker.
 
-- Work only in the delegated workspace and within the task's allowed paths.
-- Follow Canto task instructions and revision messages as the source of truth.
+- Work only in the delegated Workspace and within the assignment's allowed
+  paths.
+- Follow Canto assignment instructions and revision messages as the source of
+  truth.
 - Do not access secrets or modify denied paths.
 - Run only allowed tests and commands; report relevant results accurately.
 - Do not modify the canonical repository.
-- Do not commit, push, accept, reject, queue, or promote.
-- When complete, leave the workspace ready for `canto delegate capture`.
+- Do not self-assign, broaden scope, commit, push, accept, reject, queue, or
+  Apply a Result.
+- When complete, leave the Workspace ready for `canto delegate capture` so
+  Canto can record an immutable Result for Developer review.
 """
 
 
@@ -160,6 +170,20 @@ def _write_if_missing(path: Path, content: str) -> None:
         raise RepositoryConfigError(f"Cannot write Canto bootstrap file {path}: {exc}") from exc
 
 
+def _write_canto_owned(path: Path, content: str) -> None:
+    if path.exists() and not path.is_file():
+        raise RepositoryConfigError(f"Canto bootstrap path is not a file: {path}")
+    if path.is_file() and path.read_text(encoding="utf-8") == content:
+        return
+    temporary = path.with_name(f"{path.name}.tmp")
+    try:
+        temporary.write_text(content, encoding="utf-8")
+        temporary.replace(path)
+    except OSError as exc:
+        temporary.unlink(missing_ok=True)
+        raise RepositoryConfigError(f"Cannot refresh Canto bootstrap file {path}: {exc}") from exc
+
+
 def _ensure_agent_entrypoint(repository: Path) -> Path:
     path = repository / "AGENTS.md"
     if not path.exists():
@@ -201,9 +225,9 @@ def _ensure_agent_instructions(repository: Path) -> None:
     agents_dir = config_dir / "agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
     _write_if_missing(config_dir / "delegate.toml", DELEGATE_TOML)
-    _write_if_missing(agents_dir / "shared.md", SHARED_AGENT_INSTRUCTIONS)
-    _write_if_missing(agents_dir / "orchestrator.md", ORCHESTRATOR_AGENT_INSTRUCTIONS)
-    _write_if_missing(agents_dir / "executor.md", EXECUTOR_AGENT_INSTRUCTIONS)
+    _write_canto_owned(agents_dir / "shared.md", SHARED_AGENT_INSTRUCTIONS)
+    _write_canto_owned(agents_dir / "orchestrator.md", ORCHESTRATOR_AGENT_INSTRUCTIONS)
+    _write_canto_owned(agents_dir / "executor.md", EXECUTOR_AGENT_INSTRUCTIONS)
     _ensure_agent_entrypoint(repository)
 
 

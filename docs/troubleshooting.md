@@ -1,5 +1,9 @@
 # MVP v1 Troubleshooting
 
+This guide uses public Run, Result, and Guardrails language where possible and
+includes internal Job, Artifact, Provider, and Policy identifiers when needed
+to match commands and diagnostics.
+
 ## Health is degraded
 
 Run `canto health` and confirm `state` is `ok`. SQLite lives at
@@ -11,15 +15,15 @@ user. Redis is not required. Legacy state migration is documented in
 
 Use `canto credential list` to confirm the `vault:scope/name` reference exists.
 For `env:NAME`, export the variable in the process that starts Canto. Do not put
-plaintext values in job inputs. Recreate or rotate corrupt records; never edit
-encrypted vault JSON manually.
+plaintext values in Run inputs (`job` records). Recreate or rotate corrupt
+records; never edit encrypted vault JSON manually.
 
-## A provider is waiting for approval
+## A Run is waiting for Approval
 
-Inspect the job and events, then use the listed approval ID with `canto approve`
-or `canto reject`. Write promotion and recovery each require their own Approval.
-Changing a reviewed artifact, provider package, target identity, credential
-reference, or input invalidates promotion.
+Inspect the Job and Events, then use the listed Approval ID with `canto approve`
+or `canto reject`. Applying a reviewed write Result and running recovery each
+require their own Approval. Changing a reviewed Artifact, Provider package,
+target identity, credential reference, or input invalidates the Apply request.
 
 ## A live write fails before mutation
 

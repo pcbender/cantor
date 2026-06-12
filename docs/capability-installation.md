@@ -1,5 +1,9 @@
 # Canto Capability Installation Design
 
+Installation adds a Toolbox to Canto's local Catalog. This design retains the
+precise Capability and Registry terms for package metadata, filesystem layout,
+and compatibility with existing commands and records.
+
 This document defines local installation from validated `.canto` archives.
 
 ## Initial command

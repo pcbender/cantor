@@ -1,5 +1,9 @@
 # Local Credential Vault
 
+Canto resolves approved credential references for a Run immediately before its
+Provider implementation starts. Workers and normal Result views do not receive
+vault contents.
+
 Canto stores single-user credentials in an encrypted local vault under
 `~/.canto/vault`. AES-GCM records, the master key, and their parent directories
 use owner-only filesystem permissions. This protects secrets at rest while the
