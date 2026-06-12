@@ -775,8 +775,41 @@ Acceptance:
   orchestration, writes, or delegated promotion.
 - MVP v1.2 release/status documentation records exact verification results.
 
-MVP v1.2 is complete. CP-1315 is an MVP v1.2 foundation packet and does not reopen
-the completed CP-1300 workstream. Delegation HTTP/MCP exposure and multi-user executor
+### CP-1211 — Worker Outcome Validation
+
+Status: **planned maintenance follow-up**. The initial local Ollama dogfood run
+showed that a Worker process can exit successfully without completing its
+assigned repository work. The observed `qwen2.5-coder:14b` session emitted
+tool-call JSON as text, changed no files, and reached Capture with no Result to
+record.
+
+Improve the existing delegation UX so process completion, completed work, and
+advisory output are reported as distinct outcomes.
+
+Behavior:
+
+- Do not treat exit code `0` alone as proof that assigned work completed.
+- Detect an unchanged Workspace before presenting Capture as the next action.
+- Preserve and identify useful text-only output as advisory Worker evidence.
+- Report likely model/harness tool-execution incompatibility with actionable
+  profile guidance.
+- Derive readiness and blockers through the existing projection layer without
+  adding a second Worker lifecycle or execution path.
+
+Acceptance:
+
+- A successful process with repository changes continues through normal
+  Capture and review.
+- A successful process with no repository changes is reported clearly before
+  Capture and does not imply that a Result exists.
+- Advisory output remains inspectable through the existing launch artifacts.
+- Existing delegation records remain readable; no persisted status enum or
+  frozen orchestration contract change is required.
+- Tests use scripted executors and require no Ollama model or network access.
+
+MVP v1.2 is complete. CP-1211 is a bounded maintenance follow-up and does not
+reopen the release or completed CP-1300 workstream. CP-1315 is an MVP v1.2
+foundation packet. Delegation HTTP/MCP exposure and multi-user executor
 coordination remain MVP v2 work.
 
 ---

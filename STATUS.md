@@ -171,6 +171,17 @@ with the existing non-blocking Starlette `TestClient` deprecation warning.
 Known non-blocking issue: Starlette's current `TestClient` emits a deprecation
 warning recommending a future `httpx2` migration. Runtime behavior and tests
 remain successful under the versions pinned in `pyproject.toml`.
+
+Planned maintenance follow-up: CP-1211 — Worker Outcome Validation. A local
+Ollama dogfood session using `qwen2.5-coder:14b` emitted tool-call JSON as text
+instead of executing tools. Codex exited successfully, Canto marked the Worker
+done, and Capture then found no Workspace changes. CP-1211 will distinguish
+process success from completed assigned work, detect zero-change sessions
+before offering Capture, preserve text-only output as advisory evidence, and
+surface likely model/harness compatibility problems. It will use the existing
+delegation lifecycle and readiness projections without adding persisted status
+values or changing the frozen orchestration contract.
+
 - Working tree validation: `git diff --check` passes.
 
 ## Deferred By Specification
