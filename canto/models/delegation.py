@@ -126,6 +126,9 @@ class ExecutorLaunch(BaseModel):
     prompt_variant: str | None = None
     prompt_supplement: str | None = None
     token_usage: dict[str, int] | None = None
+    workspace_changed: bool | None = None
+    outcome: Literal["completed_work", "advisory", "no_work", "failed"] | None = None
+    outcome_detail: str | None = None
     exit_code: int | None = None
     timed_out: bool = False
     started_at: str = Field(default_factory=utc_now)
@@ -268,6 +271,7 @@ class DelegationDashboardTask(BaseModel):
     repository: str
     latest_result_revision: int = 0
     accepted_result_revision: int | None = None
+    worker_outcome: Literal["completed_work", "advisory", "no_work", "failed"] | None = None
     next_action: str
     updated_at: str
 
@@ -284,6 +288,7 @@ class DelegationDashboardDetail(BaseModel):
     reviews: list[dict[str, Any]] = Field(default_factory=list)
     commands: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
     queue: dict[str, Any] | None = None
+    outcome_detail: str | None = None
     next_actions: list[str] = Field(default_factory=list)
     artifact_root: str | None = None
 

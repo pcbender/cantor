@@ -133,8 +133,11 @@ codex exec --sandbox workspace-write --cd DELEGATED_WORKTREE \
 ```
 
 The child is not a second GUI window. Canto records its argv, prompt, stdout,
-stderr, exit code, model provenance, and Workspace. A successful capture leaves
-the assignment in `reviewing`; it does not accept the Result or Apply it to the
+stderr, exit code, model provenance, Workspace, and projected Worker outcome.
+Exit code `0` is not sufficient: Canto offers Capture only when reviewable
+Workspace changes exist. Text-only output remains inspectable as advisory
+evidence and the next action is revision. A successful capture leaves the
+assignment in `reviewing`; it does not accept the Result or Apply it to the
 canonical repository.
 
 Verify that the canonical checkout is unchanged and inspect the durable review

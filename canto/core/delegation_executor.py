@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import DelegationWorkspaceService
+from canto.core.delegation_artifacts import classify_worker_outcome
 from canto.models.delegation import ExecutorLaunch, ExecutorProfile, ExecutorSession
 from canto.models.schemas import utc_now
 
@@ -222,18 +223,46 @@ class CodexCliExecutor:
             launch = launch.model_copy(
                 update={"exit_code": completed.returncode, "ended_at": utc_now()}
             )
-            self.delegation.append_record(task_id, "launches", launch)
             if completed.returncode:
+                launch = launch.model_copy(
+                    update={
+                        "outcome": "failed",
+                        "outcome_detail": (
+                            f"Worker process exited with code {completed.returncode}"
+                        ),
+                    }
+                )
+                self.delegation.append_record(task_id, "launches", launch)
                 self.delegation.transition(
                     task_id,
                     "failed",
                     details={"launch_id": launch.launch_id, "exit_code": completed.returncode},
                 )
             else:
+                workspace_changed, outcome, outcome_detail = classify_worker_outcome(
+                    workspace_path,
+                    workspace.base_commit,
+                    completed.stdout,
+                    allowed_paths=workspace.allowed_paths,
+                    denied_paths=workspace.denied_paths,
+                )
+                launch = launch.model_copy(
+                    update={
+                        "workspace_changed": workspace_changed,
+                        "outcome": outcome,
+                        "outcome_detail": outcome_detail,
+                    }
+                )
+                self.delegation.append_record(task_id, "launches", launch)
                 self.delegation.transition(
                     task_id,
                     "executor_done",
-                    details={"launch_id": launch.launch_id, "exit_code": 0},
+                    details={
+                        "launch_id": launch.launch_id,
+                        "exit_code": 0,
+                        "worker_outcome": outcome,
+                        "workspace_changed": workspace_changed,
+                    },
                 )
             return launch
         except subprocess.TimeoutExpired as exc:

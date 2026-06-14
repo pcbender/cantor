@@ -84,6 +84,57 @@ def _changed_files(workspace: Path, base_commit: str) -> list[dict[str, str]]:
     return sorted(changed, key=lambda item: item["path"])
 
 
+def changed_files(workspace: Path, base_commit: str) -> list[dict[str, str]]:
+    """Return reviewable Workspace changes without mutating the Worker index."""
+    return _changed_files(workspace, base_commit)
+
+
+def classify_worker_outcome(
+    workspace: Path,
+    base_commit: str,
+    stdout: str,
+    *,
+    allowed_paths: list[str] | None = None,
+    denied_paths: list[str] | None = None,
+) -> tuple[bool, str, str]:
+    changes = changed_files(workspace, base_commit)
+    if changes:
+        invalid = []
+        if allowed_paths is not None:
+            invalid = [
+                change["path"]
+                for change in changes
+                if not _matches(change["path"], allowed_paths)
+                or _matches(change["path"], denied_paths or [])
+                or (workspace / change["path"]).is_symlink()
+            ]
+        if invalid:
+            return (
+                True,
+                "advisory",
+                "Worker changed paths that cannot be captured under the assignment "
+                f"Guardrails: {', '.join(invalid)}",
+            )
+        return (
+            True,
+            "completed_work",
+            f"Worker process completed with {len(changes)} reviewable Workspace change(s)",
+        )
+    if stdout.strip():
+        return (
+            False,
+            "advisory",
+            "Worker process completed with advisory output but no reviewable "
+            "Workspace changes; the model or harness may not support required "
+            "tool execution",
+        )
+    return (
+        False,
+        "no_work",
+        "Worker process completed without output or reviewable Workspace changes",
+    )
+
+
 def _artifact(path: Path, root: Path) -> DelegationArtifact:
     content = path.read_bytes()
     return DelegationArtifact(
@@ -141,6 +192,15 @@ class DelegationArtifactService:
         if task.status != "executor_done":
             raise ArtifactCaptureError("Artifacts can only be captured from executor_done")
         workspace = self.workspaces.get(task_id)
+        launches = self.delegation.get_records(task_id, "launches")
+        launch = launches[-1] if launches else None
+        if launch and launch.get("outcome") in {"advisory", "no_work"}:
+            detail = launch.get("outcome_detail") or (
+                "Worker process completed without reviewable Workspace changes"
+            )
+            raise ArtifactCaptureError(
+                f"{detail}. Inspect {launch.get('stdout_path')} and request a revision"
+            )
         root = Path(workspace.path)
         changes = _changed_files(root, workspace.base_commit)
         if not changes:
@@ -176,8 +236,6 @@ class DelegationArtifactService:
         messages = self.delegation.get_records(task_id, "messages")
         done_messages = [message for message in messages if message.get("kind") == "done"]
         summary = done_messages[-1]["body"] if done_messages else "Executor reported completion."
-        launches = self.delegation.get_records(task_id, "launches")
-        launch = launches[-1] if launches else None
         (revision_root / "proposal.diff").write_text(patch, encoding="utf-8")
         (revision_root / "changed_files.json").write_text(
             json.dumps(changes, indent=2) + "\n", encoding="utf-8"

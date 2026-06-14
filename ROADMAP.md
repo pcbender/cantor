@@ -777,7 +777,7 @@ Acceptance:
 
 ### CP-1211 — Worker Outcome Validation
 
-Status: **planned maintenance follow-up**. The initial local Ollama dogfood run
+Status: **complete in MVP v1.1.1 hotfix**. The initial local Ollama dogfood run
 showed that a Worker process can exit successfully without completing its
 assigned repository work. The observed `qwen2.5-coder:14b` session emitted
 tool-call JSON as text, changed no files, and reached Capture with no Result to
@@ -807,10 +807,10 @@ Acceptance:
   frozen orchestration contract change is required.
 - Tests use scripted executors and require no Ollama model or network access.
 
-MVP v1.2 is complete. CP-1211 is a bounded maintenance follow-up and does not
-reopen the release or completed CP-1300 workstream. CP-1315 is an MVP v1.2
-foundation packet. Delegation HTTP/MCP exposure and multi-user executor
-coordination remain MVP v2 work.
+MVP v1.2 is complete. CP-1211 was delivered as the bounded MVP v1.1.1
+maintenance hotfix without reopening the release or completed CP-1300
+workstream. CP-1315 is an MVP v1.2 foundation packet. Delegation HTTP/MCP
+exposure and multi-user executor coordination remain MVP v2 work.
 
 ---
 

@@ -72,6 +72,8 @@ def test_codex_cli_launch_is_supervised_and_records_provenance(tmp_path):
     launch = CodexCliExecutor(service, workspaces, timeout_seconds=10).launch("task_1")
 
     assert launch.exit_code == 0
+    assert launch.workspace_changed is True
+    assert launch.outcome == "completed_work"
     assert launch.argv[1:4] == ["exec", "--sandbox", "workspace-write"]
     assert Path(launch.stdout_path).read_text() == "executor complete\n"
     prompt = Path(launch.prompt_path).read_text()
@@ -187,6 +189,10 @@ def test_codex_cli_empty_workspace_can_request_revision_and_relaunch(tmp_path):
     )
 
     assert review is None
+    assert first_launch.workspace_changed is False
+    assert first_launch.outcome == "advisory"
+    assert "model or harness" in first_launch.outcome_detail
+    assert Path(first_launch.stdout_path).read_text() == "advisory only\n"
     assert service.get_task("task_1").status == "revision_requested"
     assert service.get_records("task_1", "results") == []
     executable.write_text(
@@ -199,3 +205,36 @@ def test_codex_cli_empty_workspace_can_request_revision_and_relaunch(tmp_path):
     assert first_launch.session_id != second_launch.session_id
     assert "Edit src/app.py" in Path(second_launch.prompt_path).read_text()
     assert service.get_task("task_1").status == "executor_done"
+
+
+def test_codex_cli_success_without_output_or_changes_is_no_work(tmp_path):
+    executable = tmp_path / "codex"
+    executable.write_text("#!/bin/sh\ncat >/dev/null\n")
+    executable.chmod(0o755)
+    service, workspaces = prepared_task(tmp_path, executable)
+
+    launch = CodexCliExecutor(service, workspaces, timeout_seconds=10).launch(
+        "task_1"
+    )
+
+    assert launch.exit_code == 0
+    assert launch.workspace_changed is False
+    assert launch.outcome == "no_work"
+    assert "without output" in launch.outcome_detail
+
+
+def test_codex_cli_out_of_scope_changes_are_advisory_not_completed(tmp_path):
+    executable = tmp_path / "codex"
+    executable.write_text(
+        "#!/bin/sh\ncat >/dev/null\nprintf 'outside scope\\n' > README.md\n"
+    )
+    executable.chmod(0o755)
+    service, workspaces = prepared_task(tmp_path, executable)
+
+    launch = CodexCliExecutor(service, workspaces, timeout_seconds=10).launch(
+        "task_1"
+    )
+
+    assert launch.workspace_changed is True
+    assert launch.outcome == "advisory"
+    assert "README.md" in launch.outcome_detail

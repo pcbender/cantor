@@ -9,6 +9,7 @@ from canto.core.ai_endpoints import AIEndpointService, endpoint_is_local
 from canto.core.ai_selection import WorkerSelectionService, compose_worker_policy
 from canto.core.ai_worker import APIWorkerError, APIWorkerHarness
 from canto.core.delegation import DelegationError, DelegationService
+from canto.core.delegation_artifacts import classify_worker_outcome
 from canto.core.delegation_workspace import DelegationWorkspaceService
 from canto.models.ai_workers import (
     EndpointHealthRecord,
@@ -162,12 +163,22 @@ class AIWorkerAssignmentService:
             self._record_usage(task.task_id, usage)
             stdout_path.write_text(summary, encoding="utf-8")
             stderr_path.write_text("", encoding="utf-8")
+            workspace_changed, outcome, outcome_detail = classify_worker_outcome(
+                path,
+                workspace.base_commit,
+                summary,
+                allowed_paths=workspace.allowed_paths,
+                denied_paths=workspace.denied_paths,
+            )
             launch = launch.model_copy(
                 update={
                     "token_usage": {
                         "input": usage.input_tokens,
                         "output": usage.output_tokens,
                     },
+                    "workspace_changed": workspace_changed,
+                    "outcome": outcome,
+                    "outcome_detail": outcome_detail,
                     "exit_code": 0,
                     "ended_at": utc_now(),
                 }
@@ -177,7 +188,12 @@ class AIWorkerAssignmentService:
             self.delegation.transition(
                 task.task_id,
                 "executor_done",
-                details={"launch_id": launch_id, "model_key": model.model_key},
+                details={
+                    "launch_id": launch_id,
+                    "model_key": model.model_key,
+                    "worker_outcome": outcome,
+                    "workspace_changed": workspace_changed,
+                },
             )
             return launch
         except Exception as exc:

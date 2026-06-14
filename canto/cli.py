@@ -988,6 +988,12 @@ def delegate_dashboard(
                 f"Revision: {detail.task.latest_result_revision} | Accepted: "
                 f"{detail.task.accepted_result_revision or '-'}"
             )
+            if detail.task.worker_outcome:
+                typer.echo(f"Worker outcome: {detail.task.worker_outcome}")
+            if detail.outcome_detail:
+                typer.echo(f"Outcome detail: {detail.outcome_detail}")
+            if detail.task.worker_outcome in {"advisory", "no_work"} and detail.launches:
+                typer.echo(f"Worker output: {detail.launches[-1].get('stdout_path')}")
             typer.echo("Next: " + (", ".join(detail.next_actions) or "none"))
             if detail.queue and detail.queue.get("blockers"):
                 typer.echo("Blockers: " + "; ".join(detail.queue["blockers"]))

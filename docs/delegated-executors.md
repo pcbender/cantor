@@ -127,6 +127,21 @@ Network and quota use must be disclosed. Canto never switches from local to
 cloud automatically, and cloud Results still require Capture, Developer
 Review, explicit acceptance, and qualified Apply.
 
+### Worker outcomes
+
+A Worker process exiting with code `0` does not prove that assigned work was
+completed. Canto records an additive launch outcome:
+
+- `completed_work` when the Workspace contains reviewable changes;
+- `advisory` when stdout is useful but no reviewable changes exist;
+- `no_work` when neither output nor reviewable changes exist.
+
+The dashboard offers Capture only for `completed_work`. Advisory and no-work
+launches preserve stdout and prompt artifacts, identify likely model/harness
+incompatibility, and direct the Developer to request a revision. These are
+projections over existing launch evidence; task status enums and the frozen
+orchestration contract do not change.
+
 ## Dashboard and Prompt Comparisons
 
 ```bash

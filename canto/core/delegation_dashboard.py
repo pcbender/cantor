@@ -14,7 +14,9 @@ from canto.models.delegation import (
 ATTENTION_ORDER = {"blocked": 0, "review": 1, "ready": 2, "working": 3, "terminal": 4}
 
 
-def _attention(status: str) -> str:
+def _attention(status: str, worker_outcome: str | None = None) -> str:
+    if status == "executor_done" and worker_outcome in {"advisory", "no_work"}:
+        return "blocked"
     if status in {"executor_blocked", "promotion_failed", "failed"}:
         return "blocked"
     if status in {"executor_done", "reviewing", "revision_requested"}:
@@ -26,7 +28,9 @@ def _attention(status: str) -> str:
     return "working"
 
 
-def _actions(status: str) -> list[str]:
+def _actions(status: str, worker_outcome: str | None = None) -> list[str]:
+    if status == "executor_done" and worker_outcome in {"advisory", "no_work"}:
+        return ["revise"]
     return {
         "draft": ["assign"],
         "assigned": ["prepare"],
@@ -66,8 +70,11 @@ class DelegationDashboardService:
                     profile = self.delegation.get_executor_profile(task.executor_id)
                 except Exception:
                     pass
-            actions = _actions(task.status)
-            attention = _attention(task.status)
+            launches = self.delegation.get_records(task.task_id, "launches")
+            latest_launch = launches[-1] if launches else None
+            worker_outcome = latest_launch.get("outcome") if latest_launch else None
+            actions = _actions(task.status, worker_outcome)
+            attention = _attention(task.status, worker_outcome)
             rows.append(
                 DelegationDashboardTask(
                     task_id=task.task_id,
@@ -79,6 +86,7 @@ class DelegationDashboardService:
                     repository=Path(task.repository.canonical_path).name,
                     latest_result_revision=task.latest_result_revision,
                     accepted_result_revision=task.accepted_result_revision,
+                    worker_outcome=worker_outcome,
                     next_action=actions[0] if actions else "none",
                     updated_at=task.updated_at,
                 )
@@ -119,6 +127,8 @@ class DelegationDashboardService:
         artifact_root = None
         if workspace:
             artifact_root = str(Path(workspace["path"]).parent / "artifacts")
+        launches = self.delegation.get_records(task_id, "launches")
+        latest_launch = launches[-1] if launches else None
         return DelegationDashboardDetail(
             task=row,
             repository=task.repository,
@@ -128,11 +138,12 @@ class DelegationDashboardService:
             sessions=CodexCliExecutor(
                 self.delegation, self.workspaces
             ).projected_sessions(task_id),
-            launches=self.delegation.get_records(task_id, "launches"),
+            launches=launches,
             latest_result=results[-1] if results else None,
             reviews=self.delegation.get_records(task_id, "reviews"),
             commands=grouped,
             queue=queue_records[-1] if queue_records else None,
-            next_actions=_actions(task.status),
+            outcome_detail=(latest_launch.get("outcome_detail") if latest_launch else None),
+            next_actions=_actions(task.status, row.worker_outcome),
             artifact_root=artifact_root,
         )
