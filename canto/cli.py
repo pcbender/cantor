@@ -23,6 +23,7 @@ from canto.core.capability_scaffold import (
     scaffold_capability_structure,
 )
 from canto.core.credentials import CredentialError, CredentialVault
+from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -94,6 +95,8 @@ credential_app = typer.Typer(help="Manage local encrypted credentials")
 delegate_app = typer.Typer(help="Coordinate delegated executor workspaces")
 repo_app = typer.Typer(help="Bootstrap and inspect repository-local Canto intent")
 demo_app = typer.Typer(help="Run isolated local Canto demonstrations")
+ai_app = typer.Typer(help="Configure and inspect governed AI Workers")
+ai_endpoint_app = typer.Typer(help="Manage AI provider endpoints")
 delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
 delegate_profile_app = typer.Typer(help="Manage local executor profiles")
 app.add_typer(skill_app, name="skill")
@@ -104,12 +107,23 @@ app.add_typer(credential_app, name="credential")
 app.add_typer(delegate_app, name="delegate")
 app.add_typer(repo_app, name="repo")
 app.add_typer(demo_app, name="demo")
+app.add_typer(ai_app, name="ai")
+ai_app.add_typer(ai_endpoint_app, name="endpoint")
 delegate_app.add_typer(delegate_compare_app, name="compare")
 delegate_app.add_typer(delegate_profile_app, name="profile")
 
 
 def _credential_vault() -> CredentialVault:
     return CredentialVault.local()
+
+
+def _ai_endpoint_service() -> AIEndpointService:
+    registry = _capability_registry()
+    return AIEndpointService(
+        SqliteStateStore(registry.store.paths.state_file),
+        _credential_vault(),
+        registry.store.paths.config / "ai-endpoints.yaml",
+    )
 
 
 def _runtime() -> tuple:
@@ -1030,6 +1044,67 @@ def credential_delete(
     except CredentialError as exc:
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(f"Deleted vault:{scope}/{name}")
+
+
+@ai_endpoint_app.command("add")
+def ai_endpoint_add(
+    endpoint_id: str,
+    provider: str = typer.Option(..., "--provider"),
+    base_url: str = typer.Option(..., "--base-url"),
+    api_key: str | None = typer.Option(None, "--api-key", hidden=True),
+    credential_ref: str | None = typer.Option(None, "--credential-ref"),
+) -> None:
+    """Add an endpoint; cloud API keys are encrypted in the local vault."""
+    if provider not in {
+        "openai",
+        "anthropic",
+        "google",
+        "openai_compatible",
+        "ollama",
+    }:
+        raise typer.BadParameter(f"Unsupported AI provider: {provider}")
+    if not api_key and not credential_ref and provider != "ollama":
+        api_key = typer.prompt("API key", hide_input=True)
+    try:
+        endpoint = _ai_endpoint_service().add(
+            endpoint_id,
+            provider,  # type: ignore[arg-type]
+            base_url,
+            api_key=api_key,
+            credential_ref=credential_ref,
+        )
+    except AIEndpointError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(endpoint.model_dump(mode="json"))
+
+
+@ai_endpoint_app.command("list")
+def ai_endpoint_list() -> None:
+    """List configured endpoints without decrypting credentials."""
+    _print(
+        [
+            endpoint.model_dump(mode="json")
+            for endpoint in _ai_endpoint_service().list()
+        ]
+    )
+
+
+@ai_endpoint_app.command("show")
+def ai_endpoint_show(endpoint_id: str) -> None:
+    try:
+        endpoint = _ai_endpoint_service().get(endpoint_id)
+    except AIEndpointError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(endpoint.model_dump(mode="json"))
+
+
+@ai_endpoint_app.command("disable")
+def ai_endpoint_disable(endpoint_id: str) -> None:
+    try:
+        endpoint = _ai_endpoint_service().disable(endpoint_id)
+    except AIEndpointError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(endpoint.model_dump(mode="json"))
 
 
 @app.command("migrate-state")
