@@ -24,6 +24,7 @@ from canto.core.capability_scaffold import (
 )
 from canto.core.credentials import CredentialError, CredentialVault
 from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
+from canto.core.ai_discovery import ModelCatalogService, ModelDiscoveryError
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -97,6 +98,7 @@ repo_app = typer.Typer(help="Bootstrap and inspect repository-local Canto intent
 demo_app = typer.Typer(help="Run isolated local Canto demonstrations")
 ai_app = typer.Typer(help="Configure and inspect governed AI Workers")
 ai_endpoint_app = typer.Typer(help="Manage AI provider endpoints")
+ai_model_app = typer.Typer(help="Discover and inspect exact provider models")
 delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
 delegate_profile_app = typer.Typer(help="Manage local executor profiles")
 app.add_typer(skill_app, name="skill")
@@ -109,6 +111,7 @@ app.add_typer(repo_app, name="repo")
 app.add_typer(demo_app, name="demo")
 app.add_typer(ai_app, name="ai")
 ai_app.add_typer(ai_endpoint_app, name="endpoint")
+ai_app.add_typer(ai_model_app, name="model")
 delegate_app.add_typer(delegate_compare_app, name="compare")
 delegate_app.add_typer(delegate_profile_app, name="profile")
 
@@ -124,6 +127,11 @@ def _ai_endpoint_service() -> AIEndpointService:
         _credential_vault(),
         registry.store.paths.config / "ai-endpoints.yaml",
     )
+
+
+def _ai_catalog_service() -> ModelCatalogService:
+    endpoint_service = _ai_endpoint_service()
+    return ModelCatalogService(endpoint_service.store, endpoint_service)
 
 
 def _runtime() -> tuple:
@@ -1105,6 +1113,26 @@ def ai_endpoint_disable(endpoint_id: str) -> None:
     except AIEndpointError as exc:
         raise typer.BadParameter(str(exc)) from exc
     _print(endpoint.model_dump(mode="json"))
+
+
+@ai_model_app.command("discover")
+def ai_model_discover(endpoint_id: str) -> None:
+    """Validate an endpoint by discovering its exact model catalog."""
+    try:
+        snapshot = _ai_catalog_service().discover(endpoint_id)
+    except (AIEndpointError, ModelDiscoveryError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(snapshot.model_dump(mode="json"))
+
+
+@ai_model_app.command("list")
+def ai_model_list(endpoint_id: str | None = typer.Option(None, "--endpoint")) -> None:
+    _print(
+        [
+            model.model_dump(mode="json")
+            for model in _ai_catalog_service().list(endpoint_id)
+        ]
+    )
 
 
 @app.command("migrate-state")
