@@ -92,7 +92,7 @@ class ExecutorPermissions(BaseModel):
 class ExecutorProfile(BaseModel):
     executor_id: str
     name: str
-    harness: Literal["manual", "codex_cli"]
+    harness: Literal["manual", "codex_cli", "api_worker"]
     executable: str | None = None
     configuration: dict[str, Any] = Field(default_factory=dict)
     model_provider: str | None = None

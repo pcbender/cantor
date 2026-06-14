@@ -26,6 +26,8 @@ from canto.core.credentials import CredentialError, CredentialVault
 from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
 from canto.core.ai_discovery import ModelCatalogService, ModelDiscoveryError
 from canto.core.ai_selection import WorkerSelectionError, WorkerSelectionService
+from canto.core.ai_assignment import AIWorkerAssignmentService, WorkerAssignmentError
+from canto.core.ai_worker import APIWorkerHarness
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -101,6 +103,7 @@ ai_app = typer.Typer(help="Configure and inspect governed AI Workers")
 ai_endpoint_app = typer.Typer(help="Manage AI provider endpoints")
 ai_model_app = typer.Typer(help="Discover and inspect exact provider models")
 ai_pool_app = typer.Typer(help="Select and explain governed AI Workers")
+ai_usage_app = typer.Typer(help="Inspect AI Worker usage and endpoint health")
 delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
 delegate_profile_app = typer.Typer(help="Manage local executor profiles")
 app.add_typer(skill_app, name="skill")
@@ -115,6 +118,7 @@ app.add_typer(ai_app, name="ai")
 ai_app.add_typer(ai_endpoint_app, name="endpoint")
 ai_app.add_typer(ai_model_app, name="model")
 ai_app.add_typer(ai_pool_app, name="pool")
+ai_app.add_typer(ai_usage_app, name="usage")
 delegate_app.add_typer(delegate_compare_app, name="compare")
 delegate_app.add_typer(delegate_profile_app, name="profile")
 
@@ -139,6 +143,19 @@ def _ai_catalog_service() -> ModelCatalogService:
 
 def _ai_selection_service() -> WorkerSelectionService:
     return WorkerSelectionService(_ai_endpoint_service().store)
+
+
+def _ai_assignment_service() -> AIWorkerAssignmentService:
+    delegation, workspaces = _delegation_runtime()
+    endpoints = _ai_endpoint_service()
+    return AIWorkerAssignmentService(
+        delegation,
+        workspaces,
+        endpoints,
+        ModelCatalogService(delegation.store, endpoints),
+        WorkerSelectionService(delegation.store),
+        APIWorkerHarness(),
+    )
 
 
 def _runtime() -> tuple:
@@ -1174,6 +1191,52 @@ def ai_pool_explain(decision_id: str) -> None:
     except WorkerSelectionError as exc:
         raise typer.BadParameter(str(exc)) from exc
     _print(value)
+
+
+@ai_usage_app.command("list")
+def ai_usage_list(task_id: str | None = typer.Option(None, "--task")) -> None:
+    values = _ai_endpoint_service().store.list_ai_records("usage")
+    _print([value for value in values if task_id is None or value["task_id"] == task_id])
+
+
+@ai_usage_app.command("health")
+def ai_usage_health(endpoint_id: str | None = typer.Option(None, "--endpoint")) -> None:
+    values = _ai_endpoint_service().store.list_ai_records("endpoint_health")
+    _print(
+        [
+            value
+            for value in values
+            if endpoint_id is None or value["endpoint_id"] == endpoint_id
+        ]
+    )
+
+
+@delegate_app.command("launch-ai")
+def delegate_launch_ai(
+    task_id: str,
+    priority: str = typer.Option("balanced", "--priority"),
+    allow_cloud: bool = typer.Option(False, "--allow-cloud"),
+    allow_cloud_fallback: bool = typer.Option(False, "--allow-cloud-fallback"),
+) -> None:
+    """Automatically select and launch a validated API-backed Worker."""
+    from canto.models.ai_workers import WorkerSelectionPolicy
+
+    if priority not in {"economy", "balanced", "quality", "urgent"}:
+        raise typer.BadParameter(f"Unsupported priority: {priority}")
+    if allow_cloud_fallback and not allow_cloud:
+        raise typer.BadParameter("Cloud fallback requires --allow-cloud")
+    try:
+        launch = _ai_assignment_service().launch(
+            task_id,
+            WorkerSelectionPolicy(
+                priority=priority,  # type: ignore[arg-type]
+                cloud_allowed=allow_cloud,
+                cloud_fallback_allowed=allow_cloud_fallback,
+            ),
+        )
+    except WorkerAssignmentError as exc:
+        _delegation_error(exc)
+    _print(launch.model_dump(mode="json"))
 
 
 @app.command("migrate-state")

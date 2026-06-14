@@ -59,12 +59,15 @@ class HttpDiscoveryAdapter:
         )
         if 300 <= response.status_code < 400:
             raise ModelDiscoveryError("Provider discovery redirects are not followed")
-        try:
-            response.raise_for_status()
-            payload = response.json()
-        except (requests.RequestException, ValueError) as exc:
+        if response.status_code >= 400:
             raise ModelDiscoveryError(
-                f"Model discovery failed for {endpoint.endpoint_id}: {exc}"
+                f"Model discovery failed for {endpoint.endpoint_id}: HTTP {response.status_code}"
+            )
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise ModelDiscoveryError(
+                f"Model discovery returned invalid JSON for {endpoint.endpoint_id}"
             ) from exc
         return self._parse(endpoint, payload), payload
 
@@ -220,4 +223,3 @@ class ModelCatalogService:
             for value in self.store.list_ai_records(self.MODEL_RECORD)
         ]
         return [m for m in models if endpoint_id is None or m.endpoint_id == endpoint_id]
-
