@@ -59,12 +59,17 @@ canto repo doctor
 ```
 
 This creates non-secret repo identity/policy files, `.canto/delegate.toml`,
-role manuals under `.canto/agents/`, and a short Canto pointer in `AGENTS.md`.
+`.canto/workers.toml`, role manuals under `.canto/agents/`, and a short Canto
+pointer in `AGENTS.md`.
 Review and commit these files so delegated worktrees receive them from their
 recorded Git base. `repo doctor` verifies identity, files, pointer, and Git
 readiness. Canto remains globally installed; durable state, credentials,
 installed Toolboxes (capability packages), and Worker workspaces remain under
 `~/.canto`.
+
+The Worker pool can configure vault-backed AI endpoints, discover and probe
+exact models, and select a bounded API-backed Worker. See
+[Governed AI Worker Pool](docs/ai-worker-pool.md).
 
 The API listens on `http://127.0.0.1:8765` by default. Interactive API
 documentation is at `/docs`. The unauthenticated server is intended for

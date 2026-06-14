@@ -916,8 +916,12 @@ Recommended work packets:
 - CP-1513 — End-to-End Single-User Worker Pool Demo
 - CP-1514 — Security, Stability, and Documentation Pass
 
-CP-1501 is approved and complete. Implementation begins with CP-1502. This
-workstream precedes MVP v2 and preserves its server migration path.
+CP-1501 through CP-1514 are complete. The governed single-user AI Worker pool
+supports vault-backed endpoint configuration, exact model discovery, versioned
+coding probes, deterministic policy selection, explicit cloud fallback,
+provider-neutral API execution, durable usage evidence, repo bootstrap policy,
+and an offline end-to-end demo. This workstream precedes MVP v2 and preserves
+its server migration path.
 
 ---
 

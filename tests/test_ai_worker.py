@@ -8,6 +8,7 @@ from canto.core.ai_worker import (
     AgentResponse,
     AgentToolCall,
     WorkspaceTools,
+    HttpAgentAdapter,
 )
 from canto.models.ai_workers import AIEndpointRecord, AIModelRecord, WorkerBudgetPolicy
 from canto.models.delegation import DelegationScope
@@ -89,7 +90,7 @@ def test_worker_enforces_output_token_budget(tmp_path):
         def complete(self, *args, **kwargs):
             return AgentResponse(text="too much", output_tokens=20)
 
-    with pytest.raises(APIWorkerError, match="output-token"):
+    with pytest.raises(APIWorkerError, match="output-token") as caught:
         APIWorkerHarness(Expensive()).run(
             task_id="t",
             session_id="s",
@@ -101,3 +102,21 @@ def test_worker_enforces_output_token_budget(tmp_path):
             scope=DelegationScope(allowed_paths=["src"]),
             budget=WorkerBudgetPolicy(enabled=True, max_output_tokens=10),
         )
+    assert caught.value.usage.output_tokens == 20
+
+
+def test_provider_message_translation_preserves_structured_tool_results():
+    messages = [
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "1", "name": "read_file", "arguments": {"path": "src/a"}}]},
+        {"role": "tool", "tool_call_id": "1", "name": "read_file", "content": "value"},
+    ]
+
+    openai = HttpAgentAdapter._openai_messages(messages)
+    anthropic = HttpAgentAdapter._anthropic_messages(messages)
+    google = HttpAgentAdapter._google_messages(messages)
+
+    assert openai[0]["tool_calls"][0]["function"]["name"] == "read_file"
+    assert anthropic[0]["content"][0]["type"] == "tool_use"
+    assert anthropic[1]["content"][0]["type"] == "tool_result"
+    assert google[0]["parts"][0]["functionCall"]["name"] == "read_file"
+    assert google[1]["parts"][0]["functionResponse"]["name"] == "read_file"

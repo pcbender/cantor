@@ -25,9 +25,14 @@ from canto.core.capability_scaffold import (
 from canto.core.credentials import CredentialError, CredentialVault
 from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
 from canto.core.ai_discovery import ModelCatalogService, ModelDiscoveryError
-from canto.core.ai_selection import WorkerSelectionError, WorkerSelectionService
+from canto.core.ai_selection import (
+    WorkerSelectionError,
+    WorkerSelectionService,
+    compose_worker_policy,
+)
 from canto.core.ai_assignment import AIWorkerAssignmentService, WorkerAssignmentError
 from canto.core.ai_worker import APIWorkerHarness
+from canto.core.ai_probe import APIWorkerProbeRunner, CodingWorkerProbeService
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -57,6 +62,7 @@ from canto.core.delegation_review_summary import (
 )
 from canto.core.delegation_conflicts import DelegationConflictService
 from canto.core.delegation_demo import DelegationDemoError, run_delegation_demo
+from canto.core.ai_worker_demo import run_ai_worker_pool_demo
 from canto.core.jobs import JobError, JobService
 from canto.core.local_registry import (
     LocalRegistryError,
@@ -75,6 +81,7 @@ from canto.core.repository import (
     initialize_repository,
     load_repository,
     load_repository_policy,
+    load_repository_worker_policy,
 )
 from canto.core.seed_capabilities import SeedCapabilityError, audit_seed_capabilities
 from canto.core.state import SqliteStateStore
@@ -1159,6 +1166,19 @@ def ai_model_list(endpoint_id: str | None = typer.Option(None, "--endpoint")) ->
     )
 
 
+@ai_model_app.command("probe")
+def ai_model_probe(model_key: str) -> None:
+    endpoints = _ai_endpoint_service()
+    catalog = ModelCatalogService(endpoints.store, endpoints)
+    probe = CodingWorkerProbeService(
+        endpoints.store,
+        catalog,
+        APIWorkerProbeRunner(catalog, endpoints),
+        _capability_registry().store.paths.root / "work" / "ai-probes",
+    ).probe(model_key)
+    _print(probe.model_dump(mode="json"))
+
+
 @ai_pool_app.command("select")
 def ai_pool_select(
     task_id: str,
@@ -1214,29 +1234,43 @@ def ai_usage_health(endpoint_id: str | None = typer.Option(None, "--endpoint")) 
 @delegate_app.command("launch-ai")
 def delegate_launch_ai(
     task_id: str,
-    priority: str = typer.Option("balanced", "--priority"),
+    priority: str | None = typer.Option(None, "--priority"),
     allow_cloud: bool = typer.Option(False, "--allow-cloud"),
     allow_cloud_fallback: bool = typer.Option(False, "--allow-cloud-fallback"),
 ) -> None:
     """Automatically select and launch a validated API-backed Worker."""
     from canto.models.ai_workers import WorkerSelectionPolicy
 
-    if priority not in {"economy", "balanced", "quality", "urgent"}:
+    if priority is not None and priority not in {"economy", "balanced", "quality", "urgent"}:
         raise typer.BadParameter(f"Unsupported priority: {priority}")
     if allow_cloud_fallback and not allow_cloud:
         raise typer.BadParameter("Cloud fallback requires --allow-cloud")
     try:
+        task = _delegation_runtime()[0].get_task(task_id)
+        repository_policy = load_repository_worker_policy(
+            task.repository.canonical_path
+        )
+        command_policy = WorkerSelectionPolicy(
+            priority=priority or repository_policy.priority,  # type: ignore[arg-type]
+            cloud_allowed=allow_cloud,
+            cloud_fallback_allowed=allow_cloud_fallback,
+        )
         launch = _ai_assignment_service().launch(
             task_id,
-            WorkerSelectionPolicy(
-                priority=priority,  # type: ignore[arg-type]
-                cloud_allowed=allow_cloud,
-                cloud_fallback_allowed=allow_cloud_fallback,
-            ),
+            compose_worker_policy(repository_policy, command_policy),
         )
-    except WorkerAssignmentError as exc:
+    except (WorkerAssignmentError, RepositoryConfigError) as exc:
         _delegation_error(exc)
     _print(launch.model_dump(mode="json"))
+
+
+@demo_app.command("ai-worker-pool")
+def demo_ai_worker_pool(
+    apply: bool = typer.Option(False, "--apply"),
+    keep: bool = typer.Option(False, "--keep"),
+) -> None:
+    """Run the offline governed AI Worker selection and review demo."""
+    _print(run_ai_worker_pool_demo(apply=apply, keep=keep).model_dump(mode="json"))
 
 
 @app.command("migrate-state")

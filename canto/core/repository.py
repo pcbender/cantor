@@ -8,6 +8,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, ValidationError
 
+from canto.models.ai_workers import WorkerSelectionPolicy
+
 
 class RepositoryConfigError(ValueError):
     pass
@@ -67,6 +69,23 @@ orchestrator_instructions = ".canto/agents/orchestrator.md"
 executor_instructions = ".canto/agents/executor.md"
 """
 
+WORKERS_TOML = """version = 1
+
+[selection]
+priority = "balanced"
+cloud_allowed = false
+cloud_fallback_allowed = false
+local_first = true
+allowed_endpoints = []
+allowed_providers = []
+allowed_models = []
+required_classification = "implementation"
+
+[selection.budget]
+enabled = false
+allow_unknown_pricing = false
+"""
+
 SHARED_AGENT_INSTRUCTIONS = """# Canto Shared Agent Instructions
 
 - Canto is globally installed; do not install Canto into this repository.
@@ -86,13 +105,12 @@ You are the Developer supervising governed Canto work. The compatibility
 filename is `orchestrator.md`; the public authority is Developer.
 
 - Define bounded work, Guardrails, and explicit instructions.
-- Select and assign an approved Worker profile.
-- Prefer a compatible approved local Worker when practical. If local profiles
-  cannot perform the required tool actions, explicitly select a supervised
-  `codex-cloud` Worker that uses the host Codex CLI's existing authentication.
-- Never switch from a local Worker to a cloud Worker automatically. Disclose
-  network and quota use, preserve the same bounded Workspace, and require the
-  normal Capture, Review, and Apply flow.
+- Use `canto delegate launch-ai TASK_ID` to select from previously validated
+  API-backed Workers under `.canto/workers.toml` policy.
+- Cloud use and cloud fallback require explicit Developer policy. Canto must
+  never silently widen a local-only assignment to cloud.
+- CLI-authenticated profiles are compatibility-only, explicit last-resort
+  Workers. They are excluded from automatic discovery, ranking, and fallback.
 - Do not use arbitrary `sleep` commands to guess whether a Worker finished.
   Keep the supervised launch command attached when possible, or use
   `canto delegate wait TASK_ID` to synchronize on durable task state.
@@ -234,6 +252,7 @@ def _ensure_agent_instructions(repository: Path) -> None:
     agents_dir = config_dir / "agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
     _write_if_missing(config_dir / "delegate.toml", DELEGATE_TOML)
+    _write_if_missing(config_dir / "workers.toml", WORKERS_TOML)
     _write_canto_owned(agents_dir / "shared.md", SHARED_AGENT_INSTRUCTIONS)
     _write_canto_owned(agents_dir / "orchestrator.md", ORCHESTRATOR_AGENT_INSTRUCTIONS)
     _write_canto_owned(agents_dir / "executor.md", EXECUTOR_AGENT_INSTRUCTIONS)
@@ -339,12 +358,14 @@ def doctor_repository(path: str | Path) -> RepositoryDoctorResult:
         ".canto/repo.toml",
         ".canto/policy.toml",
         ".canto/delegate.toml",
+        ".canto/workers.toml",
         ".canto/agents/shared.md",
         ".canto/agents/orchestrator.md",
         ".canto/agents/executor.md",
     ]
     for relative in required:
         check(relative, lambda relative=relative: _require_file(repository, relative))
+    check("worker_selection_policy", lambda: load_repository_worker_policy(repository).priority)
     check("AGENTS.md", lambda: _require_agent_pointer(repository))
     status = _git(repository, "status", "--porcelain", "--", "AGENTS.md", ".canto")
     checks.append(
@@ -403,3 +424,14 @@ def load_repository_policy(path: str | Path) -> RepositoryPolicy:
         )
     except (OSError, tomllib.TOMLDecodeError, ValidationError) as exc:
         raise RepositoryConfigError(f"Invalid Canto repository policy: {exc}") from exc
+
+
+def load_repository_worker_policy(path: str | Path) -> WorkerSelectionPolicy:
+    repository = find_repository(path)
+    try:
+        value = tomllib.loads((repository / ".canto" / "workers.toml").read_text())
+        return WorkerSelectionPolicy.model_validate(value.get("selection", {}))
+    except (OSError, tomllib.TOMLDecodeError, ValidationError) as exc:
+        raise RepositoryConfigError(
+            f"Invalid Canto repository Worker policy: {exc}"
+        ) from exc

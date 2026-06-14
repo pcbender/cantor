@@ -12,6 +12,10 @@ from canto.core.ai_discovery import ModelCatalogService
 from canto.core.state import StateStore
 from canto.models.ai_workers import ProbeAssertion, WorkerProbeResult
 from canto.models.schemas import utc_now
+from canto.models.ai_workers import WorkerBudgetPolicy
+from canto.models.delegation import DelegationScope
+from canto.core.ai_endpoints import AIEndpointService
+from canto.core.ai_worker import APIWorkerHarness
 
 
 PROBE_VERSION = "1"
@@ -32,6 +36,51 @@ class ProbeObservation:
 
 class WorkerProbeRunner(Protocol):
     def run_probe(self, model_key: str, workspace: Path) -> ProbeObservation: ...
+
+
+class APIWorkerProbeRunner:
+    def __init__(
+        self,
+        catalog: ModelCatalogService,
+        endpoints: AIEndpointService,
+        harness: APIWorkerHarness | None = None,
+    ):
+        self.catalog = catalog
+        self.endpoints = endpoints
+        self.harness = harness or APIWorkerHarness()
+
+    def run_probe(self, model_key: str, workspace: Path) -> ProbeObservation:
+        model = self.catalog.get(model_key)
+        endpoint = self.endpoints.get(model.endpoint_id)
+        usage, summary = self.harness.run(
+            task_id="worker-probe",
+            session_id=f"probe-session-{uuid4().hex}",
+            model=model,
+            endpoint=endpoint,
+            credential=self.endpoints.credential(endpoint),
+            prompt=(workspace / "PROBE.md").read_text(encoding="utf-8"),
+            workspace=workspace,
+            scope=DelegationScope(
+                allowed_paths=["result.txt", "command.txt"],
+                allowed_commands=["python3 -c"],
+            ),
+            budget=WorkerBudgetPolicy(
+                enabled=True,
+                max_turns=8,
+                max_tool_calls=12,
+                max_input_tokens=50_000,
+                max_output_tokens=10_000,
+                max_wall_seconds=180,
+                allow_unknown_pricing=True,
+            ),
+        )
+        return ProbeObservation(
+            responded=True,
+            structured_tool_calls=usage.tool_names,
+            detail=summary,
+            estimated_cost_usd=usage.estimated_cost_usd,
+            actual_cost_usd=usage.actual_cost_usd,
+        )
 
 
 class CodingWorkerProbeService:
@@ -57,8 +106,10 @@ class CodingWorkerProbeService:
         workspace.mkdir(parents=True)
         (workspace / "PROBE.md").write_text(
             "Use structured tools to create result.txt containing "
-            "canto-worker-probe and run a command that creates command.txt "
-            "containing probe-ok.\n",
+            "canto-worker-probe. Then use run_command with "
+            "`python3 -c \"from pathlib import Path; "
+            "Path('command.txt').write_text('probe-ok\\n')\"` to create "
+            "command.txt. Do not create command.txt with write_file.\n",
             encoding="utf-8",
         )
         subprocess.run(
@@ -154,4 +205,3 @@ class CodingWorkerProbeService:
             for value in self.store.list_ai_records(self.RECORD_TYPE)
         ]
         return [r for r in results if model_key is None or r.model_key == model_key]
-

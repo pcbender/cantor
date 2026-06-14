@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import yaml
+from pydantic import ValidationError
 
 from canto.core.credentials import CredentialError, CredentialVault
 from canto.core.state import StateStore
@@ -59,12 +60,15 @@ class AIEndpointService:
             raise AIEndpointError("Endpoint base URL must be an absolute HTTP(S) URL")
         if provider in CLOUD_PROVIDERS and parsed.scheme != "https":
             raise AIEndpointError("Cloud AI endpoints require HTTPS")
-        if provider == "ollama" and parsed.scheme == "http":
+        try:
             candidate = AIEndpointRecord(
                 endpoint_id=endpoint_id,
                 provider=provider,
                 base_url=base_url.rstrip("/"),
             )
+        except ValidationError as exc:
+            raise AIEndpointError(f"Invalid AI endpoint configuration: {exc}") from exc
+        if provider == "ollama" and parsed.scheme == "http":
             if not endpoint_is_local(candidate):
                 raise AIEndpointError("Plain HTTP Ollama endpoints must use loopback")
         if api_key and credential_ref:

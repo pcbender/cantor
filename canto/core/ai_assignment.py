@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from canto.core.ai_discovery import ModelCatalogService
 from canto.core.ai_endpoints import AIEndpointService, endpoint_is_local
-from canto.core.ai_selection import WorkerSelectionService
+from canto.core.ai_selection import WorkerSelectionService, compose_worker_policy
 from canto.core.ai_worker import APIWorkerError, APIWorkerHarness
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import DelegationWorkspaceService
@@ -50,9 +50,8 @@ class AIWorkerAssignmentService:
             raise WorkerAssignmentError(
                 "AI Worker launch requires a workspace_ready or revision_requested task"
             )
-        effective = task.worker_policy or policy or WorkerSelectionPolicy(
-            priority=task.worker_priority
-        )
+        base_policy = policy or WorkerSelectionPolicy(priority=task.worker_priority)
+        effective = compose_worker_policy(base_policy, task.worker_policy)
         endpoint_map = {item.endpoint_id: item for item in self.endpoints.list()}
         models = self.catalog.list()
         remaining = [
@@ -182,6 +181,13 @@ class AIWorkerAssignmentService:
             )
             return launch
         except Exception as exc:
+            partial_usage = getattr(exc, "usage", None)
+            if partial_usage is not None:
+                partial_usage.decision_id = task.selection_decision_id
+                partial_usage.terminal_reason = "worker_failed"
+                partial_usage.ended_at = utc_now()
+                self._price(partial_usage, model)
+                self._record_usage(task.task_id, partial_usage)
             stderr_path.write_text(str(exc), encoding="utf-8")
             launch = launch.model_copy(update={"exit_code": 1, "ended_at": utc_now()})
             self.delegation.append_record(task.task_id, "launches", launch)

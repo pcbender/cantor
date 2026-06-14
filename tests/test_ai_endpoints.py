@@ -54,3 +54,13 @@ def test_local_ollama_allows_loopback_without_key(tmp_path):
     assert endpoint.credential_ref is None
     with pytest.raises(AIEndpointError, match="loopback"):
         service.add("remote", "ollama", "http://models.example.com:11434")
+
+
+def test_invalid_endpoint_id_does_not_store_supplied_secret(tmp_path):
+    vault = CredentialVault(tmp_path / "vault")
+    service = AIEndpointService(MemoryStateStore(), vault, tmp_path / "ai.yaml")
+
+    with pytest.raises(AIEndpointError, match="Invalid AI endpoint"):
+        service.add("INVALID ID", "openai", "https://api.openai.com", api_key="secret")
+
+    assert vault.list() == []

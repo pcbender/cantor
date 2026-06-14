@@ -22,7 +22,9 @@ from canto.models.schemas import utc_now
 
 
 class APIWorkerError(RuntimeError):
-    pass
+    def __init__(self, message: str, usage: WorkerUsageRecord | None = None):
+        self.usage = usage
+        super().__init__(message)
 
 
 @dataclass(frozen=True)
@@ -89,12 +91,12 @@ class HttpAgentAdapter:
             url = base + ("/chat/completions" if base.endswith("/v1") else "/v1/chat/completions")
             return url, {"Authorization": f"Bearer {credential}"}, {
                 "model": model_id,
-                "messages": messages,
+                "messages": HttpAgentAdapter._openai_messages(messages),
                 "tools": [{"type": "function", "function": tool} for tool in tools],
             }
         if endpoint.provider == "anthropic":
             system = "\n".join(m["content"] for m in messages if m["role"] == "system")
-            content = [m for m in messages if m["role"] != "system"]
+            content = HttpAgentAdapter._anthropic_messages(messages)
             return base + "/v1/messages", {
                 "x-api-key": credential or "",
                 "anthropic-version": "2023-06-01",
@@ -112,20 +114,103 @@ class HttpAgentAdapter:
             from urllib.parse import quote
 
             url = base + f"/v1beta/models/{quote(model_id, safe='')}:generateContent?key={quote(credential or '')}"
-            contents = [
-                {"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": str(m.get("content", ""))}]}
-                for m in messages
-            ]
+            contents = HttpAgentAdapter._google_messages(messages)
             return url, {}, {
                 "contents": contents,
                 "tools": [{"functionDeclarations": tools}],
             }
         return base + "/api/chat", {}, {
             "model": model_id,
-            "messages": messages,
+            "messages": HttpAgentAdapter._openai_messages(messages),
             "tools": [{"type": "function", "function": tool} for tool in tools],
             "stream": False,
         }
+
+    @staticmethod
+    def _openai_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        result = []
+        for message in messages:
+            value = {"role": message["role"], "content": message.get("content", "")}
+            if message.get("tool_call_id"):
+                value["tool_call_id"] = message["tool_call_id"]
+                if message.get("name"):
+                    value["name"] = message["name"]
+            if message.get("tool_calls"):
+                value["tool_calls"] = [
+                    {
+                        "id": call["id"],
+                        "type": "function",
+                        "function": {
+                            "name": call["name"],
+                            "arguments": json.dumps(call["arguments"]),
+                        },
+                    }
+                    for call in message["tool_calls"]
+                ]
+            result.append(value)
+        return result
+
+    @staticmethod
+    def _anthropic_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        for message in messages:
+            if message["role"] == "system":
+                continue
+            role = "assistant" if message["role"] == "assistant" else "user"
+            blocks: list[dict[str, Any]] = []
+            if message.get("content"):
+                blocks.append({"type": "text", "text": str(message["content"])})
+            for call in message.get("tool_calls", []):
+                blocks.append(
+                    {
+                        "type": "tool_use",
+                        "id": call["id"],
+                        "name": call["name"],
+                        "input": call["arguments"],
+                    }
+                )
+            if message["role"] == "tool":
+                blocks = [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": message["tool_call_id"],
+                        "content": str(message.get("content", "")),
+                    }
+                ]
+            if result and result[-1]["role"] == role:
+                result[-1]["content"].extend(blocks)
+            else:
+                result.append({"role": role, "content": blocks})
+        return result
+
+    @staticmethod
+    def _google_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        result = []
+        for message in messages:
+            role = "model" if message["role"] == "assistant" else "user"
+            parts: list[dict[str, Any]] = []
+            if message.get("content"):
+                parts.append({"text": str(message["content"])})
+            for call in message.get("tool_calls", []):
+                parts.append(
+                    {
+                        "functionCall": {
+                            "name": call["name"],
+                            "args": call["arguments"],
+                        }
+                    }
+                )
+            if message["role"] == "tool":
+                parts = [
+                    {
+                        "functionResponse": {
+                            "name": message["name"],
+                            "response": {"result": message.get("content", "")},
+                        }
+                    }
+                ]
+            result.append({"role": role, "parts": parts})
+        return result
 
     @staticmethod
     def _parse(provider: str, payload: dict, headers: Any) -> AgentResponse:
@@ -293,8 +378,11 @@ class APIWorkerHarness:
         max_tools = budget.max_tool_calls or 100
         for _ in range(max_turns):
             if budget.max_wall_seconds and time.monotonic() - started > budget.max_wall_seconds:
-                raise APIWorkerError("Worker wall-time budget exceeded")
-            response = self.adapter.complete(endpoint, credential, model.provider_model_id, messages, TOOLS)
+                raise APIWorkerError("Worker wall-time budget exceeded", usage)
+            try:
+                response = self.adapter.complete(endpoint, credential, model.provider_model_id, messages, TOOLS)
+            except Exception as exc:
+                raise APIWorkerError(str(exc), usage) from exc
             usage.input_tokens += response.input_tokens
             usage.cached_input_tokens += response.cached_input_tokens
             usage.output_tokens += response.output_tokens
@@ -304,9 +392,9 @@ class APIWorkerHarness:
                 usage.provider_request_ids.append(response.request_id)
             if budget.enabled:
                 if budget.max_input_tokens and usage.input_tokens > budget.max_input_tokens:
-                    raise APIWorkerError("Worker input-token budget exceeded")
+                    raise APIWorkerError("Worker input-token budget exceeded", usage)
                 if budget.max_output_tokens and usage.output_tokens > budget.max_output_tokens:
-                    raise APIWorkerError("Worker output-token budget exceeded")
+                    raise APIWorkerError("Worker output-token budget exceeded", usage)
             if response.text:
                 summaries.append(response.text)
             if not response.tool_calls:
@@ -323,8 +411,12 @@ class APIWorkerHarness:
             })
             for call in response.tool_calls:
                 usage.tool_calls += 1
+                usage.tool_names.append(call.name)
                 if usage.tool_calls > max_tools:
-                    raise APIWorkerError("Worker tool-call budget exceeded")
-                result = tools.execute(call)
+                    raise APIWorkerError("Worker tool-call budget exceeded", usage)
+                try:
+                    result = tools.execute(call)
+                except Exception as exc:
+                    raise APIWorkerError(str(exc), usage) from exc
                 messages.append({"role": "tool", "tool_call_id": call.call_id, "name": call.name, "content": result})
-        raise APIWorkerError("Worker turn budget exceeded")
+        raise APIWorkerError("Worker turn budget exceeded", usage)

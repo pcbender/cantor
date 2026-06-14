@@ -47,6 +47,7 @@ Canto uses global user state and repo-local intent:
 <repo>/.canto/repo.toml
 <repo>/.canto/policy.toml
 <repo>/.canto/delegate.toml
+<repo>/.canto/workers.toml
 <repo>/.canto/agents/shared.md
 <repo>/.canto/agents/orchestrator.md
 <repo>/.canto/agents/executor.md

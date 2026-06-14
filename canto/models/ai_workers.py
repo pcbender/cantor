@@ -148,6 +148,7 @@ class WorkerUsageRecord(BaseModel):
     reasoning_tokens: int = Field(default=0, ge=0)
     turns: int = Field(default=0, ge=0)
     tool_calls: int = Field(default=0, ge=0)
+    tool_names: list[str] = Field(default_factory=list)
     estimated_cost_usd: float | None = Field(default=None, ge=0)
     actual_cost_usd: float | None = Field(default=None, ge=0)
     provider_request_ids: list[str] = Field(default_factory=list)
