@@ -22,12 +22,12 @@ TRANSITIONS: dict[str, set[str]] = {
     "workspace_ready": {"executor_working"},
     "executor_working": {"executor_blocked", "executor_done", "failed", "cancelled"},
     "executor_blocked": {"executor_working", "failed", "cancelled"},
-    "executor_done": {"reviewing"},
+    "executor_done": {"reviewing", "revision_requested"},
     "reviewing": {"revision_requested", "accepted", "rejected"},
     "revision_requested": {"executor_working"},
     "accepted": {"promoting", "cancelled"},
     "promoting": {"promoted", "promotion_failed"},
-    "promotion_failed": {"promoting", "rejected", "cancelled"},
+    "promotion_failed": {"promoting", "revision_requested", "rejected", "cancelled"},
 }
 
 TERMINAL_STATUSES = {"promoted", "rejected", "cancelled", "failed"}

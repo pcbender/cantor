@@ -11,6 +11,18 @@ Run `canto health` and confirm `state` is `ok`. SQLite lives at
 user. Redis is not required. Legacy state migration is documented in
 `docs/state-migration.md`.
 
+Read-only delegation inspection commands (`canto delegate pool` and
+`canto delegate status`) open existing SQLite state without schema or WAL
+initialization. If state is absent or unreadable, they report a concise
+state-access error rather than creating files or emitting a traceback.
+
+## The `canto` command is not on PATH
+
+A repo bootstrap does not install Canto. From a source checkout, use the
+checkout executable (for example `~/canto/.venv/bin/canto`) or add that virtual
+environment's `bin` directory to the shell `PATH`. For normal use, install the
+trusted local wheel as described in `docs/local-installation.md`.
+
 ## A credential cannot be resolved
 
 Use `canto credential list` to confirm the `vault:scope/name` reference exists.
@@ -96,3 +108,24 @@ merge, rebase, reset, retry, or clean up.
 Prompts, stdout/stderr, command logs, and immutable result artifacts live under
 `~/.canto/work/delegations/TASK_ID/artifacts/`. Revision feedback remains a
 review decision and is separate from optional prompt variants.
+
+If a supervised Worker exits successfully but changes no Workspace files,
+Capture has no Result to record. Use `canto delegate revise TASK_ID --note
+"..."` to return the same task to `revision_requested`; the next launch receives
+that feedback. Canto projects the matching launch outcome onto the session, so
+completed or failed supervised sessions do not remain displayed as running.
+
+If repeated local-model launches produce tool-call text instead of tool
+execution, treat the profile as incompatible with implementation work. Use it
+for advisory output or explicitly assign an authenticated `codex-cloud`
+profile. Canto must not make that local-to-cloud switch automatically.
+
+Do not use `sleep` to poll Worker completion. Keep `canto delegate launch`
+attached when possible. If the calling agent has yielded that command, run
+`canto delegate wait TASK_ID`; it observes durable status and returns when the
+task completes, fails, blocks, or otherwise needs Developer attention.
+
+If promotion rolls back safely because accepted patch evidence is incomplete,
+use `canto delegate revise TASK_ID --note "..."` and capture a new immutable
+Result. Do not edit an existing Result artifact or force the incomplete patch
+into the canonical repository.

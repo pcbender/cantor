@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import subprocess
+import tempfile
 from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
@@ -16,12 +17,15 @@ class ArtifactCaptureError(DelegationError):
     pass
 
 
-def _git(workspace: Path, *args: str) -> str:
+def _git(
+    workspace: Path, *args: str, env: dict[str, str] | None = None
+) -> str:
     completed = subprocess.run(
         ["git", "-C", str(workspace), *args],
         text=True,
         capture_output=True,
         check=False,
+        env={**os.environ, **(env or {})},
     )
     if completed.returncode:
         raise ArtifactCaptureError(
@@ -44,7 +48,7 @@ def _is_generated_cache(path: str) -> bool:
     )
 
 
-def _changed_files(workspace: Path) -> list[dict[str, str]]:
+def _changed_files(workspace: Path, base_commit: str) -> list[dict[str, str]]:
     output = subprocess.run(
         ["git", "-C", str(workspace), "status", "--porcelain=v1", "-z", "--untracked-files=all"],
         capture_output=True,
@@ -66,6 +70,16 @@ def _changed_files(workspace: Path) -> list[dict[str, str]]:
             changed.append({"path": source, "status": "D "})
         if status == "??" and _is_generated_cache(path):
             continue
+        filesystem_path = workspace / path
+        exists_in_workspace = os.path.lexists(filesystem_path)
+        exists_in_base = subprocess.run(
+            ["git", "-C", str(workspace), "cat-file", "-e", f"{base_commit}:{path}"],
+            capture_output=True,
+            check=False,
+        ).returncode == 0
+        if not exists_in_workspace and not exists_in_base:
+            # Ignore stale intent-to-add entries left by older capture versions.
+            continue
         changed.append({"path": path, "status": status})
     return sorted(changed, key=lambda item: item["path"])
 
@@ -80,12 +94,30 @@ def _artifact(path: Path, root: Path) -> DelegationArtifact:
     )
 
 
-def workspace_patch(workspace: Path, base_commit: str) -> str:
-    changes = _changed_files(workspace)
-    untracked = [item["path"] for item in changes if item["status"] == "??"]
-    if untracked:
-        _git(workspace, "add", "-N", "--", *untracked)
-    return _git(workspace, "diff", "--binary", "--full-index", base_commit, "--")
+def workspace_patch(
+    workspace: Path,
+    base_commit: str,
+    changes: list[dict[str, str]] | None = None,
+) -> str:
+    snapshot = changes if changes is not None else _changed_files(workspace, base_commit)
+    paths = [item["path"] for item in snapshot]
+    if not paths:
+        return ""
+    with tempfile.TemporaryDirectory(prefix="canto-capture-index-") as root:
+        env = {"GIT_INDEX_FILE": str(Path(root) / "index")}
+        _git(workspace, "read-tree", base_commit, env=env)
+        _git(workspace, "add", "-A", "--", *paths, env=env)
+        return _git(
+            workspace,
+            "diff",
+            "--cached",
+            "--binary",
+            "--full-index",
+            base_commit,
+            "--",
+            *paths,
+            env=env,
+        )
 
 
 class DelegationArtifactService:
@@ -110,7 +142,7 @@ class DelegationArtifactService:
             raise ArtifactCaptureError("Artifacts can only be captured from executor_done")
         workspace = self.workspaces.get(task_id)
         root = Path(workspace.path)
-        changes = _changed_files(root)
+        changes = _changed_files(root, workspace.base_commit)
         if not changes:
             raise ArtifactCaptureError("Delegation workspace has no changes to capture")
         for change in changes:
@@ -125,7 +157,7 @@ class DelegationArtifactService:
             if filesystem_path.is_symlink():
                 raise ArtifactCaptureError(f"Symlink changes are not allowed: {change['path']}")
 
-        patch = workspace_patch(root, workspace.base_commit)
+        patch = workspace_patch(root, workspace.base_commit, changes)
         if not patch:
             raise ArtifactCaptureError("Workspace changes did not produce a reviewable patch")
 

@@ -87,6 +87,15 @@ filename is `orchestrator.md`; the public authority is Developer.
 
 - Define bounded work, Guardrails, and explicit instructions.
 - Select and assign an approved Worker profile.
+- Prefer a compatible approved local Worker when practical. If local profiles
+  cannot perform the required tool actions, explicitly select a supervised
+  `codex-cloud` Worker that uses the host Codex CLI's existing authentication.
+- Never switch from a local Worker to a cloud Worker automatically. Disclose
+  network and quota use, preserve the same bounded Workspace, and require the
+  normal Capture, Review, and Apply flow.
+- Do not use arbitrary `sleep` commands to guess whether a Worker finished.
+  Keep the supervised launch command attached when possible, or use
+  `canto delegate wait TASK_ID` to synchronize on durable task state.
 - Inspect dashboards, immutable Results, command evidence, and conflicts.
 - Request revisions when evidence or implementation is incomplete.
 - Accept or reject Results explicitly; Workers cannot accept their own work.

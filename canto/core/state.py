@@ -47,8 +47,9 @@ class SqliteStateStore:
 
     SCHEMA_VERSION = 1
 
-    def __init__(self, path: str | Path):
+    def __init__(self, path: str | Path, *, read_only: bool = False):
         self.path = Path(path).expanduser().resolve()
+        self.read_only = read_only
         self._init_lock = RLock()
         self._initialized = False
 
@@ -57,7 +58,17 @@ class SqliteStateStore:
         return self._raw_connect()
 
     def _raw_connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path, timeout=30)
+        if self.read_only:
+            wal_path = self.path.with_name(f"{self.path.name}-wal")
+            query = "mode=ro" if wal_path.exists() else "mode=ro&immutable=1"
+            connection = sqlite3.connect(
+                f"{self.path.as_uri()}?{query}",
+                timeout=30,
+                uri=True,
+            )
+            connection.execute("PRAGMA query_only = ON")
+        else:
+            connection = sqlite3.connect(self.path, timeout=30)
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA busy_timeout = 30000")
         return connection
@@ -67,6 +78,13 @@ class SqliteStateStore:
             return
         with self._init_lock:
             if self._initialized:
+                return
+            if self.read_only:
+                if not self.path.is_file():
+                    raise sqlite3.OperationalError(
+                        f"Canto state database does not exist: {self.path}"
+                    )
+                self._initialized = True
                 return
             self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
             with self._raw_connect() as connection:

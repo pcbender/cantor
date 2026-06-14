@@ -129,6 +129,9 @@ def test_repo_init_refreshes_canto_owned_role_manuals(repository):
 
     assert "# Canto Developer Instructions" in developer_manual.read_text()
     assert "Authorize Canto to Apply" in developer_manual.read_text()
+    assert "`codex-cloud` Worker" in developer_manual.read_text()
+    assert "Never switch from a local Worker" in developer_manual.read_text()
+    assert "`canto delegate wait TASK_ID`" in developer_manual.read_text()
     assert "# Canto Delegated Worker Instructions" in worker_manual.read_text()
     assert "Do not self-assign" in worker_manual.read_text()
 

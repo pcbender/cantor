@@ -70,6 +70,48 @@ def test_capture_creates_immutable_hashed_result_revision(tmp_path):
     assert service.get_task("task_1").status == "reviewing"
 
 
+def test_capture_includes_empty_new_file_without_mutating_worker_index(tmp_path):
+    service, workspaces, workspace = executor_done(tmp_path)
+    empty = workspace / "src" / "empty.md"
+    empty.write_text("")
+    before = subprocess.run(
+        ["git", "-C", str(workspace), "diff", "--cached", "--binary"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout
+
+    DelegationArtifactService(service, workspaces).capture("task_1")
+
+    patch = (workspace.parent / "artifacts" / "revision-1" / "proposal.diff").read_text()
+    after = subprocess.run(
+        ["git", "-C", str(workspace), "diff", "--cached", "--binary"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout
+    assert "new file mode 100644" in patch
+    assert "src/empty.md" in patch
+    assert after == before
+
+
+def test_capture_excludes_stale_intent_to_add_path_absent_from_base_and_workspace(tmp_path):
+    service, workspaces, workspace = executor_done(tmp_path)
+    ghost = workspace / "src" / "ghost.md"
+    ghost.write_text("")
+    git(workspace, "add", "-N", "--", "src/ghost.md")
+    ghost.unlink()
+    (workspace / "src" / "app.py").write_text("value = 2\n")
+
+    DelegationArtifactService(service, workspaces).capture("task_1")
+
+    artifact_root = workspace.parent / "artifacts" / "revision-1"
+    changed = json.loads((artifact_root / "changed_files.json").read_text())
+    patch = (artifact_root / "proposal.diff").read_text()
+    assert [item["path"] for item in changed] == ["src/app.py"]
+    assert "ghost.md" not in patch
+
+
 def test_capture_rejects_denied_path_change(tmp_path):
     service, workspaces, workspace = executor_done(tmp_path)
     (workspace / "private").mkdir()

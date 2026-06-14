@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -128,9 +130,14 @@ def _capability_registry() -> CapabilityRegistry:
     return CapabilityRegistry.local()
 
 
-def _delegation_runtime() -> tuple[DelegationService, DelegationWorkspaceService]:
+def _delegation_runtime(
+    *, read_only: bool = False
+) -> tuple[DelegationService, DelegationWorkspaceService]:
     registry = _capability_registry()
-    store = SqliteStateStore(registry.store.paths.state_file)
+    store = SqliteStateStore(
+        registry.store.paths.state_file,
+        read_only=read_only,
+    )
     service = DelegationService(store)
     workspaces = DelegationWorkspaceService(
         service, registry.store.paths.root / "work" / "delegations"
@@ -440,11 +447,13 @@ def delegate_done(
 def delegate_show(task_id: str) -> None:
     """Show a delegation task and its durable manual workflow records."""
     try:
-        service, _ = _delegation_runtime()
+        service, workspaces = _delegation_runtime()
         task = service.get_task(task_id)
         value = task.model_dump(mode="json")
         value["messages"] = service.get_records(task_id, "messages")
-        value["sessions"] = service.get_records(task_id, "sessions")
+        value["sessions"] = CodexCliExecutor(
+            service, workspaces
+        ).projected_sessions(task_id)
     except DelegationError as exc:
         _delegation_error(exc)
     _print(value)
@@ -691,7 +700,17 @@ def delegate_revise(
         )
     except (DelegationError, ReviewError) as exc:
         _delegation_error(exc)
-    _print(review.model_dump(mode="json"))
+    if review is None:
+        _print(
+            {
+                "task_id": task_id,
+                "status": "revision_requested",
+                "result_revision": None,
+                "note": note,
+            }
+        )
+    else:
+        _print(review.model_dump(mode="json"))
 
 
 @delegate_app.command("reject")
@@ -778,25 +797,63 @@ def delegate_waive_command(
 @delegate_app.command("pool")
 def delegate_pool() -> None:
     """Show executor availability and active assignments without scheduling."""
-    service, _ = _delegation_runtime()
-    _print(
-        [
-            entry.model_dump(mode="json")
-            for entry in DelegationPoolService(service).executors()
-        ]
-    )
+    try:
+        service, _ = _delegation_runtime(read_only=True)
+        _print(
+            [
+                entry.model_dump(mode="json")
+                for entry in DelegationPoolService(service).executors()
+            ]
+        )
+    except (OSError, sqlite3.Error) as exc:
+        _delegation_error(
+            RuntimeError(f"Cannot read Canto state for delegate pool: {exc}")
+        )
 
 
 @delegate_app.command("status")
 def delegate_status(active: bool = typer.Option(False, "--active")) -> None:
     """Show durable delegation task status across parallel workspaces."""
-    service, _ = _delegation_runtime()
-    _print(
-        [
-            item.model_dump(mode="json")
-            for item in DelegationPoolService(service).tasks(active_only=active)
-        ]
-    )
+    try:
+        service, _ = _delegation_runtime(read_only=True)
+        _print(
+            [
+                item.model_dump(mode="json")
+                for item in DelegationPoolService(service).tasks(active_only=active)
+            ]
+        )
+    except (OSError, sqlite3.Error) as exc:
+        _delegation_error(
+            RuntimeError(f"Cannot read Canto state for delegate status: {exc}")
+        )
+
+
+@delegate_app.command("wait")
+def delegate_wait(
+    task_id: str,
+    timeout: float = typer.Option(1800.0, "--timeout", min=0.1),
+    interval: float = typer.Option(2.0, "--interval", min=0.1),
+) -> None:
+    """Wait for a working Worker task to reach completion or need attention."""
+    deadline = time.monotonic() + timeout
+    waiting_statuses = {"executor_working", "promoting"}
+    try:
+        service, _ = _delegation_runtime(read_only=True)
+        while True:
+            task = service.get_task(task_id)
+            if task.status not in waiting_statuses:
+                _print(task.model_dump(mode="json"))
+                return
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                typer.echo(
+                    f"Error: Timed out waiting for {task_id}; current status is {task.status}",
+                    err=True,
+                )
+                raise typer.Exit(1)
+            time.sleep(min(interval, remaining))
+    except (DelegationError, OSError, sqlite3.Error) as exc:
+        _delegation_error(RuntimeError(f"Cannot wait for delegation task: {exc}"))
 
 
 @delegate_app.command("queue-add")
