@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import sqlite3
+import time
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -21,6 +23,16 @@ from canto.core.capability_scaffold import (
     scaffold_capability_structure,
 )
 from canto.core.credentials import CredentialError, CredentialVault
+from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
+from canto.core.ai_discovery import ModelCatalogService, ModelDiscoveryError
+from canto.core.ai_selection import (
+    WorkerSelectionError,
+    WorkerSelectionService,
+    compose_worker_policy,
+)
+from canto.core.ai_assignment import AIWorkerAssignmentService, WorkerAssignmentError
+from canto.core.ai_worker import APIWorkerHarness
+from canto.core.ai_probe import APIWorkerProbeRunner, CodingWorkerProbeService
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -50,6 +62,7 @@ from canto.core.delegation_review_summary import (
 )
 from canto.core.delegation_conflicts import DelegationConflictService
 from canto.core.delegation_demo import DelegationDemoError, run_delegation_demo
+from canto.core.ai_worker_demo import run_ai_worker_pool_demo
 from canto.core.jobs import JobError, JobService
 from canto.core.local_registry import (
     LocalRegistryError,
@@ -68,6 +81,7 @@ from canto.core.repository import (
     initialize_repository,
     load_repository,
     load_repository_policy,
+    load_repository_worker_policy,
 )
 from canto.core.seed_capabilities import SeedCapabilityError, audit_seed_capabilities
 from canto.core.state import SqliteStateStore
@@ -92,6 +106,11 @@ credential_app = typer.Typer(help="Manage local encrypted credentials")
 delegate_app = typer.Typer(help="Coordinate delegated executor workspaces")
 repo_app = typer.Typer(help="Bootstrap and inspect repository-local Canto intent")
 demo_app = typer.Typer(help="Run isolated local Canto demonstrations")
+ai_app = typer.Typer(help="Configure and inspect governed AI Workers")
+ai_endpoint_app = typer.Typer(help="Manage AI provider endpoints")
+ai_model_app = typer.Typer(help="Discover and inspect exact provider models")
+ai_pool_app = typer.Typer(help="Select and explain governed AI Workers")
+ai_usage_app = typer.Typer(help="Inspect AI Worker usage and endpoint health")
 delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
 delegate_profile_app = typer.Typer(help="Manage local executor profiles")
 app.add_typer(skill_app, name="skill")
@@ -102,12 +121,48 @@ app.add_typer(credential_app, name="credential")
 app.add_typer(delegate_app, name="delegate")
 app.add_typer(repo_app, name="repo")
 app.add_typer(demo_app, name="demo")
+app.add_typer(ai_app, name="ai")
+ai_app.add_typer(ai_endpoint_app, name="endpoint")
+ai_app.add_typer(ai_model_app, name="model")
+ai_app.add_typer(ai_pool_app, name="pool")
+ai_app.add_typer(ai_usage_app, name="usage")
 delegate_app.add_typer(delegate_compare_app, name="compare")
 delegate_app.add_typer(delegate_profile_app, name="profile")
 
 
 def _credential_vault() -> CredentialVault:
     return CredentialVault.local()
+
+
+def _ai_endpoint_service() -> AIEndpointService:
+    registry = _capability_registry()
+    return AIEndpointService(
+        SqliteStateStore(registry.store.paths.state_file),
+        _credential_vault(),
+        registry.store.paths.config / "ai-endpoints.yaml",
+    )
+
+
+def _ai_catalog_service() -> ModelCatalogService:
+    endpoint_service = _ai_endpoint_service()
+    return ModelCatalogService(endpoint_service.store, endpoint_service)
+
+
+def _ai_selection_service() -> WorkerSelectionService:
+    return WorkerSelectionService(_ai_endpoint_service().store)
+
+
+def _ai_assignment_service() -> AIWorkerAssignmentService:
+    delegation, workspaces = _delegation_runtime()
+    endpoints = _ai_endpoint_service()
+    return AIWorkerAssignmentService(
+        delegation,
+        workspaces,
+        endpoints,
+        ModelCatalogService(delegation.store, endpoints),
+        WorkerSelectionService(delegation.store),
+        APIWorkerHarness(),
+    )
 
 
 def _runtime() -> tuple:
@@ -128,9 +183,14 @@ def _capability_registry() -> CapabilityRegistry:
     return CapabilityRegistry.local()
 
 
-def _delegation_runtime() -> tuple[DelegationService, DelegationWorkspaceService]:
+def _delegation_runtime(
+    *, read_only: bool = False
+) -> tuple[DelegationService, DelegationWorkspaceService]:
     registry = _capability_registry()
-    store = SqliteStateStore(registry.store.paths.state_file)
+    store = SqliteStateStore(
+        registry.store.paths.state_file,
+        read_only=read_only,
+    )
     service = DelegationService(store)
     workspaces = DelegationWorkspaceService(
         service, registry.store.paths.root / "work" / "delegations"
@@ -440,11 +500,13 @@ def delegate_done(
 def delegate_show(task_id: str) -> None:
     """Show a delegation task and its durable manual workflow records."""
     try:
-        service, _ = _delegation_runtime()
+        service, workspaces = _delegation_runtime()
         task = service.get_task(task_id)
         value = task.model_dump(mode="json")
         value["messages"] = service.get_records(task_id, "messages")
-        value["sessions"] = service.get_records(task_id, "sessions")
+        value["sessions"] = CodexCliExecutor(
+            service, workspaces
+        ).projected_sessions(task_id)
     except DelegationError as exc:
         _delegation_error(exc)
     _print(value)
@@ -691,7 +753,17 @@ def delegate_revise(
         )
     except (DelegationError, ReviewError) as exc:
         _delegation_error(exc)
-    _print(review.model_dump(mode="json"))
+    if review is None:
+        _print(
+            {
+                "task_id": task_id,
+                "status": "revision_requested",
+                "result_revision": None,
+                "note": note,
+            }
+        )
+    else:
+        _print(review.model_dump(mode="json"))
 
 
 @delegate_app.command("reject")
@@ -778,25 +850,63 @@ def delegate_waive_command(
 @delegate_app.command("pool")
 def delegate_pool() -> None:
     """Show executor availability and active assignments without scheduling."""
-    service, _ = _delegation_runtime()
-    _print(
-        [
-            entry.model_dump(mode="json")
-            for entry in DelegationPoolService(service).executors()
-        ]
-    )
+    try:
+        service, _ = _delegation_runtime(read_only=True)
+        _print(
+            [
+                entry.model_dump(mode="json")
+                for entry in DelegationPoolService(service).executors()
+            ]
+        )
+    except (OSError, sqlite3.Error) as exc:
+        _delegation_error(
+            RuntimeError(f"Cannot read Canto state for delegate pool: {exc}")
+        )
 
 
 @delegate_app.command("status")
 def delegate_status(active: bool = typer.Option(False, "--active")) -> None:
     """Show durable delegation task status across parallel workspaces."""
-    service, _ = _delegation_runtime()
-    _print(
-        [
-            item.model_dump(mode="json")
-            for item in DelegationPoolService(service).tasks(active_only=active)
-        ]
-    )
+    try:
+        service, _ = _delegation_runtime(read_only=True)
+        _print(
+            [
+                item.model_dump(mode="json")
+                for item in DelegationPoolService(service).tasks(active_only=active)
+            ]
+        )
+    except (OSError, sqlite3.Error) as exc:
+        _delegation_error(
+            RuntimeError(f"Cannot read Canto state for delegate status: {exc}")
+        )
+
+
+@delegate_app.command("wait")
+def delegate_wait(
+    task_id: str,
+    timeout: float = typer.Option(1800.0, "--timeout", min=0.1),
+    interval: float = typer.Option(2.0, "--interval", min=0.1),
+) -> None:
+    """Wait for a working Worker task to reach completion or need attention."""
+    deadline = time.monotonic() + timeout
+    waiting_statuses = {"executor_working", "promoting"}
+    try:
+        service, _ = _delegation_runtime(read_only=True)
+        while True:
+            task = service.get_task(task_id)
+            if task.status not in waiting_statuses:
+                _print(task.model_dump(mode="json"))
+                return
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                typer.echo(
+                    f"Error: Timed out waiting for {task_id}; current status is {task.status}",
+                    err=True,
+                )
+                raise typer.Exit(1)
+            time.sleep(min(interval, remaining))
+    except (DelegationError, OSError, sqlite3.Error) as exc:
+        _delegation_error(RuntimeError(f"Cannot wait for delegation task: {exc}"))
 
 
 @delegate_app.command("queue-add")
@@ -973,6 +1083,194 @@ def credential_delete(
     except CredentialError as exc:
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(f"Deleted vault:{scope}/{name}")
+
+
+@ai_endpoint_app.command("add")
+def ai_endpoint_add(
+    endpoint_id: str,
+    provider: str = typer.Option(..., "--provider"),
+    base_url: str = typer.Option(..., "--base-url"),
+    api_key: str | None = typer.Option(None, "--api-key", hidden=True),
+    credential_ref: str | None = typer.Option(None, "--credential-ref"),
+) -> None:
+    """Add an endpoint; cloud API keys are encrypted in the local vault."""
+    if provider not in {
+        "openai",
+        "anthropic",
+        "google",
+        "openai_compatible",
+        "ollama",
+    }:
+        raise typer.BadParameter(f"Unsupported AI provider: {provider}")
+    if not api_key and not credential_ref and provider != "ollama":
+        api_key = typer.prompt("API key", hide_input=True)
+    try:
+        endpoint = _ai_endpoint_service().add(
+            endpoint_id,
+            provider,  # type: ignore[arg-type]
+            base_url,
+            api_key=api_key,
+            credential_ref=credential_ref,
+        )
+    except AIEndpointError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(endpoint.model_dump(mode="json"))
+
+
+@ai_endpoint_app.command("list")
+def ai_endpoint_list() -> None:
+    """List configured endpoints without decrypting credentials."""
+    _print(
+        [
+            endpoint.model_dump(mode="json")
+            for endpoint in _ai_endpoint_service().list()
+        ]
+    )
+
+
+@ai_endpoint_app.command("show")
+def ai_endpoint_show(endpoint_id: str) -> None:
+    try:
+        endpoint = _ai_endpoint_service().get(endpoint_id)
+    except AIEndpointError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(endpoint.model_dump(mode="json"))
+
+
+@ai_endpoint_app.command("disable")
+def ai_endpoint_disable(endpoint_id: str) -> None:
+    try:
+        endpoint = _ai_endpoint_service().disable(endpoint_id)
+    except AIEndpointError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(endpoint.model_dump(mode="json"))
+
+
+@ai_model_app.command("discover")
+def ai_model_discover(endpoint_id: str) -> None:
+    """Validate an endpoint by discovering its exact model catalog."""
+    try:
+        snapshot = _ai_catalog_service().discover(endpoint_id)
+    except (AIEndpointError, ModelDiscoveryError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(snapshot.model_dump(mode="json"))
+
+
+@ai_model_app.command("list")
+def ai_model_list(endpoint_id: str | None = typer.Option(None, "--endpoint")) -> None:
+    _print(
+        [
+            model.model_dump(mode="json")
+            for model in _ai_catalog_service().list(endpoint_id)
+        ]
+    )
+
+
+@ai_model_app.command("probe")
+def ai_model_probe(model_key: str) -> None:
+    endpoints = _ai_endpoint_service()
+    catalog = ModelCatalogService(endpoints.store, endpoints)
+    probe = CodingWorkerProbeService(
+        endpoints.store,
+        catalog,
+        APIWorkerProbeRunner(catalog, endpoints),
+        _capability_registry().store.paths.root / "work" / "ai-probes",
+    ).probe(model_key)
+    _print(probe.model_dump(mode="json"))
+
+
+@ai_pool_app.command("select")
+def ai_pool_select(
+    task_id: str,
+    priority: str = typer.Option("balanced", "--priority"),
+    allow_cloud: bool = typer.Option(False, "--allow-cloud"),
+) -> None:
+    from canto.models.ai_workers import WorkerSelectionPolicy
+
+    if priority not in {"economy", "balanced", "quality", "urgent"}:
+        raise typer.BadParameter(f"Unsupported priority: {priority}")
+    endpoints_service = _ai_endpoint_service()
+    decision = _ai_selection_service().select(
+        task_id,
+        _ai_catalog_service().list(),
+        {endpoint.endpoint_id: endpoint for endpoint in endpoints_service.list()},
+        WorkerSelectionPolicy(
+            priority=priority,  # type: ignore[arg-type]
+            cloud_allowed=allow_cloud,
+        ),
+    )
+    _print(decision.model_dump(mode="json"))
+    if not decision.selected_model_key:
+        raise typer.Exit(2)
+
+
+@ai_pool_app.command("explain")
+def ai_pool_explain(decision_id: str) -> None:
+    try:
+        value = _ai_selection_service().explain(decision_id)
+    except WorkerSelectionError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(value)
+
+
+@ai_usage_app.command("list")
+def ai_usage_list(task_id: str | None = typer.Option(None, "--task")) -> None:
+    values = _ai_endpoint_service().store.list_ai_records("usage")
+    _print([value for value in values if task_id is None or value["task_id"] == task_id])
+
+
+@ai_usage_app.command("health")
+def ai_usage_health(endpoint_id: str | None = typer.Option(None, "--endpoint")) -> None:
+    values = _ai_endpoint_service().store.list_ai_records("endpoint_health")
+    _print(
+        [
+            value
+            for value in values
+            if endpoint_id is None or value["endpoint_id"] == endpoint_id
+        ]
+    )
+
+
+@delegate_app.command("launch-ai")
+def delegate_launch_ai(
+    task_id: str,
+    priority: str | None = typer.Option(None, "--priority"),
+    allow_cloud: bool = typer.Option(False, "--allow-cloud"),
+    allow_cloud_fallback: bool = typer.Option(False, "--allow-cloud-fallback"),
+) -> None:
+    """Automatically select and launch a validated API-backed Worker."""
+    from canto.models.ai_workers import WorkerSelectionPolicy
+
+    if priority is not None and priority not in {"economy", "balanced", "quality", "urgent"}:
+        raise typer.BadParameter(f"Unsupported priority: {priority}")
+    if allow_cloud_fallback and not allow_cloud:
+        raise typer.BadParameter("Cloud fallback requires --allow-cloud")
+    try:
+        task = _delegation_runtime()[0].get_task(task_id)
+        repository_policy = load_repository_worker_policy(
+            task.repository.canonical_path
+        )
+        command_policy = WorkerSelectionPolicy(
+            priority=priority or repository_policy.priority,  # type: ignore[arg-type]
+            cloud_allowed=allow_cloud,
+            cloud_fallback_allowed=allow_cloud_fallback,
+        )
+        launch = _ai_assignment_service().launch(
+            task_id,
+            compose_worker_policy(repository_policy, command_policy),
+        )
+    except (WorkerAssignmentError, RepositoryConfigError) as exc:
+        _delegation_error(exc)
+    _print(launch.model_dump(mode="json"))
+
+
+@demo_app.command("ai-worker-pool")
+def demo_ai_worker_pool(
+    apply: bool = typer.Option(False, "--apply"),
+    keep: bool = typer.Option(False, "--keep"),
+) -> None:
+    """Run the offline governed AI Worker selection and review demo."""
+    _print(run_ai_worker_pool_demo(apply=apply, keep=keep).model_dump(mode="json"))
 
 
 @app.command("migrate-state")

@@ -11,7 +11,8 @@ from canto.core.delegation_artifacts import (
     workspace_patch,
 )
 from canto.core.delegation_workspace import DelegationWorkspaceService
-from canto.models.delegation import DelegationReview, DelegationResult
+from canto.models.delegation import DelegationMessage, DelegationReview, DelegationResult
+from canto.models.schemas import utc_now
 
 
 class ReviewError(DelegationError):
@@ -30,7 +31,40 @@ class DelegationReviewService:
 
     def request_revision(
         self, task_id: str, reviewer: str, note: str
-    ) -> DelegationReview:
+    ) -> DelegationReview | None:
+        task = self.delegation.get_task(task_id)
+        if task.status == "executor_done" and task.latest_result_revision == 0:
+            message = DelegationMessage(
+                message_id=f"message_{uuid4().hex}",
+                task_id=task_id,
+                sender="orchestrator",
+                kind="revision",
+                body=note,
+                created_at=utc_now(),
+            )
+            self.delegation.append_record(task_id, "messages", message)
+            self.delegation.transition(
+                task_id,
+                "revision_requested",
+                details={"message_id": message.message_id, "reason": "no_result"},
+            )
+            return None
+        if task.status == "promotion_failed":
+            result = self.artifacts.get(task_id, task.latest_result_revision)
+            review = self._record(
+                task_id, result, "revision_requested", reviewer, note
+            )
+            self.delegation.transition(
+                task_id,
+                "revision_requested",
+                updates={"accepted_result_revision": None},
+                details={
+                    "review_id": review.review_id,
+                    "revision": result.revision,
+                    "reason": "promotion_failed",
+                },
+            )
+            return review
         task, result = self._reviewable(task_id)
         review = self._record(task_id, result, "revision_requested", reviewer, note)
         self.delegation.transition(

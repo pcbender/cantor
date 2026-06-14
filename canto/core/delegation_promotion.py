@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
+import tempfile
 from pathlib import Path
 from uuid import uuid4
 
@@ -20,12 +22,18 @@ class PromotionError(DelegationError):
     pass
 
 
-def _git(repository: Path, *args: str, stdin: bytes | None = None) -> bytes:
+def _git(
+    repository: Path,
+    *args: str,
+    stdin: bytes | None = None,
+    env: dict[str, str] | None = None,
+) -> bytes:
     completed = subprocess.run(
         ["git", "-C", str(repository), *args],
         input=stdin,
         capture_output=True,
         check=False,
+        env={**os.environ, **(env or {})},
     )
     if completed.returncode:
         message = completed.stderr.decode(errors="replace").strip()
@@ -51,8 +59,16 @@ class DelegationPromotionService:
         self, task_id: str, decided_by: str, note: str = ""
     ) -> PromotionResult:
         task = self.delegation.get_task(task_id)
-        if task.status != "accepted":
-            raise PromotionError("Only an accepted delegation task can be promoted")
+        if task.status not in {"accepted", "promotion_failed"}:
+            raise PromotionError(
+                "Only an accepted or safely rolled-back delegation task can be promoted"
+            )
+        if task.status == "promotion_failed":
+            promotions = self.delegation.get_records(task_id, "promotions")
+            if not promotions or promotions[-1].get("rollback_succeeded") is not True:
+                raise PromotionError(
+                    "Failed promotion cannot be retried because rollback was not confirmed"
+                )
         if task.accepted_result_revision != task.latest_result_revision:
             raise PromotionError("Accepted revision is not the latest result revision")
         result = self.artifacts.get(task_id, task.accepted_result_revision)
@@ -174,15 +190,24 @@ class DelegationPromotionService:
     def _verify_applied(
         self, repository: Path, base_commit: str, patch: bytes, changed_files: list[str]
     ) -> None:
-        actual = _git(
-            repository,
-            "diff",
-            "--binary",
-            "--full-index",
-            base_commit,
-            "--",
-            *changed_files,
-        )
+        # Build the comparison in an isolated index so new, untracked files are
+        # included without changing the canonical repository's real index.
+        with tempfile.TemporaryDirectory(prefix="canto-promotion-index-") as root:
+            index = Path(root) / "index"
+            env = {"GIT_INDEX_FILE": str(index)}
+            _git(repository, "read-tree", base_commit, env=env)
+            _git(repository, "add", "-A", "--", *changed_files, env=env)
+            actual = _git(
+                repository,
+                "diff",
+                "--cached",
+                "--binary",
+                "--full-index",
+                base_commit,
+                "--",
+                *changed_files,
+                env=env,
+            )
         if hashlib.sha256(actual).hexdigest() != hashlib.sha256(patch).hexdigest():
             raise PromotionError("Applied canonical diff does not match accepted patch")
 

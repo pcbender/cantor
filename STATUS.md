@@ -1,6 +1,17 @@
 # Canto Implementation Status
 
-Updated: 2026-06-12
+Updated: 2026-06-14
+
+## Governed AI Worker Pool
+
+MVP v1.3 CP-1501 through CP-1514 are complete on the working branch. Canto can
+configure vault-backed local/cloud endpoints, discover and probe exact models,
+select the least-cost eligible Worker under explicit policy, run it through the
+existing delegated Workspace lifecycle, and persist selection, usage, cost,
+health, and exact-version evidence. Cloud use and fallback are never implicit.
+
+Run `canto demo ai-worker-pool` for the offline acceptance flow or add
+`--apply` to prove exact-Result promotion in the disposable demo repository.
 
 ## Release Preparation
 

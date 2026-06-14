@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import fakeredis
 import pytest
+import sqlite3
 import threading
 
 from canto.core.state import MemoryStateStore, RedisStateStore, SqliteStateStore
@@ -84,6 +85,33 @@ def test_sqlite_state_survives_reopen(tmp_path):
     assert reopened.get_job("job_1")["status"] == "queued"
     assert reopened.get_events("job_1") == [{"type": "created"}]
     assert reopened.get_plan("plan_20260610_abcdef")["status"] == "draft"
+
+
+def test_sqlite_read_only_store_reads_without_writable_directory(tmp_path):
+    path = tmp_path / "state" / "canto.db"
+    writable = SqliteStateStore(path)
+    writable.set_executor_profile(
+        "local-worker",
+        {"executor_id": "local-worker", "name": "Local Worker", "harness": "manual"},
+    )
+    path.parent.chmod(0o500)
+
+    try:
+        read_only = SqliteStateStore(path, read_only=True)
+
+        assert read_only.list_executor_profiles()[0]["executor_id"] == "local-worker"
+    finally:
+        path.parent.chmod(0o700)
+
+
+def test_sqlite_read_only_store_does_not_create_missing_state(tmp_path):
+    path = tmp_path / "missing" / "state.sqlite"
+    store = SqliteStateStore(path, read_only=True)
+
+    with pytest.raises(sqlite3.OperationalError, match="does not exist"):
+        store.list_executor_profiles()
+
+    assert not path.parent.exists()
 
 
 def test_sqlite_transition_is_atomic_under_concurrency(tmp_path):

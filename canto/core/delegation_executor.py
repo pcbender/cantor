@@ -87,12 +87,22 @@ class CodexCliExecutor:
             for review in reviews
             if review.get("decision") == "revision_requested"
         ]
-        if task.status == "revision_requested" and revision_reviews:
+        revision_messages = [
+            message
+            for message in self.delegation.get_records(task_id, "messages")
+            if message.get("kind") == "revision"
+        ]
+        revision_note = None
+        if revision_reviews:
+            revision_note = revision_reviews[-1].get("note")
+        elif revision_messages:
+            revision_note = revision_messages[-1].get("body")
+        if task.status == "revision_requested" and revision_note:
             sections.extend(
                 [
                     "",
                     "Revision feedback:",
-                    revision_reviews[-1].get("note", "Address the requested revision."),
+                    revision_note,
                 ]
             )
         sections.extend(
@@ -109,6 +119,24 @@ class CodexCliExecutor:
             ]
         )
         return "\n".join(sections).strip() + "\n"
+
+    def projected_sessions(self, task_id: str) -> list[dict]:
+        sessions = self.delegation.get_records(task_id, "sessions")
+        launches = self.delegation.get_records(task_id, "launches")
+        launches_by_session = {launch["session_id"]: launch for launch in launches}
+        projected = []
+        for session in sessions:
+            value = dict(session)
+            launch = launches_by_session.get(session["session_id"])
+            if launch and launch.get("ended_at"):
+                value["ended_at"] = launch["ended_at"]
+                value["status"] = (
+                    "completed"
+                    if launch.get("exit_code") == 0 and not launch.get("timed_out")
+                    else "failed"
+                )
+            projected.append(value)
+        return projected
 
     def launch(
         self,

@@ -16,6 +16,7 @@ from canto.core.repository import (
     find_repository,
     initialize_repository,
     load_repository,
+    load_repository_worker_policy,
 )
 from canto.core.delegation import DelegationService
 from canto.core.delegation_workspace import DelegationWorkspaceService, inspect_repository
@@ -53,6 +54,7 @@ def test_repo_init_creates_non_secret_repo_configuration(repository):
     assert (repository / ".canto" / "repo.toml").is_file()
     assert (repository / ".canto" / "policy.toml").is_file()
     assert (repository / ".canto" / "delegate.toml").is_file()
+    assert (repository / ".canto" / "workers.toml").is_file()
     assert (repository / ".canto" / "agents" / "shared.md").is_file()
     assert (repository / ".canto" / "agents" / "orchestrator.md").is_file()
     assert (repository / ".canto" / "agents" / "executor.md").is_file()
@@ -68,6 +70,7 @@ def test_repo_init_creates_non_secret_repo_configuration(repository):
     assert "credential" not in content
     assert "task" not in content
     assert load_repository(repository).repo_id == config.repo_id
+    assert load_repository_worker_policy(repository).cloud_allowed is False
 
 
 def test_repo_init_preserves_existing_agents_content_and_is_idempotent(repository):
@@ -129,6 +132,9 @@ def test_repo_init_refreshes_canto_owned_role_manuals(repository):
 
     assert "# Canto Developer Instructions" in developer_manual.read_text()
     assert "Authorize Canto to Apply" in developer_manual.read_text()
+    assert "`canto delegate launch-ai TASK_ID`" in developer_manual.read_text()
+    assert "excluded from automatic discovery" in developer_manual.read_text()
+    assert "`canto delegate wait TASK_ID`" in developer_manual.read_text()
     assert "# Canto Delegated Worker Instructions" in worker_manual.read_text()
     assert "Do not self-assign" in worker_manual.read_text()
 

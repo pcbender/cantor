@@ -98,3 +98,15 @@ def test_dashboard_cli_has_human_and_json_views(tmp_path, monkeypatch):
     assert "ATTENTION\tSTATUS\tTASK" in human.output
     assert json.loads(machine.output)[0]["task_id"] == "task_review"
     assert "Next: accept, revise, reject" in detail.output
+
+
+def test_executor_done_dashboard_allows_revision_when_capture_has_no_result(tmp_path):
+    service, workspaces = dashboard_runtime(tmp_path)
+    current = service.get_task("task_work").model_dump(mode="json")
+    service.store.set_delegation_task(
+        "task_work", {**current, "status": "executor_done"}
+    )
+
+    detail = DelegationDashboardService(service, workspaces).detail("task_work")
+
+    assert detail.next_actions == ["capture", "revise"]

@@ -90,6 +90,7 @@ canto delegate profile check local-codex
 canto delegate assign TASK_ID --executor local-codex
 canto delegate prepare TASK_ID
 canto delegate launch TASK_ID
+canto delegate wait TASK_ID
 canto delegate capture TASK_ID
 canto delegate revise TASK_ID --note "Address review feedback"
 canto delegate launch TASK_ID
@@ -97,6 +98,34 @@ canto delegate capture TASK_ID
 ```
 
 `canto delegate add-codex` remains available for compatibility.
+
+`delegate launch` remains attached to the supervised Codex process. If an
+agent command runner yields while that process continues elsewhere, use
+`canto delegate wait TASK_ID` instead of fixed-duration sleeps. The command
+polls durable Canto state until the task finishes or needs attention. Use
+`--timeout SECONDS` and `--interval SECONDS` to bound waiting; timeout does not
+cancel or mutate the Worker task.
+
+## Worker Selection and Cloud Fallback
+
+The Developer may prefer a compatible local Worker, but local model
+availability is not proof that the model can execute the Codex tool protocol.
+If a local Worker repeatedly returns tool-call text or otherwise cannot make
+the required Workspace changes, stop retrying that profile and explicitly
+select a supervised cloud Codex Worker:
+
+```bash
+codex login status
+canto delegate profile save cloud-codex --preset codex-cloud --model MODEL
+canto delegate profile check cloud-codex
+canto delegate assign TASK_ID --executor cloud-codex
+```
+
+This launches a separate `codex exec` process in the same bounded Canto
+Workspace. Codex CLI owns authentication; Canto stores no cloud API key.
+Network and quota use must be disclosed. Canto never switches from local to
+cloud automatically, and cloud Results still require Capture, Developer
+Review, explicit acceptance, and qualified Apply.
 
 ## Dashboard and Prompt Comparisons
 

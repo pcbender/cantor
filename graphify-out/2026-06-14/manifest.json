@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "canto/core/ai_assignment.py": {
-    "mtime": 1781468165.1849194,
-    "ast_hash": "aa0fd3c7329c23826c9e1f62a041ecaa",
+    "mtime": 1781467952.7845712,
+    "ast_hash": "aabcc6009b53e4a686edb681a93920a5",
     "semantic_hash": ""
   },
   "canto/core/ai_discovery.py": {
@@ -1145,8 +1145,8 @@
     "semantic_hash": ""
   },
   "tests/test_ai_endpoints.py": {
-    "mtime": 1781468165.3609192,
-    "ast_hash": "34011c50dc869edda15f71b0e68984a6",
+    "mtime": 1781467070.3956463,
+    "ast_hash": "4c31a6d03f753f83c58f2d0fe24051c3",
     "semantic_hash": ""
   },
   "tests/test_ai_probe.py": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "tests/test_ai_worker.py": {
-    "mtime": 1781468165.2729194,
-    "ast_hash": "4e47827aa9290901257944c6cc989016",
+    "mtime": 1781467970.560139,
+    "ast_hash": "00d3fb2d9749ffb7ce5851faa175ea5d",
     "semantic_hash": ""
   },
   "tests/test_ai_worker_demo.py": {

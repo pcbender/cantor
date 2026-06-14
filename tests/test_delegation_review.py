@@ -55,3 +55,19 @@ def test_revision_request_preserves_prior_result_and_accepts_new_revision(tmp_pa
         "revision_requested",
         "accepted",
     ]
+
+
+def test_revision_can_be_requested_after_promotion_failure(tmp_path):
+    service, workspaces, _, result = capture(tmp_path)
+    reviews = DelegationReviewService(service, workspaces)
+    reviews.accept("task_1", "reviewer")
+    service.transition("task_1", "promoting")
+    service.transition("task_1", "promotion_failed")
+
+    review = reviews.request_revision(
+        "task_1", "reviewer", "Recapture with complete promotion artifacts"
+    )
+
+    assert review.result_revision == result.revision
+    assert service.get_task("task_1").status == "revision_requested"
+    assert service.get_task("task_1").accepted_result_revision is None

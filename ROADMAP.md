@@ -853,6 +853,78 @@ compatibility review.
 
 ---
 
+## MVP v1.3 — Governed AI Worker Pool (single-user local extension)
+
+Goal: give single-user Canto a globally configured pool of validated local and
+cloud AI Workers, then deterministically select the least-cost eligible Worker
+for a bounded delegation task under Developer-defined cloud, priority, and
+budget policy.
+
+Design source: `docs/ai-worker-pool-architecture.md`.
+
+Architecture posture:
+
+- Keep API keys only in the global Canto vault; repository bootstrap stores
+  endpoint references and policy, never credentials.
+- Support OpenAI, Anthropic, Google, generic OpenAI-compatible, and local Ollama
+  endpoints through explicit adapters.
+- Require a versioned coding-Worker probe before a model is eligible for
+  implementation work; useful text-only models remain advisory.
+- Let Canto select automatically from eligible candidates with deterministic,
+  explainable ranking across capability, reliability, cost, latency, locality,
+  size fit, availability, priority, and budget.
+- Never widen local-only policy or fall back to cloud silently.
+- Reuse the existing delegation Workspace, session, Result, Review, and Apply
+  lifecycle.
+- Introduce one provider-neutral API Worker harness locally; migrate that same
+  harness behind authenticated server execution in MVP v2.
+- Preserve existing CLI-authenticated profiles as explicit last-resort
+  compatibility Workers, but exclude them from automatic pool selection,
+  ranking, discovery, and fallback.
+
+Non-goals:
+
+- No OAuth, browser login, inherited CLI sessions, automatic key creation, or
+  billing administration.
+- No remote Worker pool, multi-user endpoint grants, autonomous approval, or
+  silent policy changes.
+- No model training, fine-tuning, or autonomous prompt/policy optimization.
+- No change to the frozen orchestration HTTP contract in this workstream.
+
+Success condition:
+
+A Developer configures vault-backed local and cloud endpoints once, Canto
+discovers and probes their exact models, automatically selects the least-cost
+eligible Worker for a bounded task, records the selection and actual usage,
+and completes the existing Capture → Review → Apply flow without manual model
+trial-and-error or credentials in the repository.
+
+Recommended work packets:
+
+- CP-1501 — Governed AI Worker Pool Architecture and Design
+- CP-1502 — Endpoint, Model, Probe, Selection, and Usage Models
+- CP-1503 — Vault-Backed Endpoint Configuration
+- CP-1504 — Provider Discovery Adapters
+- CP-1505 — Versioned Coding-Worker Probe Harness
+- CP-1506 — Worker Classification and Compatibility Evidence
+- CP-1507 — Priority, Budget, and Eligibility Policy
+- CP-1508 — Deterministic Worker Ranking and Explain Output
+- CP-1509 — Provider-Neutral API Worker Harness
+- CP-1510 — Automatic Assignment and Explicit Fallback
+- CP-1511 — Usage, Cost, Health, and Reliability Records
+- CP-1512 — Repo Bootstrap Integration and Migration
+- CP-1513 — End-to-End Single-User Worker Pool Demo
+- CP-1514 — Security, Stability, and Documentation Pass
+
+CP-1501 through CP-1514 are complete. The governed single-user AI Worker pool
+supports vault-backed endpoint configuration, exact model discovery, versioned
+coding probes, deterministic policy selection, explicit cloud fallback,
+provider-neutral API execution, durable usage evidence, repo bootstrap policy,
+and an offline end-to-end demo. This workstream precedes MVP v2 and preserves
+its server migration path.
+
+---
+
 ## MVP v2 — Local Team Server
 
 Goal: deploy one Canto instance on an internal network that a team of humans and AI

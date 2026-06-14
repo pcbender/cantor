@@ -18,6 +18,12 @@ python3 -m venv .venv
 .venv/bin/pip check
 ```
 
+Until a user-level wheel is installed, invoke the checkout directly as
+`.venv/bin/canto` or add that virtual environment's `bin` directory to the
+interactive shell `PATH`. A repository bootstrap does not install Canto or
+modify `PATH`; Canto is globally installed and repositories are only
+bootstrapped.
+
 Build and install a local wheel:
 
 ```bash
@@ -41,6 +47,7 @@ Canto uses global user state and repo-local intent:
 <repo>/.canto/repo.toml
 <repo>/.canto/policy.toml
 <repo>/.canto/delegate.toml
+<repo>/.canto/workers.toml
 <repo>/.canto/agents/shared.md
 <repo>/.canto/agents/orchestrator.md
 <repo>/.canto/agents/executor.md

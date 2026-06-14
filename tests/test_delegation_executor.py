@@ -84,6 +84,9 @@ def test_codex_cli_launch_is_supervised_and_records_provenance(tmp_path):
     assert Path(workspaces.get("task_1").path, "src", "app.py").read_text() == "value = 2\n"
     assert service.get_task("task_1").status == "executor_done"
     assert service.get_records("task_1", "sessions")[0]["enforcement"] == "canto_observed"
+    projected = CodexCliExecutor(service, workspaces).projected_sessions("task_1")
+    assert projected[0]["status"] == "completed"
+    assert projected[0]["ended_at"] == launch.ended_at
 
 
 def test_codex_cli_launch_preserves_named_prompt_variant(tmp_path):
@@ -169,3 +172,30 @@ def test_codex_cli_relaunches_with_revision_feedback_and_preserves_logs(tmp_path
     assert "Use value 3 instead" in Path(second_launch.prompt_path).read_text()
     assert service.get_task("task_1").status == "executor_done"
     assert len(service.get_records("task_1", "launches")) == 2
+
+
+def test_codex_cli_empty_workspace_can_request_revision_and_relaunch(tmp_path):
+    executable = tmp_path / "codex"
+    executable.write_text("#!/bin/sh\ncat >/dev/null\nprintf 'advisory only\\n'\n")
+    executable.chmod(0o755)
+    service, workspaces = prepared_task(tmp_path, executable)
+    executor = CodexCliExecutor(service, workspaces, timeout_seconds=10)
+
+    first_launch = executor.launch("task_1")
+    review = DelegationReviewService(service, workspaces).request_revision(
+        "task_1", "developer", "Edit src/app.py instead of describing the tool call."
+    )
+
+    assert review is None
+    assert service.get_task("task_1").status == "revision_requested"
+    assert service.get_records("task_1", "results") == []
+    executable.write_text(
+        "#!/bin/sh\ncat >/dev/null\nprintf 'value = 3\\n' > src/app.py\n"
+    )
+    executable.chmod(0o755)
+
+    second_launch = executor.launch("task_1")
+
+    assert first_launch.session_id != second_launch.session_id
+    assert "Edit src/app.py" in Path(second_launch.prompt_path).read_text()
+    assert service.get_task("task_1").status == "executor_done"

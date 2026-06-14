@@ -5,6 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from canto.models.schemas import utc_now
+from canto.models.ai_workers import PriorityLevel, WorkerSelectionPolicy
 
 
 DelegationStatus = Literal[
@@ -58,6 +59,10 @@ class DelegationTask(BaseModel):
     workspace_id: str | None = None
     latest_result_revision: int = 0
     accepted_result_revision: int | None = None
+    worker_priority: PriorityLevel = "balanced"
+    worker_policy: WorkerSelectionPolicy | None = None
+    selection_decision_id: str | None = None
+    selected_model_key: str | None = None
     created_at: str = Field(default_factory=utc_now)
     updated_at: str = Field(default_factory=utc_now)
 
@@ -87,7 +92,7 @@ class ExecutorPermissions(BaseModel):
 class ExecutorProfile(BaseModel):
     executor_id: str
     name: str
-    harness: Literal["manual", "codex_cli"]
+    harness: Literal["manual", "codex_cli", "api_worker"]
     executable: str | None = None
     configuration: dict[str, Any] = Field(default_factory=dict)
     model_provider: str | None = None
