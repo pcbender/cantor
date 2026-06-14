@@ -25,6 +25,7 @@ from canto.core.capability_scaffold import (
 from canto.core.credentials import CredentialError, CredentialVault
 from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
 from canto.core.ai_discovery import ModelCatalogService, ModelDiscoveryError
+from canto.core.ai_selection import WorkerSelectionError, WorkerSelectionService
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -99,6 +100,7 @@ demo_app = typer.Typer(help="Run isolated local Canto demonstrations")
 ai_app = typer.Typer(help="Configure and inspect governed AI Workers")
 ai_endpoint_app = typer.Typer(help="Manage AI provider endpoints")
 ai_model_app = typer.Typer(help="Discover and inspect exact provider models")
+ai_pool_app = typer.Typer(help="Select and explain governed AI Workers")
 delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
 delegate_profile_app = typer.Typer(help="Manage local executor profiles")
 app.add_typer(skill_app, name="skill")
@@ -112,6 +114,7 @@ app.add_typer(demo_app, name="demo")
 app.add_typer(ai_app, name="ai")
 ai_app.add_typer(ai_endpoint_app, name="endpoint")
 ai_app.add_typer(ai_model_app, name="model")
+ai_app.add_typer(ai_pool_app, name="pool")
 delegate_app.add_typer(delegate_compare_app, name="compare")
 delegate_app.add_typer(delegate_profile_app, name="profile")
 
@@ -132,6 +135,10 @@ def _ai_endpoint_service() -> AIEndpointService:
 def _ai_catalog_service() -> ModelCatalogService:
     endpoint_service = _ai_endpoint_service()
     return ModelCatalogService(endpoint_service.store, endpoint_service)
+
+
+def _ai_selection_service() -> WorkerSelectionService:
+    return WorkerSelectionService(_ai_endpoint_service().store)
 
 
 def _runtime() -> tuple:
@@ -1133,6 +1140,40 @@ def ai_model_list(endpoint_id: str | None = typer.Option(None, "--endpoint")) ->
             for model in _ai_catalog_service().list(endpoint_id)
         ]
     )
+
+
+@ai_pool_app.command("select")
+def ai_pool_select(
+    task_id: str,
+    priority: str = typer.Option("balanced", "--priority"),
+    allow_cloud: bool = typer.Option(False, "--allow-cloud"),
+) -> None:
+    from canto.models.ai_workers import WorkerSelectionPolicy
+
+    if priority not in {"economy", "balanced", "quality", "urgent"}:
+        raise typer.BadParameter(f"Unsupported priority: {priority}")
+    endpoints_service = _ai_endpoint_service()
+    decision = _ai_selection_service().select(
+        task_id,
+        _ai_catalog_service().list(),
+        {endpoint.endpoint_id: endpoint for endpoint in endpoints_service.list()},
+        WorkerSelectionPolicy(
+            priority=priority,  # type: ignore[arg-type]
+            cloud_allowed=allow_cloud,
+        ),
+    )
+    _print(decision.model_dump(mode="json"))
+    if not decision.selected_model_key:
+        raise typer.Exit(2)
+
+
+@ai_pool_app.command("explain")
+def ai_pool_explain(decision_id: str) -> None:
+    try:
+        value = _ai_selection_service().explain(decision_id)
+    except WorkerSelectionError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(value)
 
 
 @app.command("migrate-state")
