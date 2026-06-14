@@ -139,3 +139,33 @@ def test_capture_excludes_untracked_python_and_pytest_caches(tmp_path):
     assert [item["path"] for item in changed] == ["src/app.py"]
     assert "__pycache__" not in patch
     assert ".pytest_cache" not in patch
+
+
+def test_capture_reports_advisory_launch_before_scanning_empty_workspace(tmp_path):
+    service, workspaces, workspace = executor_done(tmp_path)
+    stdout = workspace.parent / "artifacts" / "launch.stdout.log"
+    stdout.parent.mkdir(exist_ok=True)
+    stdout.write_text("printed tool call JSON\n")
+    service.store.append_delegation_record(
+        "task_1",
+        "launches",
+        "launch_1",
+        {
+            "launch_id": "launch_1",
+            "task_id": "task_1",
+            "session_id": "session_1",
+            "executor_id": "worker",
+            "argv": ["worker"],
+            "cwd": str(workspace),
+            "prompt_path": str(workspace.parent / "artifacts" / "prompt.md"),
+            "stdout_path": str(stdout),
+            "stderr_path": str(workspace.parent / "artifacts" / "stderr.log"),
+            "outcome": "advisory",
+            "outcome_detail": "Worker produced advisory output but changed no files",
+        },
+    )
+
+    with pytest.raises(ArtifactCaptureError, match="request a revision") as caught:
+        DelegationArtifactService(service, workspaces).capture("task_1")
+
+    assert str(stdout) in str(caught.value)

@@ -110,3 +110,75 @@ def test_executor_done_dashboard_allows_revision_when_capture_has_no_result(tmp_
     detail = DelegationDashboardService(service, workspaces).detail("task_work")
 
     assert detail.next_actions == ["capture", "revise"]
+
+
+def test_executor_done_advisory_output_blocks_capture_and_points_to_evidence(tmp_path):
+    service, workspaces = dashboard_runtime(tmp_path)
+    current = service.get_task("task_work").model_dump(mode="json")
+    service.store.set_delegation_task(
+        "task_work", {**current, "status": "executor_done"}
+    )
+    service.store.append_delegation_record(
+        "task_work",
+        "launches",
+        "launch_1",
+        {
+            "launch_id": "launch_1",
+            "task_id": "task_work",
+            "session_id": "session_1",
+            "executor_id": "manual",
+            "argv": ["worker"],
+            "cwd": "/workspace",
+            "prompt_path": "/artifacts/prompt.md",
+            "stdout_path": "/artifacts/stdout.log",
+            "stderr_path": "/artifacts/stderr.log",
+            "workspace_changed": False,
+            "outcome": "advisory",
+            "outcome_detail": "Worker described tool calls but changed no files",
+        },
+    )
+
+    detail = DelegationDashboardService(service, workspaces).detail("task_work")
+
+    assert detail.task.attention == "blocked"
+    assert detail.task.worker_outcome == "advisory"
+    assert detail.next_actions == ["revise"]
+    assert "changed no files" in detail.outcome_detail
+
+
+def test_dashboard_cli_prints_advisory_outcome_and_output_path(tmp_path, monkeypatch):
+    service, workspaces = dashboard_runtime(tmp_path)
+    current = service.get_task("task_work").model_dump(mode="json")
+    service.store.set_delegation_task(
+        "task_work", {**current, "status": "executor_done"}
+    )
+    service.store.append_delegation_record(
+        "task_work",
+        "launches",
+        "launch_1",
+        {
+            "launch_id": "launch_1",
+            "task_id": "task_work",
+            "session_id": "session_1",
+            "executor_id": "manual",
+            "argv": ["worker"],
+            "cwd": "/workspace",
+            "prompt_path": "/artifacts/prompt.md",
+            "stdout_path": "/artifacts/stdout.log",
+            "stderr_path": "/artifacts/stderr.log",
+            "outcome": "advisory",
+            "outcome_detail": "Advisory output only",
+        },
+    )
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app, ["delegate", "dashboard", "task_work"]
+    )
+
+    assert result.exit_code == 0
+    assert "Worker outcome: advisory" in result.output
+    assert "Worker output: /artifacts/stdout.log" in result.output
+    assert "Next: revise" in result.output

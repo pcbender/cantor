@@ -110,9 +110,13 @@ Prompts, stdout/stderr, command logs, and immutable result artifacts live under
 review decision and is separate from optional prompt variants.
 
 If a supervised Worker exits successfully but changes no Workspace files,
-Capture has no Result to record. Use `canto delegate revise TASK_ID --note
-"..."` to return the same task to `revision_requested`; the next launch receives
-that feedback. Canto projects the matching launch outcome onto the session, so
+Canto reports the launch as `advisory` when stdout contains useful text or
+`no_work` when it does not. `canto delegate dashboard TASK_ID` shows the
+outcome, preserved stdout path, and `revise` as the next action instead of
+implying that Capture can create a Result. A direct Capture attempt also stops
+with the same evidence path. Use `canto delegate revise TASK_ID --note "..."`
+to return the same task to `revision_requested`; the next launch receives that
+feedback. Canto projects the matching launch outcome onto the session, so
 completed or failed supervised sessions do not remain displayed as running.
 
 If repeated local-model launches produce tool-call text instead of tool
