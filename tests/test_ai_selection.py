@@ -25,6 +25,8 @@ def model(key, endpoint, provider, *, cost=1.0, context=32000):
         context_tokens=context,
         classification="implementation",
         probe_stale=False,
+        probe_state="current",
+        availability="available",
         catalog_checksum="checksum",
         pricing=ModelPricing(input_per_million=cost, output_per_million=cost),
     )
@@ -93,3 +95,23 @@ def test_selection_reports_stale_probe_and_budget_rejections():
     reasons = {item.model_key: item.rejection_reasons for item in decision.candidates}
     assert "coding-worker probe is stale" in reasons["cloud:stale"]
     assert "estimated cost exceeds task budget" in reasons["cloud:costly"]
+
+
+def test_selection_rejects_missing_local_model_with_specific_reason():
+    store = MemoryStateStore()
+    selector = WorkerSelectionService(store)
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+    missing = model("local:gone", "local", "ollama").model_copy(
+        update={"availability": "missing"}
+    )
+
+    decision = selector.select(
+        "task-3", [missing], {"local": endpoint}, WorkerSelectionPolicy()
+    )
+
+    assert decision.selected_model_key is None
+    assert decision.candidates[0].rejection_reasons == [
+        "local model availability is missing"
+    ]

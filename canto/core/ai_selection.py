@@ -153,7 +153,9 @@ class WorkerSelectionService:
             rejected.append("provider is not allowed")
         if policy.allowed_models and model.model_key not in policy.allowed_models:
             rejected.append("model is not allowed")
-        if model.probe_stale:
+        if model.provider == "ollama" and model.availability != "available":
+            rejected.append(f"local model availability is {model.availability}")
+        if model.probe_stale or model.probe_state != "current":
             rejected.append("coding-worker probe is stale")
         if model.classification != policy.required_classification:
             rejected.append(
@@ -209,4 +211,3 @@ class WorkerSelectionService:
             "priority": decision.policy.priority,
             "candidates": [candidate.model_dump(mode="json") for candidate in decision.candidates],
         }
-

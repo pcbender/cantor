@@ -15,7 +15,9 @@ from canto.models.ai_workers import (
     AIModelRecord,
     EndpointHealthRecord,
     ModelCatalogSnapshot,
+    ModelMetadataRecord,
     ModelReconciliationRecord,
+    WorkerProbeResult,
 )
 from canto.models.schemas import utc_now
 
@@ -248,3 +250,109 @@ class LocalModelReconciliationService:
         self.store.set_ai_record(
             "endpoint_health", record.health_id, record.model_dump(mode="json")
         )
+
+
+class ModelCatalogMaintenanceError(RuntimeError):
+    pass
+
+
+class ModelCatalogMaintenanceService:
+    def __init__(self, store: StateStore):
+        self.store = store
+
+    def status(self, endpoint_id: str) -> dict:
+        models = [
+            AIModelRecord.model_validate(value)
+            for value in self.store.list_ai_records(ModelCatalogService.MODEL_RECORD)
+            if value.get("endpoint_id") == endpoint_id
+        ]
+        reconciliations = [
+            ModelReconciliationRecord.model_validate(value)
+            for value in self.store.list_ai_records(
+                LocalModelReconciliationService.RECONCILIATION_RECORD
+            )
+            if value.get("endpoint_id") == endpoint_id
+            and value.get("authoritative_success")
+        ]
+        latest = max(reconciliations, key=lambda item: item.created_at, default=None)
+        return {
+            "endpoint_id": endpoint_id,
+            "last_successful_refresh": latest.created_at if latest else None,
+            "availability": self._group(models, "availability"),
+            "classification": self._group(models, "classification"),
+            "probe_state": self._group(models, "probe_state"),
+            "models": [model.model_dump(mode="json") for model in sorted(models, key=lambda item: item.model_key)],
+        }
+
+    def show(self, model_key: str) -> dict:
+        value = self.store.get_ai_record(ModelCatalogService.MODEL_RECORD, model_key)
+        if not value:
+            raise ModelCatalogMaintenanceError(f"AI model not found: {model_key}")
+        probes = [
+            WorkerProbeResult.model_validate(item)
+            for item in self.store.list_ai_records("probe")
+            if item.get("model_key") == model_key
+        ]
+        metadata = [
+            ModelMetadataRecord.model_validate(item)
+            for item in self.store.list_ai_records("model_metadata")
+            if item.get("model_key") == model_key
+        ]
+        return {
+            "model": AIModelRecord.model_validate(value).model_dump(mode="json"),
+            "latest_probe": (
+                max(probes, key=lambda item: item.started_at).model_dump(mode="json")
+                if probes
+                else None
+            ),
+            "metadata": [item.model_dump(mode="json") for item in metadata],
+            "references": self.references(model_key),
+        }
+
+    def forget(self, model_key: str) -> None:
+        value = self.store.get_ai_record(ModelCatalogService.MODEL_RECORD, model_key)
+        if not value:
+            raise ModelCatalogMaintenanceError(f"AI model not found: {model_key}")
+        model = AIModelRecord.model_validate(value)
+        if model.availability == "available":
+            raise ModelCatalogMaintenanceError(
+                f"Cannot forget available model: {model_key}"
+            )
+        references = self.references(model_key)
+        if references:
+            raise ModelCatalogMaintenanceError(
+                f"Cannot forget referenced model {model_key}: {', '.join(references)}"
+            )
+        self.store.delete_ai_record(ModelCatalogService.MODEL_RECORD, model_key)
+        for value in self.store.list_ai_records("model_metadata"):
+            if value.get("model_key") == model_key:
+                self.store.delete_ai_record("model_metadata", value["metadata_id"])
+
+    def references(self, model_key: str) -> list[str]:
+        references: list[str] = []
+        for record_type in ("probe", "usage"):
+            if any(
+                value.get("model_key") == model_key
+                for value in self.store.list_ai_records(record_type)
+            ):
+                references.append(record_type)
+        for value in self.store.list_ai_records("selection"):
+            candidate_keys = {
+                item.get("model_key") for item in value.get("candidates", [])
+            }
+            if value.get("selected_model_key") == model_key or model_key in candidate_keys:
+                references.append("selection")
+                break
+        if any(
+            value.get("selected_model_key") == model_key
+            for value in self.store.list_delegation_tasks()
+        ):
+            references.append("delegation")
+        return references
+
+    @staticmethod
+    def _group(models: list[AIModelRecord], field: str) -> dict[str, list[str]]:
+        groups: dict[str, list[str]] = {}
+        for model in models:
+            groups.setdefault(str(getattr(model, field)), []).append(model.model_key)
+        return {key: sorted(values) for key, values in sorted(groups.items())}

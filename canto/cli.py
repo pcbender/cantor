@@ -27,6 +27,8 @@ from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
 from canto.core.ai_discovery import ModelCatalogService, ModelDiscoveryError
 from canto.core.ai_reconciliation import (
     LocalModelReconciliationService,
+    ModelCatalogMaintenanceError,
+    ModelCatalogMaintenanceService,
     ModelReconciliationError,
 )
 from canto.core.ai_selection import (
@@ -155,6 +157,10 @@ def _ai_catalog_service() -> ModelCatalogService:
 def _ai_reconciliation_service() -> LocalModelReconciliationService:
     endpoint_service = _ai_endpoint_service()
     return LocalModelReconciliationService(endpoint_service.store, endpoint_service)
+
+
+def _ai_catalog_maintenance_service() -> ModelCatalogMaintenanceService:
+    return ModelCatalogMaintenanceService(_ai_endpoint_service().store)
 
 
 def _ai_selection_service() -> WorkerSelectionService:
@@ -1206,6 +1212,43 @@ def ai_model_list(endpoint_id: str | None = typer.Option(None, "--endpoint")) ->
             for model in _ai_catalog_service().list(endpoint_id)
         ]
     )
+
+
+@ai_model_app.command("status")
+def ai_model_status(
+    endpoint_id: str = typer.Option(..., "--endpoint"),
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    status = _ai_catalog_maintenance_service().status(endpoint_id)
+    if json_output:
+        _print(status)
+        return
+    typer.echo(f"Endpoint: {endpoint_id}")
+    typer.echo(f"Last successful refresh: {status['last_successful_refresh'] or '-'}")
+    for group_name in ("availability", "classification", "probe_state"):
+        typer.echo(f"{group_name}:")
+        groups = status[group_name]
+        if not groups:
+            typer.echo("  -")
+        for key, values in groups.items():
+            typer.echo(f"  {key}: {len(values)}")
+
+
+@ai_model_app.command("show")
+def ai_model_show(model_key: str) -> None:
+    try:
+        _print(_ai_catalog_maintenance_service().show(model_key))
+    except ModelCatalogMaintenanceError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@ai_model_app.command("forget")
+def ai_model_forget(model_key: str) -> None:
+    try:
+        _ai_catalog_maintenance_service().forget(model_key)
+    except ModelCatalogMaintenanceError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Forgot {model_key}")
 
 
 @ai_model_app.command("probe")
