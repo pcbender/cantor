@@ -23,6 +23,7 @@ from canto.core.security import (
     validate_sensitive_inputs,
 )
 from canto.core.state import StateStore
+from canto.core.memory import MemoryService, MemoryServiceError
 from canto.models.schemas import Approval, Job, JobRequest, utc_now
 
 
@@ -686,6 +687,13 @@ class JobService:
         approval = Approval.model_validate(raw)
         if approval.status != "pending":
             raise JobError(f"Approval is already {approval.status}")
+        if approval.subject_kind == "memory":
+            try:
+                return MemoryService(self.store).decide_approval(
+                    approval_id, approve=True, actor=approved_by, note=note
+                )
+            except MemoryServiceError as exc:
+                raise JobError(str(exc)) from exc
         if approval.promotion:
             dry_job = Job.model_validate(
                 self.store.get_job(approval.promotion["dry_run_job_id"])
@@ -767,6 +775,13 @@ class JobService:
         approval = Approval.model_validate(raw)
         if approval.status != "pending":
             raise JobError(f"Approval is already {approval.status}")
+        if approval.subject_kind == "memory":
+            try:
+                return MemoryService(self.store).decide_approval(
+                    approval_id, approve=False, actor=rejected_by, note=reason
+                )
+            except MemoryServiceError as exc:
+                raise JobError(str(exc)) from exc
         approval.status = "rejected"
         approval.updated_at = utc_now()
         approval.decided_by = rejected_by

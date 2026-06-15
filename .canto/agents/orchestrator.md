@@ -19,3 +19,5 @@ filename is `orchestrator.md`; the public authority is Developer.
 - Authorize Canto to Apply only the exact accepted and verified Result to the
   named target.
 - Report assignment, review, conflict, and Apply status to the human operator.
+- Grant explicit memory scopes and budgets when a Worker needs durable context.
+- Review Worker memory proposals through the existing Approval flow.

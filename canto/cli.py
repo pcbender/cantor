@@ -77,6 +77,7 @@ from canto.core.delegation_conflicts import DelegationConflictService
 from canto.core.delegation_demo import DelegationDemoError, run_delegation_demo
 from canto.core.ai_worker_demo import run_ai_worker_pool_demo
 from canto.core.jobs import JobError, JobService
+from canto.core.memory import MemoryService, MemoryServiceError
 from canto.core.local_registry import (
     LocalRegistryError,
     Registry as CapabilityRegistry,
@@ -127,6 +128,8 @@ ai_pool_app = typer.Typer(help="Select and explain governed AI Workers")
 ai_usage_app = typer.Typer(help="Inspect AI Worker usage and endpoint health")
 delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
 delegate_profile_app = typer.Typer(help="Manage local executor profiles")
+memory_app = typer.Typer(help="Manage governed Canto memory")
+memory_project_app = typer.Typer(help="Manage memory project identity")
 app.add_typer(skill_app, name="skill")
 app.add_typer(provider_app, name="provider")
 app.add_typer(job_app, name="job")
@@ -142,10 +145,23 @@ ai_app.add_typer(ai_pool_app, name="pool")
 ai_app.add_typer(ai_usage_app, name="usage")
 delegate_app.add_typer(delegate_compare_app, name="compare")
 delegate_app.add_typer(delegate_profile_app, name="profile")
+app.add_typer(memory_app, name="memory")
+memory_app.add_typer(memory_project_app, name="project")
 
 
 def _credential_vault() -> CredentialVault:
     return CredentialVault.local()
+
+
+def _memory_service(*, read_only: bool = False) -> MemoryService:
+    registry = _capability_registry()
+    return MemoryService(
+        SqliteStateStore(registry.store.paths.state_file, read_only=read_only)
+    )
+
+
+def _memory_error(exc: Exception) -> None:
+    raise typer.BadParameter(str(exc)) from exc
 
 
 def _ai_endpoint_service() -> AIEndpointService:
@@ -1810,6 +1826,238 @@ def job_events(job_id: str) -> None:
 def job_artifacts(job_id: str) -> None:
     _, store, _, _ = _runtime()
     _print(store.get_artifacts(job_id))
+
+
+@memory_app.command("status")
+def memory_status() -> None:
+    try:
+        _print(_memory_service(read_only=True).status())
+    except (MemoryServiceError, sqlite3.Error, RuntimeError) as exc:
+        _memory_error(exc)
+
+
+@memory_project_app.command("create")
+def memory_project_create(label: str) -> None:
+    try:
+        _print(_memory_service().create_project(label, "cli").model_dump(mode="json"))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_project_app.command("list")
+def memory_project_list() -> None:
+    try:
+        _print([item.model_dump(mode="json") for item in _memory_service(read_only=True).list_projects()])
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_project_app.command("show")
+def memory_project_show(project_id: str) -> None:
+    try:
+        _print(_memory_service(read_only=True).get_project(project_id).model_dump(mode="json"))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_project_app.command("link-repository")
+def memory_project_link_repository(project_id: str, repository: Path = Path(".")) -> None:
+    try:
+        config = load_repository(repository)
+        _print(_memory_service().link_repository(project_id, config.repo_id, "cli").model_dump(mode="json"))
+    except (MemoryServiceError, RepositoryConfigError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_project_app.command("unlink-repository")
+def memory_project_unlink_repository(project_id: str, repository: Path = Path(".")) -> None:
+    try:
+        config = load_repository(repository)
+        _print(_memory_service().unlink_repository(project_id, config.repo_id, "cli").model_dump(mode="json"))
+    except (MemoryServiceError, RepositoryConfigError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("propose")
+def memory_propose(
+    scope: str = typer.Option(..., "--scope"),
+    type: str = typer.Option(..., "--type"),
+    title: str = typer.Option(..., "--title"),
+    body: str = typer.Option(..., "--body"),
+    source_kind: str = typer.Option("documentation", "--source-kind"),
+    source_ref: str = typer.Option("cli", "--source-ref"),
+    confidence: str = typer.Option("uncertain", "--confidence"),
+    alias: list[str] = typer.Option([], "--alias"),
+    tag: list[str] = typer.Option([], "--tag"),
+) -> None:
+    try:
+        item = _memory_service().propose(
+            scope=scope, type=type, title=title, body=body,
+            source_kind=source_kind, source_ref=source_ref,
+            author_kind="developer", author_id="cli", confidence=confidence,
+            aliases=alias, tags=tag,
+        )
+        _print(item.model_dump(mode="json"))
+    except (MemoryServiceError, ValueError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("list")
+def memory_list(status: list[str] = typer.Option([], "--status")) -> None:
+    try:
+        values = _memory_service(read_only=True).list(set(status) or None)
+        _print([item.model_dump(mode="json") for item in values])
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("show")
+def memory_show(memory_id: str) -> None:
+    try:
+        _print(_memory_service(read_only=True).get(memory_id).model_dump(mode="json"))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("request-approval")
+def memory_request_approval(memory_id: str) -> None:
+    try:
+        _print(_memory_service().request_approval(memory_id, "cli").model_dump(mode="json"))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("supersede")
+def memory_supersede(memory_id: str, replacement_id: str) -> None:
+    try:
+        _print(_memory_service().supersede(memory_id, replacement_id, "cli").model_dump(mode="json"))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("expire")
+def memory_expire(memory_id: str, reason: str = "") -> None:
+    try:
+        _print(_memory_service().transition(memory_id, "expired", "cli", reason).model_dump(mode="json"))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("delete")
+def memory_delete(memory_id: str, reason: str = "") -> None:
+    try:
+        _print(_memory_service().transition(memory_id, "deleted", "cli", reason).model_dump(mode="json"))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("purge")
+def memory_purge(memory_id: str, reason: str = typer.Option(..., "--reason")) -> None:
+    try:
+        _memory_service().purge(memory_id, "cli", reason)
+        _print({"memory_id": memory_id, "purged": True})
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+def _memory_scopes(repository: Path, project: list[str]) -> tuple[MemoryService, list[str]]:
+    config = load_repository(repository)
+    service = _memory_service(read_only=True)
+    requested = ["global:terminology", f"repo:{config.repo_id}", *[f"project:{value}" for value in project]]
+    return service, service.allowed_scopes(config.repo_id, requested)
+
+
+@memory_app.command("recall")
+def memory_recall(
+    query: str,
+    repository: Path = typer.Option(Path("."), "--repo"),
+    project: list[str] = typer.Option([], "--project"),
+    type: list[str] = typer.Option([], "--type"),
+    max_items: int = typer.Option(12, "--max-items"),
+    max_tokens: int = typer.Option(2500, "--max-tokens"),
+) -> None:
+    try:
+        service, scopes = _memory_scopes(repository, project)
+        _print(service.recall(query, scopes, types=set(type) or None, max_items=max_items, max_tokens=max_tokens).model_dump(mode="json"))
+    except (MemoryServiceError, RepositoryConfigError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("resolve")
+def memory_resolve(reference: str, repository: Path = typer.Option(Path("."), "--repo"), project: list[str] = typer.Option([], "--project")) -> None:
+    try:
+        service, scopes = _memory_scopes(repository, project)
+        _print(service.resolve(reference, scopes).model_dump(mode="json"))
+    except (MemoryServiceError, RepositoryConfigError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("context-pack")
+def memory_context_pack(
+    repository: Path = typer.Option(Path("."), "--repo"),
+    profile: str = typer.Option("startup", "--profile"),
+    query: str = typer.Option("", "--query"),
+    project: list[str] = typer.Option([], "--project"),
+) -> None:
+    try:
+        service, scopes = _memory_scopes(repository, project)
+        _print(service.context_pack(profile, scopes, query).model_dump(mode="json"))
+    except (MemoryServiceError, RepositoryConfigError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("attach-observation")
+def memory_attach_observation(
+    source_kind: str = typer.Option(..., "--source-kind"),
+    source_ref: str = typer.Option(..., "--source-ref"),
+    scope: str = typer.Option(..., "--scope"),
+    title: str = typer.Option(..., "--title"),
+    body: str = typer.Option(..., "--body"),
+) -> None:
+    try:
+        item = _memory_service().propose(scope=scope, type="observation", title=title, body=body, source_kind=source_kind, source_ref=source_ref, author_kind="worker", author_id="cli", confidence="observed", observed=True)
+        _print(item.model_dump(mode="json"))
+    except (MemoryServiceError, ValueError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("attach-outcome")
+def memory_attach_outcome(
+    source_kind: str = typer.Option(..., "--source-kind"),
+    source_ref: str = typer.Option(..., "--source-ref"),
+    scope: str = typer.Option(..., "--scope"),
+    title: str = typer.Option(..., "--title"),
+    body: str = typer.Option(..., "--body"),
+) -> None:
+    try:
+        item = _memory_service().propose(scope=scope, type="outcome", title=title, body=body, source_kind=source_kind, source_ref=source_ref, author_kind="worker", author_id="cli", confidence="supported")
+        _print(item.model_dump(mode="json"))
+    except (MemoryServiceError, ValueError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("retain")
+def memory_retain() -> None:
+    try:
+        _print({"expired": _memory_service().run_retention()})
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("export")
+def memory_export(include_deleted: bool = typer.Option(False, "--include-deleted")) -> None:
+    try:
+        _print(_memory_service(read_only=True).export(include_deleted=include_deleted))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
+
+
+@memory_app.command("audit")
+def memory_audit(memory_id: str | None = typer.Option(None, "--memory-id")) -> None:
+    try:
+        _print(_memory_service(read_only=True).audit(memory_id))
+    except (MemoryServiceError, sqlite3.Error) as exc:
+        _memory_error(exc)
 
 
 @app.command()

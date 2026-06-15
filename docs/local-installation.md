@@ -18,6 +18,13 @@ python3 -m venv .venv
 .venv/bin/pip check
 ```
 
+Governed memory uses the same global SQLite state under `~/.canto`. Repository
+bootstrap stores no memory or credentials in the repository. Run
+`canto repo init` to refresh generated agent guidance, then use
+`canto memory status` to inspect the local service. See
+[`memory-service.md`](memory-service.md) for proposal, Approval, recall, and
+context-pack usage.
+
 Until a user-level wheel is installed, invoke the checkout directly as
 `.venv/bin/canto` or add that virtual environment's `bin` directory to the
 interactive shell `PATH`. A repository bootstrap does not install Canto or

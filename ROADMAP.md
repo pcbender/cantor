@@ -1015,9 +1015,15 @@ Planned work packets:
 - CP-1612 - Retention, Export, and Audit
 - CP-1613 - Graphify Pointers and Agent Guidance
 - CP-1614 - End-to-End Dogfood, Security, and Stability
+- CP-1615 - Cross-Worker Memory And Bounded Orchestrator Approval
 
-CP-1601 and the CP-1602 through CP-1614 implementation sequence are approved.
-CP-1602 is the next unstarted packet.
+CP-1601 through CP-1615 are implemented on the governed memory service working
+branch. The workstream now includes additive SQLite migration, domain and
+StateStore records, the existing Approval flow, project/repository scope,
+administration CLI, FTS-backed recall, reference resolution, context packs,
+governed source pointers, retention/export/audit, agent guidance, and an
+end-to-end local dogfood test. CP-1615 adds true cross-Worker shared memory and
+policy-gated Orchestrator approval by default for routine low-risk memory.
 
 Hard rules:
 
@@ -1027,7 +1033,7 @@ Hard rules:
 - Do not add orchestration HTTP fields or endpoints in this workstream.
 - Defer daemon, MCP, vector search, cloud sync, multi-user authority, and broad
   global preferences.
-- Stop after CP-1614 for Developer review.
+- Stop after CP-1615 for Developer review.
 
 ---
 

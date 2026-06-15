@@ -99,6 +99,9 @@ SHARED_AGENT_INSTRUCTIONS = """# Canto Shared Agent Instructions
 - Do not commit or push unless the human explicitly instructs you to do so.
 - Do not access secrets, credential vault files, or paths denied by Guardrails.
 - Sparse checkout limits context but is not a security boundary.
+- Use `canto memory resolve` for unknown project references before guessing.
+- Use a scoped `canto memory context-pack` when the assignment permits memory.
+- Workers may propose memory but cannot approve durable memory.
 """
 
 ORCHESTRATOR_AGENT_INSTRUCTIONS = """# Canto Developer Instructions
@@ -122,6 +125,8 @@ filename is `orchestrator.md`; the public authority is Developer.
 - Authorize Canto to Apply only the exact accepted and verified Result to the
   named target.
 - Report assignment, review, conflict, and Apply status to the human operator.
+- Grant explicit memory scopes and budgets when a Worker needs durable context.
+- Review Worker memory proposals through the existing Approval flow.
 """
 
 EXECUTOR_AGENT_INSTRUCTIONS = """# Canto Delegated Worker Instructions
@@ -138,6 +143,10 @@ the public role is Worker.
 - Do not modify the canonical repository.
 - Do not self-assign, broaden scope, commit, push, accept, reject, queue, or
   Apply a Result.
+- Resolve unknown references through Canto Memory when the assignment permits
+  it; do not guess or retrieve memory outside assigned scopes.
+- You may propose memory or attach observations, but you may not approve or
+  silently activate durable memory.
 - When complete, leave the Workspace ready for `canto delegate capture` so
   Canto can record an immutable Result for Developer review.
 """
@@ -276,6 +285,20 @@ def _require_agent_pointer(repository: Path) -> str:
     return "Canto pointer present"
 
 
+def _require_memory_guidance(repository: Path) -> str:
+    required = {
+        ".canto/agents/shared.md": "canto memory resolve",
+        ".canto/agents/orchestrator.md": "memory scopes",
+        ".canto/agents/executor.md": "propose memory",
+    }
+    for relative, marker in required.items():
+        if marker not in (repository / relative).read_text(encoding="utf-8"):
+            raise RepositoryConfigError(
+                f"Generated agent guidance is outdated: {relative}; run canto repo init"
+            )
+    return "memory guidance present"
+
+
 def initialize_repository(path: str | Path) -> RepositoryConfig:
     repository = git_root(path)
     common_dir, head, remotes = _git_metadata(repository)
@@ -369,6 +392,7 @@ def doctor_repository(path: str | Path) -> RepositoryDoctorResult:
         check(relative, lambda relative=relative: _require_file(repository, relative))
     check("worker_selection_policy", lambda: load_repository_worker_policy(repository).priority)
     check("AGENTS.md", lambda: _require_agent_pointer(repository))
+    check("memory_agent_guidance", lambda: _require_memory_guidance(repository))
     status = _git(repository, "status", "--porcelain", "--", "AGENTS.md", ".canto")
     checks.append(
         RepositoryDoctorCheck(

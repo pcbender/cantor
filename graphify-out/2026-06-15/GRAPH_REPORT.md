@@ -1,16 +1,16 @@
 # Graph Report - canto  (2026-06-15)
 
 ## Corpus Check
-- 211 files · ~119,633 words
+- 219 files · ~135,225 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2471 nodes · 8441 edges · 200 communities (126 shown, 74 thin omitted)
-- Extraction: 64% EXTRACTED · 36% INFERRED · 0% AMBIGUOUS · INFERRED: 3016 edges (avg confidence: 0.5)
+- 2734 nodes · 9255 edges · 210 communities (133 shown, 77 thin omitted)
+- Extraction: 65% EXTRACTED · 35% INFERRED · 0% AMBIGUOUS · INFERRED: 3224 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5bdf7d49`
+- Built from commit: `3d41fc31`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -190,95 +190,110 @@
 - [[_COMMUNITY_Community 187|Community 187]]
 - [[_COMMUNITY_Community 188|Community 188]]
 - [[_COMMUNITY_Community 189|Community 189]]
-- [[_COMMUNITY_Community 192|Community 192]]
+- [[_COMMUNITY_Community 191|Community 191]]
 - [[_COMMUNITY_Community 193|Community 193]]
+- [[_COMMUNITY_Community 194|Community 194]]
 - [[_COMMUNITY_Community 195|Community 195]]
+- [[_COMMUNITY_Community 196|Community 196]]
 - [[_COMMUNITY_Community 197|Community 197]]
+- [[_COMMUNITY_Community 199|Community 199]]
+- [[_COMMUNITY_Community 201|Community 201]]
 - [[_COMMUNITY_Community 202|Community 202]]
 - [[_COMMUNITY_Community 203|Community 203]]
-- [[_COMMUNITY_Community 205|Community 205]]
-- [[_COMMUNITY_Community 209|Community 209]]
+- [[_COMMUNITY_Community 204|Community 204]]
+- [[_COMMUNITY_Community 206|Community 206]]
 - [[_COMMUNITY_Community 210|Community 210]]
+- [[_COMMUNITY_Community 214|Community 214]]
+- [[_COMMUNITY_Community 216|Community 216]]
+- [[_COMMUNITY_Community 217|Community 217]]
+- [[_COMMUNITY_Community 218|Community 218]]
+- [[_COMMUNITY_Community 219|Community 219]]
+- [[_COMMUNITY_Community 220|Community 220]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `DelegationService` - 206 edges
-2. `StateStore` - 156 edges
-3. `DelegationWorkspaceService` - 151 edges
-4. `SqliteStateStore` - 135 edges
-5. `MemoryStateStore` - 121 edges
-6. `WorkerSelectionPolicy` - 118 edges
-7. `DelegationError` - 116 edges
-8. `AIEndpointService` - 113 edges
-9. `JobService` - 103 edges
-10. `DelegationArtifactService` - 100 edges
+1. `DelegationService` - 207 edges
+2. `StateStore` - 180 edges
+3. `SqliteStateStore` - 162 edges
+4. `DelegationWorkspaceService` - 152 edges
+5. `MemoryStateStore` - 146 edges
+6. `WorkerSelectionPolicy` - 120 edges
+7. `DelegationError` - 117 edges
+8. `AIEndpointService` - 114 edges
+9. `JobService` - 112 edges
+10. `DelegationArtifactService` - 101 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `test_api_defaults_to_sqlite_state_store()` --calls--> `create_app()`  [EXTRACTED]
   tests/test_api.py → canto/api/server.py
-- `test_registry_loads()` --calls--> `create_app()`  [EXTRACTED]
-  tests/test_registry.py → canto/api/server.py
 - `Response` --uses--> `HttpDiscoveryAdapter`  [INFERRED]
   tests/test_ai_discovery.py → canto/core/ai_discovery.py
 - `Session` --uses--> `HttpDiscoveryAdapter`  [INFERRED]
   tests/test_ai_discovery.py → canto/core/ai_discovery.py
 - `Adapter` --uses--> `ModelCatalogService`  [INFERRED]
   tests/test_ai_assignment.py → canto/core/ai_discovery.py
+- `Workspaces` --uses--> `ModelCatalogService`  [INFERRED]
+  tests/test_ai_assignment.py → canto/core/ai_discovery.py
 
 ## Import Cycles
 - 1-file cycle: `canto/api/server.py -> canto/api/server.py`
+- 1-file cycle: `canto/core/memory.py -> canto/core/memory.py`
 
 ## Hyperedges (group relationships)
 - **** — adr_0001_canonical_execution_identity, mvp_v1_demo_canto_yaml, release_demo_canto_yaml [EXTRACTED 1.00]
 
-## Communities (200 total, 74 thin omitted)
+## Communities (210 total, 77 thin omitted)
+
+### Community 0 - "Community 0"
+Cohesion: 0.06
+Nodes (6): AIProvider, CredentialVault, Path, StateStore, Any, StateStore
 
 ### Community 1 - "Community 1"
-Cohesion: 0.22
-Nodes (28): create_app(), BaseModel, CapabilityRegistry, Settings, StateStore, CapabilityManifest, CapabilityMatch, CapabilityMatcher (+20 more)
+Cohesion: 0.16
+Nodes (46): BaseModel, CapabilityRegistry, Settings, StateStore, CapabilityManifest, JobService, Path, Registry (+38 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.10
-Nodes (32): DelegationService, DelegationWorkspaceService, DelegationService, DelegationWorkspaceService, DelegationService, DelegationTask, Exception, DelegationService (+24 more)
+Cohesion: 0.09
+Nodes (34): DelegationService, DelegationWorkspaceService, DelegationService, DelegationWorkspaceService, DelegationService, DelegationTask, Exception, DelegationService (+26 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.26
-Nodes (10): Any, ExecutionPlan, _next_plan_timestamp(), _now(), OrchestrationError, Orchestrator, PlanEvent, Raised when a local orchestration plan cannot be managed. (+2 more)
+Cohesion: 0.16
+Nodes (16): Path, Settings, Any, check_dependencies(), Registry, main(), markdown_report(), select_manifests() (+8 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.17
-Nodes (9): Any, Path, Any, CapabilityRootSource, RegistryError, Raised when write-provider metadata is incomplete or inconsistent., validate_write_contract(), WriteContractError (+1 more)
+Cohesion: 0.10
+Nodes (23): Any, Path, Any, Any, CapabilityRootSource, RegistryError, Raised when provider runner metadata is not executable., RunnerContractError (+15 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.06
+Cohesion: 0.05
 Nodes (8): Path, SqliteStateStore, _increment(), migrate_legacy_state(), StateMigrationResult, RedisStateStore, RedisStateStore, test_migrate_legacy_state_is_repeatable_and_preserves_sources()
 
 ### Community 6 - "Community 6"
 Cohesion: 0.05
-Nodes (57): delegate_accept(), delegate_assign(), delegate_block(), delegate_capture(), delegate_compare_create(), delegate_compare_show(), delegate_create(), delegate_dashboard() (+49 more)
+Nodes (64): _ai_assignment_service(), delegate_accept(), delegate_add_codex(), delegate_assign(), delegate_block(), delegate_capture(), delegate_compare_create(), delegate_compare_show() (+56 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.12
-Nodes (25): AIEndpointRecord, AIEndpointService, AIModelRecord, Any, ModelCatalogSnapshot, Session, StateStore, ModelCatalogService (+17 more)
+Cohesion: 0.07
+Nodes (130): AIWorkerAssignmentService, _ai_metadata_service(), AIEndpointService, Any, CapabilityRegistry, CredentialVault, DelegationService, DelegationWorkspaceService (+122 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.13
-Nodes (26): DelegationService, DelegationWorkspaceService, DelegationConflictService, DelegationPromotionQueue, _overlap(), DelegationWorkspaceService, DelegationConflictReport, PromotionResult (+18 more)
+Nodes (19): DelegationService, DelegationWorkspaceService, DelegationPromotionQueue, _overlap(), DelegationConflictReport, DelegationBlocker, DelegationConflictReport, PromotionQueueEntry (+11 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.08
-Nodes (54): Path, Path, WorkerSelectionPolicy, _git(), inspect_repository(), _normalize_scope_path(), _overlaps(), verify_repository_identity() (+46 more)
+Cohesion: 0.11
+Nodes (41): Any, ExecutorProfile, Path, WorkerSelectionPolicy, _merge(), _reject_secrets(), doctor_repository(), _ensure_agent_entrypoint() (+33 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.32
-Nodes (57): AIWorkerAssignmentService, AIEndpointService, Any, CapabilityRegistry, CredentialVault, DelegationService, DelegationWorkspaceService, Exception (+49 more)
+Cohesion: 0.23
+Nodes (3): LocalRegistryError, Raised when local registry metadata cannot be loaded., RegistryStore
 
 ### Community 11 - "Community 11"
-Cohesion: 0.07
-Nodes (25): Path, CapabilityManifest, Path, CapabilityManifest, CapabilityManifestError, Raised when a capability manifest cannot be parsed or validated., InstalledCapability, InstalledValidationResult (+17 more)
+Cohesion: 0.09
+Nodes (7): test_registry_index_entry_models_metadata(), test_registry_index_entry_rejects_unknown_risk_level(), test_registry_remove_deletes_directory_and_index_entry(), test_registry_remove_rejects_path_outside_installed_root(), test_registry_reports_installed_manifest_mismatch(), test_registry_store_loads_index_metadata(), test_registry_validates_installed_manifest_and_checksum()
 
 ### Community 12 - "Community 12"
-Cohesion: 0.13
-Nodes (4): Path, Connection, Durable single-user state store backed by SQLite., SqliteStateStore
+Cohesion: 0.11
+Nodes (3): Connection, Durable single-user state store backed by SQLite., SqliteStateStore
 
 ### Community 13 - "Community 13"
 Cohesion: 0.13
@@ -286,27 +301,23 @@ Nodes (24): HTMLParser, Any, Path, build_migration_plan(), build_schema(), gener
 
 ### Community 14 - "Community 14"
 Cohesion: 0.09
-Nodes (33): approve(), delegate_promote(), delegate_queue(), delegate_queue_promote(), delegate_reject(), demo_ai_worker_pool(), health(), job_artifacts() (+25 more)
+Nodes (37): _ai_catalog_maintenance_service(), ai_model_forget(), ai_model_metadata_add(), ai_model_show(), ai_model_status(), approve(), capability_validate(), delegate_reject() (+29 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.05
-Nodes (68): _patch_stats(), _runtime(), _record_id(), _summary(), DelegationTimelineItem, CommandRecord, DelegationBlocker, DelegationComparison (+60 more)
+Cohesion: 0.29
+Nodes (5): Any, CapabilityExecution, CapabilityProviderBinding, CapabilityRisk, CapabilityValidationResult
 
 ### Community 16 - "Community 16"
-Cohesion: 0.08
-Nodes (46): Path, DelegationService, DelegationWorkspaceService, Path, DelegationService, DelegationWorkspaceService, DelegationService, DelegationWorkspaceService (+38 more)
+Cohesion: 0.12
+Nodes (31): DelegationService, DelegationWorkspaceService, DelegationResult, DelegationService, DelegationWorkspaceService, DelegationArtifactService, DelegationReviewService, DelegationReview (+23 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.36
-Nodes (7): Any, check_dependencies(), main(), markdown_report(), select_manifests(), Any, Registry
-
-### Community 18 - "Community 18"
-Cohesion: 0.09
-Nodes (37): AIProvider, AIEndpointRecord, AIEndpointService, APIWorkerHarness, ModelCatalogService, Path, StateStore, DiscoveredModel (+29 more)
+Cohesion: 0.24
+Nodes (20): pack(), Pack a capability directory into a deterministic .canto archive., Validate a .canto archive and its checksums., validate_capability_package(), pack_capability(), validate_package(), make_capability(), make_executable_capability() (+12 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.13
-Nodes (27): JobService, Registry, PlanStore, WorkflowPlanner, install_fixture_capability(), installed_match_registry(), multi_step_registry(), test_approved_plan_is_saved_locally_without_execution() (+19 more)
+Cohesion: 0.16
+Nodes (29): Orchestrator, PlanStore, WorkflowPlanner, main(), executable_discovery_registry(), install_fixture_capability(), installed_match_registry(), multi_step_registry() (+21 more)
 
 ### Community 20 - "Community 20"
 Cohesion: 0.16
@@ -314,39 +325,39 @@ Nodes (18): Any, Path, Protocol, _endpoint(), _fetch_collection(), HttpResponse,
 
 ### Community 21 - "Community 21"
 Cohesion: 0.05
-Nodes (40): Advanced Workflow Orchestration (formerly v6.0), AI-Assisted Capability Authoring (formerly v5.0), Architecture Language Sprint, Architecture Lock, Canonical Identity Decision, Canto Roadmap, Completed Phases, CP-1201 — Delegated Executor UX Architecture and Design (+32 more)
+Nodes (41): Advanced Workflow Orchestration (formerly v6.0), AI-Assisted Capability Authoring (formerly v5.0), Architecture Language Sprint, Architecture Lock, Canonical Identity Decision, Canto Roadmap, Completed Phases, CP-1201 — Delegated Executor UX Architecture and Design (+33 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.50
-Nodes (8): create_task(), git(), main(), DelegationService, DelegationWorkspaceService, Path, repository(), review_and_promote()
+Cohesion: 0.12
+Nodes (23): Path, DelegationService, DelegationWorkspaceService, Path, CommandRecord, AIWorkerPoolDemoResult, _git(), run_ai_worker_pool_demo() (+15 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.26
-Nodes (15): Any, Path, Settings, _artifact_usage(), effective_limits(), _local_entrypoint(), run_provider(), _runtime_command() (+7 more)
+Cohesion: 0.15
+Nodes (32): demo_ai_worker_pool(), memory_attach_observation(), memory_attach_outcome(), memory_audit(), memory_context_pack(), memory_delete(), _memory_error(), memory_expire() (+24 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.13
-Nodes (35): _ai_assignment_service(), AIEndpointService, APIWorkerHarness, DelegationService, DelegationWorkspaceService, ExecutorLaunch, ModelCatalogService, WorkerSelectionPolicy (+27 more)
+Cohesion: 0.06
+Nodes (95): CandidateScore, AIEndpointService, APIWorkerHarness, DelegationService, DelegationWorkspaceService, ExecutorLaunch, ModelCatalogService, WorkerSelectionPolicy (+87 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.10
-Nodes (43): pack(), Pack a capability directory into a deterministic .canto archive., Validate a .canto archive and its checksums., validate_capability_package(), CapabilityManifest, Path, build_checksums(), collect_package_files() (+35 more)
+Cohesion: 0.23
+Nodes (13): CapabilityManifest, Path, build_checksums(), collect_package_files(), _excluded(), PackageValidationResult, _parse_checksums(), provider_binding_errors() (+5 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.09
-Nodes (37): Any, Path, Path, StateStore, Any, collect_artifacts(), contained_path(), _mime_type() (+29 more)
+Cohesion: 0.11
+Nodes (31): create_app(), Any, Path, collect_artifacts(), contained_path(), _mime_type(), read_artifact(), JobRequest (+23 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.12
-Nodes (43): CandidateScore, AIEndpointRecord, AIModelRecord, StateStore, WorkerBudgetPolicy, WorkerSelectionPolicy, AIEndpointRecord, AIModelRecord (+35 more)
+Cohesion: 0.24
+Nodes (7): Response, service(), Session, test_catalog_change_marks_previously_probed_model_stale(), test_ollama_discovery_accepts_list_capabilities(), test_ollama_discovery_uses_digest_as_resolved_version(), test_openai_discovery_persists_exact_model_and_snapshot()
 
 ### Community 28 - "Community 28"
-Cohesion: 0.18
-Nodes (23): Approval, Any, CredentialVault, Path, Registry, Settings, StateStore, Any (+15 more)
+Cohesion: 0.17
+Nodes (21): Any, Approval, CredentialVault, Path, Registry, Settings, StateStore, Any (+13 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.25
-Nodes (8): ai_pool_explain(), delegate_conflict(), execute(), explain(), _orchestrator(), Execute an approved local orchestration plan., Explain a saved orchestration plan without executing it., Explain delegation conflicts and safe recovery options without acting.
+Cohesion: 0.11
+Nodes (26): DelegationService, DelegationWorkspaceService, Path, DelegationWorkspaceService, _git(), _normalize_scope_path(), _overlaps(), verify_repository_identity() (+18 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.06
@@ -365,16 +376,16 @@ Cohesion: 0.14
 Nodes (14): AGENTS.md, Canto, Canto Agents Executor.md, Canto Agents Orchestrator.md, Canto Agents Shared.md, Canto Delegate.toml, Canto Installed, Canto Policy.toml (+6 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.06
-Nodes (5): MemoryStateStore, test_cloud_endpoint_requires_https_and_vault_reference(), test_endpoint_records_persist_without_plaintext_key(), test_invalid_endpoint_id_does_not_store_supplied_secret(), test_local_ollama_allows_loopback_without_key()
+Cohesion: 0.05
+Nodes (14): MemoryStateStore, ExecutorLaunch, model(), AIModelRecord, test_ai_record_delete_round_trip(), test_forget_detects_retained_session_and_result_after_task_selection_changes(), test_forget_requires_unavailable_unreferenced_model(), test_status_groups_lifecycle_fields_and_show_includes_evidence() (+6 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.13
 Nodes (14): Acceptance, Core Rule, CP-1515 — Local Model Catalog Reconciliation Design, Identity And Lifecycle, Metadata Enrichment, Non-Goals, Probe Behavior, Purpose (+6 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.27
-Nodes (9): Any, Raised when provider runner metadata is not executable., RunnerContractError, validate_runner_contract(), provider(), test_binary_adapter_uses_shared_protocol(), test_container_adapter_fails_clearly_without_runtime(), test_node_adapter_uses_shared_protocol() (+1 more)
+Cohesion: 0.06
+Nodes (30): 10. Memory Statuses, 12. Scopes and Inheritance, 14. Inclusion Policy, 15. Exclusion Policy, 16. Secret Detection, 17. Retrieval Model, 18. Reference Resolver, 19. Context Packs (+22 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.27
@@ -389,8 +400,8 @@ Cohesion: 0.18
 Nodes (11): Delegation UX Design, Comparison Grouping, Isolated Variant Creation, Prompt Metadata, and Comparison Views, Complete UX Integration and Release Verification, Dashboard Projection Models, Rendering, and Read-Only Commands, Global/Repo Path Resolution, Repo Bootstrap Configuration, Repository Identity Linking, State-Path Migration, and Bootstrap Diagnostics, Ollama Preflight, Profile Behavior, Fixtures, and Smoke-Test Docs, One-Command Demo and Isolated Cleanup Behavior, Preset Loading, Resolution, Profile Commands, and Launch Snapshots (+3 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.20
-Nodes (14): Path, Settings, Registry, main(), main(), show(), Path, runtime() (+6 more)
+Cohesion: 0.24
+Nodes (8): Path, CapabilityManifest, CapabilityManifestError, Raised when a capability manifest cannot be parsed or validated., extract_package(), InstalledCapability, InstalledValidationResult, InstallResult
 
 ### Community 42 - "Community 42"
 Cohesion: 0.28
@@ -409,16 +420,16 @@ Cohesion: 0.27
 Nodes (7): Any, Path, Registry, audit_seed_capabilities(), load_seed_capabilities(), SeedCapability, test_seed_catalogue_is_reviewed_and_registered()
 
 ### Community 46 - "Community 46"
-Cohesion: 0.31
-Nodes (10): _dry_run(), test_failed_post_write_verification_prevents_completion(), test_live_retry_returns_prior_result_without_mutation(), test_live_write_fails_safely_when_target_changed_after_review(), test_promotion_rejects_tampered_change_set(), test_recovery_requires_approval_and_rolls_back(), test_reference_write_provider_dry_run_is_deterministic_and_read_only(), test_registry_rejects_malformed_write_provider() (+2 more)
+Cohesion: 0.46
+Nodes (7): manager(), test_builtin_presets_are_credential_free_and_reusable(), test_ollama_check_never_pulls_missing_model(), test_ollama_preset_is_local_only_and_checks_installed_model(), test_profile_check_is_non_mutating(), test_profile_precedence_is_cli_task_saved_preset_default(), test_user_presets_load_from_global_config_and_reject_secrets()
 
 ### Community 47 - "Community 47"
-Cohesion: 0.08
-Nodes (48): _ai_catalog_maintenance_service(), _ai_catalog_service(), ai_endpoint_add(), ai_endpoint_disable(), ai_endpoint_list(), _ai_endpoint_service(), ai_endpoint_show(), _ai_metadata_service() (+40 more)
+Cohesion: 0.06
+Nodes (38): _ai_catalog_service(), ai_endpoint_disable(), ai_endpoint_list(), _ai_endpoint_service(), ai_endpoint_show(), ai_model_discover(), ai_model_list(), ai_model_probe() (+30 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.23
-Nodes (12): DelegationResult, DelegationReviewService, DelegationReviewSummaryService, DelegationReview, capture(), test_review_summary_reports_checksum_and_workspace_blockers(), test_review_summary_reports_evidence_and_acceptance_readiness(), test_review_summary_reports_promotion_readiness_after_acceptance() (+4 more)
+Cohesion: 0.47
+Nodes (8): assigned_service(), git(), Path, repository(), test_prepare_creates_sparse_worktree_and_durable_record(), test_prepare_rejects_overlapping_denied_path(), test_prepare_rejects_stale_repository_identity(), test_remove_deletes_only_managed_worktree()
 
 ### Community 49 - "Community 49"
 Cohesion: 0.22
@@ -433,8 +444,8 @@ Cohesion: 0.25
 Nodes (8): Guarded write execution path (dry-run → live promotion), Idempotency and rollback / compensation, MVP v1 (Single-User, Write-Capable), Redis → SQLite state-migration tool, Secret rotation and redaction guarantees, Single-user credential vault and vault-backed `*_ref` resolution, SqliteStateStore, Write-provider contract and reference write-capable provider
 
 ### Community 52 - "Community 52"
-Cohesion: 0.46
-Nodes (7): ExternalRedirect, fetch_same_domain(), main(), normalize_url(), probable_type(), Response, Session
+Cohesion: 0.07
+Nodes (50): Any, Approval, StateStore, ensure_no_secret(), estimate_tokens(), MemoryService, MemoryServiceError, _now() (+42 more)
 
 ### Community 53 - "Community 53"
 Cohesion: 0.10
@@ -513,12 +524,12 @@ Cohesion: 0.67
 Nodes (3): Logging, Monitoring, Tracing
 
 ### Community 79 - "Community 79"
-Cohesion: 0.24
-Nodes (7): Response, service(), Session, test_catalog_change_marks_previously_probed_model_stale(), test_ollama_discovery_accepts_list_capabilities(), test_ollama_discovery_uses_digest_as_resolved_version(), test_openai_discovery_persists_exact_model_and_snapshot()
+Cohesion: 0.33
+Nodes (6): delegate_promote(), delegate_queue_promote(), promote(), Explicitly promote one unblocked queued result; never runs automatically., Request approval to promote a completed write-provider dry run., Apply the exact accepted patch to the clean canonical repository.
 
 ### Community 118 - "Community 118"
-Cohesion: 0.10
-Nodes (23): DelegationService, DelegationWorkspaceService, ExecutorProfile, Path, DelegationService, _actions(), _attention(), CodexCliExecutor (+15 more)
+Cohesion: 0.13
+Nodes (33): Path, cleanup_delegation_demo(), _git(), run_delegation_demo(), inspect_repository(), DelegationScope, DelegationTask, DelegationVariant (+25 more)
 
 ### Community 119 - "Community 119"
 Cohesion: 0.12
@@ -557,8 +568,8 @@ Cohesion: 0.15
 Nodes (12): Codex CLI Profile, Commands and Evidence, Dashboard and Prompt Comparisons, Delegated Worker Workspaces, Inspection, Local Demo, Local Ollama Profile, Manual Workflow (+4 more)
 
 ### Community 157 - "Community 157"
-Cohesion: 0.18
-Nodes (10): API summary, Approval flow, Canto, Orchestration contract freeze, Product language, Quickstart, Requirements, Run a source inventory (+2 more)
+Cohesion: 0.17
+Nodes (11): API summary, Approval flow, Canto, Governed memory, Orchestration contract freeze, Product language, Quickstart, Requirements (+3 more)
 
 ### Community 158 - "Community 158"
 Cohesion: 0.22
@@ -581,8 +592,8 @@ Cohesion: 0.29
 Nodes (6): Deferred Authentication, Deferred Lifecycle Features, Deferred Manifest Versioning, Deferred Wire-Shape Gaps, Orchestration Contract Freeze Audit, Out of Scope
 
 ### Community 163 - "Community 163"
-Cohesion: 0.25
-Nodes (7): Canto Implementation Status, Current Result, Deferred By Specification, Governed AI Worker Pool, Orchestration Contract v1.0, Release Preparation, Verification
+Cohesion: 0.22
+Nodes (8): Canto Implementation Status, Current Result, Deferred By Specification, Governed AI Worker Pool, Governed Memory Service, Orchestration Contract v1.0, Release Preparation, Verification
 
 ### Community 164 - "Community 164"
 Cohesion: 0.33
@@ -617,8 +628,8 @@ Cohesion: 0.40
 Nodes (4): Authentication Placeholder, Deferred Work, Loopback Default, Reserved Header
 
 ### Community 172 - "Community 172"
-Cohesion: 0.26
-Nodes (3): Any, HttpAgentAdapter, Provider transport with one normalized tool-call contract.
+Cohesion: 0.48
+Nodes (7): git(), main(), DelegationService, DelegationWorkspaceService, Path, repository(), review_and_promote()
 
 ### Community 173 - "Community 173"
 Cohesion: 0.50
@@ -637,60 +648,88 @@ Cohesion: 0.40
 Nodes (8): build_crosswalk(), _concept_names(), CrosswalkError, Any, Path, Raised when artifact-only crosswalk planning cannot be completed., write_crosswalk(), test_wordpress_processwire_crosswalk_maps_common_concepts()
 
 ### Community 189 - "Community 189"
-Cohesion: 0.22
-Nodes (9): delegate_run_command(), migrate_state(), _parse_inputs(), Run the local FastAPI server., Copy legacy Redis and filesystem-plan state into SQLite., Run and record an allowed command in the delegation workspace., run(), serve() (+1 more)
+Cohesion: 0.40
+Nodes (5): ai_pool_explain(), delegate_conflict(), explain(), Explain a saved orchestration plan without executing it., Explain delegation conflicts and safe recovery options without acting.
 
-### Community 192 - "Community 192"
-Cohesion: 0.29
-Nodes (19): AIEndpointRecord, AIModelRecord, StateStore, WorkerSelectionPolicy, ai_worker_readiness_checks(), _cloud_check(), _endpoint_check(), _latest_health() (+11 more)
+### Community 191 - "Community 191"
+Cohesion: 0.25
+Nodes (10): Any, ExecutionPlan, _next_plan_timestamp(), _now(), OrchestrationError, PlanEvent, Raised when a local orchestration plan cannot be managed., resolve_artifact_inputs() (+2 more)
 
 ### Community 193 - "Community 193"
 Cohesion: 0.40
 Nodes (4): Codex Integration, Graphify Maintenance, Repository Policy, Supported Workflow
 
+### Community 194 - "Community 194"
+Cohesion: 0.20
+Nodes (21): Any, Path, Settings, _artifact_usage(), effective_limits(), _local_entrypoint(), run_provider(), RunnerError (+13 more)
+
 ### Community 195 - "Community 195"
-Cohesion: 0.25
-Nodes (11): DelegationResult, Path, _artifact(), _changed_files(), _git(), _is_generated_cache(), _matches(), Return reviewable Workspace changes without mutating the Worker index. (+3 more)
+Cohesion: 0.18
+Nodes (15): DelegationResult, Path, Path, _artifact(), _changed_files(), classify_worker_outcome(), _git(), _is_generated_cache() (+7 more)
+
+### Community 196 - "Community 196"
+Cohesion: 0.09
+Nodes (21): Canto Memory Service Implementation Plan, Completion, CP-1601 - Memory Service Scope and Architecture, CP-1602 - StateStore Schema Migration Framework, CP-1603 - Memory Domain Models and Persistence, CP-1604 - MemoryService Lifecycle and Secret Rejection, CP-1605 - Project Identity and Repository Membership, CP-1606 - Approval Subject Linkage and Activation (+13 more)
+
+### Community 199 - "Community 199"
+Cohesion: 0.17
+Nodes (12): 31. Candidate Work Areas, CP-MEM-001 — Memory Domain Model, CP-MEM-002 — SQLite Schema and Migrations, CP-MEM-003 — Memory Proposal and Approval Linkage CLI, CP-MEM-004 — Scoped Recall, CP-MEM-005 — Reference Resolver, CP-MEM-006 — Context Packs, CP-MEM-007 — Existing Record Integration (+4 more)
+
+### Community 201 - "Community 201"
+Cohesion: 0.18
+Nodes (11): 9.10 Summary, 9.1 Terminology, 9.2 Decision, 9.3 Preference, 9.4 Constraint, 9.5 Fact, 9.6 Observation, 9.7 Outcome (+3 more)
 
 ### Community 202 - "Community 202"
-Cohesion: 0.18
-Nodes (11): delegate_add_codex(), delegate_profile_check(), delegate_profile_list(), delegate_profile_save(), delegate_profile_show(), _profile_manager(), Register a local Codex CLI executor profile without credentials., List saved profiles and available preset names. (+3 more)
+Cohesion: 0.33
+Nodes (7): delegate_profile_list(), delegate_profile_save(), delegate_profile_show(), _profile_manager(), List saved profiles and available preset names., Show one saved executor profile., Resolve and save a credential-free named executor profile.
 
 ### Community 203 - "Community 203"
-Cohesion: 0.22
-Nodes (9): credential_delete(), credential_list(), credential_rotate(), credential_set(), _credential_vault(), Create or replace an encrypted local credential., List references without decrypting credential values., Replace a credential value while preserving its reference. (+1 more)
+Cohesion: 0.18
+Nodes (11): ai_endpoint_add(), credential_delete(), credential_list(), credential_rotate(), credential_set(), _credential_vault(), Create or replace an encrypted local credential., List references without decrypting credential values. (+3 more)
 
-### Community 205 - "Community 205"
-Cohesion: 0.29
-Nodes (5): Any, CapabilityExecution, CapabilityProviderBinding, CapabilityRisk, CapabilityValidationResult
+### Community 204 - "Community 204"
+Cohesion: 0.11
+Nodes (21): _patch_stats(), _runtime(), _actions(), _attention(), DelegationDashboardTask, CommandRecord, DelegationComparison, DelegationComparisonItem (+13 more)
 
-### Community 209 - "Community 209"
-Cohesion: 0.70
-Nodes (4): catalog_with_model(), test_metadata_cli_requires_explicit_review(), test_metadata_requires_review_and_rejects_observed_source(), test_reviewed_metadata_is_source_labeled_without_changing_model()
+### Community 206 - "Community 206"
+Cohesion: 0.31
+Nodes (10): isolated_app(), orchestration_app(), test_api_approval_and_artifact_read(), test_api_defaults_to_sqlite_state_store(), test_api_missing_provider_is_structured(), test_api_missing_skill_is_structured(), test_api_promotes_completed_write_dry_run(), test_frozen_orchestration_http_contract_loop() (+2 more)
 
 ### Community 210 - "Community 210"
-Cohesion: 0.50
-Nodes (3): CredentialVault, Path, StateStore
+Cohesion: 0.20
+Nodes (9): Basic Flow, Bounded Orchestrator Approval, Context Profiles, Deferred, Governed Memory Service, Projects, Retention And Audit, Scopes (+1 more)
+
+### Community 214 - "Community 214"
+Cohesion: 0.40
+Nodes (4): _record_id(), _summary(), DelegationTimelineItem, DelegationTimelineItem
+
+### Community 216 - "Community 216"
+Cohesion: 0.40
+Nodes (5): 11.1 Worker, 11.2 Developer Session / Orchestrator Component, 11.3 Developer, 11.4 Repository Policy, 11. Authority and Approval Model
+
+### Community 217 - "Community 217"
+Cohesion: 0.40
+Nodes (5): 8.1 Evidence Reference, 8.2 Observation, 8.3 Proposed Memory, 8.4 Durable Memory, 8. Memory Classes
 
 ## Knowledge Gaps
-- **578 isolated node(s):** `Path`, `Any`, `Any`, `Any`, `Path` (+573 more)
+- **667 isolated node(s):** `Path`, `Any`, `Any`, `Any`, `Path` (+662 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **74 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **77 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `StateStore` connect `Community 0` to `Community 192`, `Community 1`, `Community 2`, `Community 3`, `Community 5`, `Community 7`, `Community 10`, `Community 15`, `Community 18`, `Community 210`, `Community 19`, `Community 20`, `Community 24`, `Community 26`, `Community 27`, `Community 28`?**
-  _High betweenness centrality (0.055) - this node is a cross-community bridge._
-- **Why does `SqliteStateStore` connect `Community 12` to `Community 1`, `Community 2`, `Community 5`, `Community 6`, `Community 8`, `Community 10`, `Community 14`, `Community 15`, `Community 16`, `Community 19`, `Community 22`, `Community 24`, `Community 25`, `Community 29`, `Community 35`, `Community 41`, `Community 47`, `Community 49`, `Community 189`?**
-  _High betweenness centrality (0.044) - this node is a cross-community bridge._
-- **Why does `DelegationService` connect `Community 2` to `Community 0`, `Community 195`, `Community 6`, `Community 8`, `Community 9`, `Community 10`, `Community 47`, `Community 16`, `Community 48`, `Community 15`, `Community 118`, `Community 22`, `Community 24`?**
-  _High betweenness centrality (0.043) - this node is a cross-community bridge._
-- **Are the 132 inferred relationships involving `DelegationService` (e.g. with `AIWorkerAssignmentService` and `AIEndpointService`) actually correct?**
-  _`DelegationService` has 132 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 111 inferred relationships involving `StateStore` (e.g. with `AIProvider` and `Approval`) actually correct?**
-  _`StateStore` has 111 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 102 inferred relationships involving `DelegationWorkspaceService` (e.g. with `AIWorkerAssignmentService` and `AIEndpointService`) actually correct?**
-  _`DelegationWorkspaceService` has 102 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 42 inferred relationships involving `SqliteStateStore` (e.g. with `AIWorkerAssignmentService` and `CapabilityRegistry`) actually correct?**
-  _`SqliteStateStore` has 42 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `StateStore` connect `Community 0` to `Community 1`, `Community 2`, `Community 5`, `Community 7`, `Community 19`, `Community 52`, `Community 20`, `Community 118`, `Community 24`, `Community 28`, `Community 191`?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Why does `MemoryStateStore` connect `Community 35` to `Community 0`, `Community 2`, `Community 3`, `Community 5`, `Community 7`, `Community 8`, `Community 9`, `Community 16`, `Community 17`, `Community 19`, `Community 24`, `Community 27`, `Community 29`, `Community 46`, `Community 48`, `Community 49`, `Community 52`, `Community 204`, `Community 118`?**
+  _High betweenness centrality (0.040) - this node is a cross-community bridge._
+- **Why does `Registry` connect `Community 3` to `Community 1`, `Community 4`, `Community 7`, `Community 45`, `Community 14`, `Community 17`, `Community 19`, `Community 26`, `Community 28`?**
+  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+- **Are the 133 inferred relationships involving `DelegationService` (e.g. with `AIWorkerAssignmentService` and `AIEndpointService`) actually correct?**
+  _`DelegationService` has 133 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 122 inferred relationships involving `StateStore` (e.g. with `AIProvider` and `CandidateScore`) actually correct?**
+  _`StateStore` has 122 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 45 inferred relationships involving `SqliteStateStore` (e.g. with `AIWorkerAssignmentService` and `CapabilityRegistry`) actually correct?**
+  _`SqliteStateStore` has 45 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 103 inferred relationships involving `DelegationWorkspaceService` (e.g. with `AIWorkerAssignmentService` and `AIEndpointService`) actually correct?**
+  _`DelegationWorkspaceService` has 103 INFERRED edges - model-reasoned connections that need verification._

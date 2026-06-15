@@ -70,6 +70,8 @@ class RejectionDecision(BaseModel):
 
 class Approval(BaseModel):
     approval_id: str
+    subject_kind: Literal["job", "plan", "memory"] | None = None
+    subject_id: str | None = None
     job_id: str | None = None
     plan_id: str | None = None
     step_capability: str | None = None
