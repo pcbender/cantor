@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "STATUS.md": {
-    "mtime": 1781542044.5513248,
-    "ast_hash": "32a56e6bc20cbce48a9542bb93b5b131",
+    "mtime": 1781542658.3509092,
+    "ast_hash": "f9c14104a71a4dc57d832d395e4602e4",
     "semantic_hash": ""
   },
   "Vision.md": {
@@ -1115,8 +1115,8 @@
     "semantic_hash": ""
   },
   "canto/core/ai_selection.py": {
-    "mtime": 1781541953.1155272,
-    "ast_hash": "89b167a35bef84a71d79fc0df23f0452",
+    "mtime": 1781542616.4940662,
+    "ast_hash": "859e5b41f0b419dd2d0e505a447172b6",
     "semantic_hash": ""
   },
   "canto/core/ai_worker.py": {
@@ -1155,8 +1155,8 @@
     "semantic_hash": ""
   },
   "tests/test_ai_selection.py": {
-    "mtime": 1781541953.2145271,
-    "ast_hash": "3d8e3c58f3dc2c1965b34a14e3b41b54",
+    "mtime": 1781542616.7250664,
+    "ast_hash": "548293c4ffe893f4da25687a0fd8a382",
     "semantic_hash": ""
   },
   "tests/test_ai_worker.py": {
@@ -1180,13 +1180,13 @@
     "semantic_hash": ""
   },
   "canto/core/ai_reconciliation.py": {
-    "mtime": 1781541718.7517588,
-    "ast_hash": "de77145d02af338d6663a190c975bd01",
+    "mtime": 1781542616.6150663,
+    "ast_hash": "60b25971fb3df6c9ec8c6c42dfe36563",
     "semantic_hash": ""
   },
   "tests/test_ai_catalog_maintenance.py": {
-    "mtime": 1781541754.7075348,
-    "ast_hash": "46ec5ffac7888e1ab405c56c290787af",
+    "mtime": 1781542616.8350663,
+    "ast_hash": "ce1daf3582550c973a2cb80cec0785e2",
     "semantic_hash": ""
   },
   "tests/test_ai_metadata.py": {

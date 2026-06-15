@@ -10,6 +10,13 @@ from canto.core.ai_reconciliation import (
 )
 from canto.core.state import MemoryStateStore, SqliteStateStore
 from canto.models.ai_workers import AIModelRecord
+from canto.models.delegation import (
+    DelegationResult,
+    DelegationTask,
+    ExecutorLaunch,
+    ExecutorSession,
+    RepositoryIdentity,
+)
 
 
 def model(key: str, availability: str = "missing") -> AIModelRecord:
@@ -112,3 +119,62 @@ def test_status_show_and_forget_cli(monkeypatch):
     assert '"availability": "missing"' in shown.stdout
     assert forgotten.exit_code == 0
     assert forgotten.stdout == "Forgot local:gone\n"
+
+
+def test_forget_detects_retained_session_and_result_after_task_selection_changes():
+    store = MemoryStateStore()
+    model_record = model("local:old-worker")
+    store.set_ai_record(
+        "model", model_record.model_key, model_record.model_dump(mode="json")
+    )
+    task = DelegationTask(
+        task_id="task-1",
+        title="Fallback fixture",
+        repository=RepositoryIdentity(canonical_path="/tmp/repo", initial_head="abc"),
+        selected_model_key="cloud:fallback",
+    )
+    store.set_delegation_task(task.task_id, task.model_dump(mode="json"))
+    session = ExecutorSession(
+        session_id="session-old",
+        task_id=task.task_id,
+        executor_id="ai:local:old-worker",
+        status="failed",
+        enforcement="canto_observed",
+    )
+    launch = ExecutorLaunch(
+        launch_id="launch-old",
+        task_id=task.task_id,
+        session_id=session.session_id,
+        executor_id=session.executor_id,
+        argv=["canto-api-worker", "local:old-worker"],
+        cwd="/tmp/workspace",
+        prompt_path="prompt.md",
+        stdout_path="stdout.log",
+        stderr_path="stderr.log",
+    )
+    result = DelegationResult(
+        result_id="result-old",
+        task_id=task.task_id,
+        revision=1,
+        base_commit="abc",
+        workspace_patch_sha256="checksum",
+        producing_session_id=session.session_id,
+        producing_launch_id=launch.launch_id,
+    )
+    store.append_delegation_record(
+        task.task_id, "sessions", session.session_id, session.model_dump(mode="json")
+    )
+    store.append_delegation_record(
+        task.task_id, "launches", launch.launch_id, launch.model_dump(mode="json")
+    )
+    store.append_delegation_record(
+        task.task_id, "results", result.result_id, result.model_dump(mode="json")
+    )
+    service = ModelCatalogMaintenanceService(store)
+
+    assert service.references(model_record.model_key) == [
+        "delegation_session",
+        "result",
+    ]
+    with pytest.raises(ModelCatalogMaintenanceError, match="delegation_session, result"):
+        service.forget(model_record.model_key)

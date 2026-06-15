@@ -343,11 +343,34 @@ class ModelCatalogMaintenanceService:
             if value.get("selected_model_key") == model_key or model_key in candidate_keys:
                 references.append("selection")
                 break
-        if any(
-            value.get("selected_model_key") == model_key
-            for value in self.store.list_delegation_tasks()
-        ):
-            references.append("delegation")
+        executor_id = f"ai:{model_key}"
+        for task in self.store.list_delegation_tasks():
+            task_id = task.get("task_id")
+            if not task_id:
+                continue
+            if task.get("selected_model_key") == model_key:
+                references.append("delegation")
+            sessions = self.store.get_delegation_records(task_id, "sessions")
+            launches = self.store.get_delegation_records(task_id, "launches")
+            matching_sessions = {
+                value.get("session_id")
+                for value in sessions
+                if value.get("executor_id") == executor_id
+            }
+            matching_launches = {
+                value.get("launch_id")
+                for value in launches
+                if value.get("executor_id") == executor_id
+            }
+            if matching_sessions or matching_launches:
+                references.append("delegation_session")
+            if any(
+                value.get("producing_session_id") in matching_sessions
+                or value.get("producing_launch_id") in matching_launches
+                for value in self.store.get_delegation_records(task_id, "results")
+            ):
+                references.append("result")
+        references = list(dict.fromkeys(references))
         return references
 
     @staticmethod

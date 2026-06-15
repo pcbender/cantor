@@ -9,6 +9,7 @@ from canto.core.state import MemoryStateStore
 from canto.models.ai_workers import (
     AIEndpointRecord,
     AIModelRecord,
+    EndpointHealthRecord,
     ModelPricing,
     WorkerBudgetPolicy,
     WorkerSelectionPolicy,
@@ -134,3 +135,41 @@ def test_selection_distinguishes_absent_probe_from_stale_probe():
     assert decision.candidates[0].rejection_reasons == [
         "coding-worker probe is absent"
     ]
+
+
+def test_selection_rejects_latest_explicitly_unhealthy_endpoint():
+    store = MemoryStateStore()
+    selector = WorkerSelectionService(store)
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+    store.set_ai_record(
+        "endpoint_health",
+        "health-old",
+        EndpointHealthRecord(
+            health_id="health-old",
+            endpoint_id="local",
+            available=True,
+            checked_at="2026-06-15T10:00:00Z",
+        ).model_dump(mode="json"),
+    )
+    store.set_ai_record(
+        "endpoint_health",
+        "health-new",
+        EndpointHealthRecord(
+            health_id="health-new",
+            endpoint_id="local",
+            available=False,
+            checked_at="2026-06-15T11:00:00Z",
+        ).model_dump(mode="json"),
+    )
+
+    decision = selector.select(
+        "task-5",
+        [model("local:coder", "local", "ollama")],
+        {"local": endpoint},
+        WorkerSelectionPolicy(),
+    )
+
+    assert decision.selected_model_key is None
+    assert "endpoint is currently unhealthy" in decision.candidates[0].rejection_reasons
