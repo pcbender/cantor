@@ -9,3 +9,6 @@
 - Do not commit or push unless the human explicitly instructs you to do so.
 - Do not access secrets, credential vault files, or paths denied by Guardrails.
 - Sparse checkout limits context but is not a security boundary.
+- Use `canto memory resolve` for unknown project references before guessing.
+- Use a scoped `canto memory context-pack` when the assignment permits memory.
+- Workers may propose memory but cannot approve durable memory.

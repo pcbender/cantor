@@ -5,12 +5,16 @@ Updated: 2026-06-15
 ## Governed Memory Service
 
 CP-1601 is approved and documented in
-`docs/Canto Memory Service Specification.md`. The CP-1602 through CP-1614
-implementation sequence in `docs/canto-memory-service-implementation-plan.md`
-and ROADMAP.md is also approved. CP-1602 is the next unstarted packet. The
-workstream reuses the existing StateStore, Approval, repository identity, and
-delegation evidence models and does not change the frozen orchestration HTTP
-contract.
+`docs/Canto Memory Service Specification.md`. CP-1602 through CP-1614 are
+implemented on the governed memory service working branch. Canto now provides
+project/repository/global-terminology scopes, proposal and existing Approval
+activation, deterministic FTS-backed recall, reference resolution, context
+packs, source pointers, retention, export, audit, secret rejection, and
+generated agent guidance. The workstream reuses the existing StateStore,
+Approval, repository identity, and delegation evidence models and does not
+change the frozen orchestration HTTP contract. CP-1615 adds a true cross-Worker
+shared-memory dogfood test and bounded Orchestrator approval by default for
+low-risk repository/project memory.
 
 ## Governed AI Worker Pool
 

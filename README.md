@@ -260,6 +260,13 @@ Developer authorization, Canto can Apply only the exact accepted Result to the
 canonical repository after repository, checksum, path, command-evidence, and
 applicability checks.
 
+## Governed memory
+
+Canto can retain compact approved terminology, decisions, outcomes, and source
+pointers across governed work. Memory uses the existing StateStore and Approval
+flow; retrieval is local, scoped, lexical, and budgeted. See
+[`docs/memory-service.md`](docs/memory-service.md).
+
 ## Tests
 
 ```bash

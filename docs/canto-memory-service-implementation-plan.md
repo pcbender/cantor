@@ -1,6 +1,6 @@
 # Canto Memory Service Implementation Plan
 
-Status: Approved
+Status: Implemented through CP-1615
 Workstream: CP-1600
 Design source: `docs/Canto Memory Service Specification.md`
 
@@ -11,7 +11,7 @@ approved context and propose durable knowledge without creating a second
 Approval model, execution path, registry, or evidence store.
 
 CP-1601 is the approved scope and architecture packet. The approved
-implementation sequence begins with CP-1602 and ends with CP-1614.
+implementation sequence begins with CP-1602 and ends with CP-1615.
 
 ## Frozen Decisions
 
@@ -319,6 +319,40 @@ Acceptance:
 - no daemon, MCP, vector database, cloud sync, or model-based retrieval appears;
 - full test suite passes.
 
+### CP-1615 - Cross-Worker Memory And Bounded Orchestrator Approval
+
+Objective: Prove that memory is useful across separate governed Worker tasks
+and add bounded Orchestrator approval so routine memory does not require the
+Developer to approve every low-risk observation.
+
+Deliverables:
+
+- memory activation policy model for bounded Orchestrator decisions;
+- policy fields for allowed auto-activation types, scopes, governed-source
+  requirement, conflict requirement, proposer/approver separation, and per-task
+  or per-day limits;
+- service operation that evaluates policy and records the Approval decision as
+  `decided_by=orchestrator:<id>` only when all gates pass;
+- audit payload that records the policy rule that allowed the decision;
+- cross-Worker dogfood test using separate governed task/session identities;
+- documentation for what always escalates to Developer approval.
+
+Acceptance:
+
+- Worker A proposes or attaches memory from one governed task/session;
+- bounded Orchestrator policy may activate only allowed repository/project
+  outcomes, source pointers, or non-conflicting aliases;
+- Worker B, in a separate governed task/session, can retrieve the approved
+  memory through assigned scopes;
+- Worker B cannot retrieve unapproved, expired, or out-of-scope memory;
+- decisions, preferences, durable constraints, global terminology, conflicts,
+  supersession, policy changes, and broad project-scope changes still require
+  Developer approval;
+- the proposing Worker cannot approve its own proposal unless explicit policy
+  allows it;
+- audit shows source record, approver identity, and policy gate evidence;
+- no second Approval model or approval endpoint is introduced.
+
 ## Stop Conditions
 
 Pause implementation when any packet requires:
@@ -329,4 +363,12 @@ Pause implementation when any packet requires:
 - a new multi-user, organization, daemon, MCP, vector, or cloud-sync design;
 - silent scope widening or model-based authority decisions.
 
-Stop after CP-1614 for Developer review.
+Stop after CP-1615 for Developer review.
+
+## Completion
+
+CP-1602 through CP-1615 are implemented on the governed memory service working
+branch. Runtime behavior, migration, Approval integration, CLI, retrieval,
+context packs, source references, retention, agent guidance, end-to-end
+dogfood coverage, true cross-Worker memory coverage, and bounded Orchestrator
+approval are complete pending final Developer review and merge.
