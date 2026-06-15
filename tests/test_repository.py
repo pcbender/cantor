@@ -203,6 +203,27 @@ def test_repo_doctor_requires_instruction_files_in_git_base(repository, monkeypa
     assert '"valid": true' in result.output
 
 
+def test_repo_doctor_reports_unavailable_ai_state_without_traceback(
+    repository, monkeypatch
+):
+    initialize_repository(repository)
+    git(repository, "add", "AGENTS.md", ".canto")
+    git(repository, "commit", "-m", "Bootstrap Canto agent instructions")
+
+    class BrokenStore:
+        def list_ai_records(self, record_type):
+            raise sqlite3.OperationalError("read-only state unavailable")
+
+    monkeypatch.setattr(cli_module, "_ai_readiness_store", lambda: BrokenStore())
+    result = CliRunner().invoke(
+        cli_module.app, ["repo", "doctor", "--repository", str(repository)]
+    )
+
+    assert result.exit_code == 0
+    assert "WARN ai_worker_state: global AI state is unavailable" in result.output
+    assert "Traceback" not in result.output
+
+
 def test_delegated_sparse_workspace_includes_committed_role_instructions(repository, tmp_path):
     initialize_repository(repository)
     git(repository, "add", "AGENTS.md", ".canto")
