@@ -90,6 +90,11 @@ may be `economy`, `balanced`, `quality`, or `urgent`. Policy can narrow
 endpoints, providers, models, token limits, estimated cost, turns, tool calls,
 and wall time. More specific policy cannot widen a parent policy.
 
+`canto repo doctor` includes AI Worker readiness. It reports policy-required
+endpoints and exact models, current cloud readiness, and local model status.
+Missing explicitly allowed endpoints or models are blocking failures. Optional
+local capacity is shown as a warning when cloud use remains authorized.
+
 ## Select And Run
 
 ```bash

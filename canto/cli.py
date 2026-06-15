@@ -45,6 +45,7 @@ from canto.core.ai_probe import (
     WorkerProbeError,
 )
 from canto.core.ai_metadata import ModelMetadataError, ModelMetadataService
+from canto.core.ai_readiness import ai_worker_readiness_checks
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -89,6 +90,7 @@ from canto.core.orchestration import (
 from canto.core.registry import Registry
 from canto.core.repository import (
     RepositoryConfigError,
+    RepositoryDoctorCheck,
     doctor_repository,
     initialize_repository,
     load_repository,
@@ -158,6 +160,11 @@ def _ai_endpoint_service() -> AIEndpointService:
 def _ai_catalog_service() -> ModelCatalogService:
     endpoint_service = _ai_endpoint_service()
     return ModelCatalogService(endpoint_service.store, endpoint_service)
+
+
+def _ai_readiness_store() -> SqliteStateStore:
+    registry = _capability_registry()
+    return SqliteStateStore(registry.store.paths.state_file, read_only=True)
 
 
 def _ai_reconciliation_service() -> LocalModelReconciliationService:
@@ -314,6 +321,32 @@ def repo_doctor(
     """Verify repository identity, agent instructions, and Git readiness."""
     try:
         result = doctor_repository(repository)
+        worker_policy = load_repository_worker_policy(repository)
+        try:
+            ai_checks = ai_worker_readiness_checks(
+                _ai_readiness_store(), worker_policy
+            )
+        except (OSError, sqlite3.Error) as exc:
+            required = bool(
+                worker_policy.allowed_endpoints
+                or worker_policy.allowed_models
+                or worker_policy.allowed_providers
+            )
+            ai_checks = [
+                RepositoryDoctorCheck(
+                    name="ai_worker_state",
+                    valid=False,
+                    detail=f"global AI state is unavailable: {exc}",
+                    severity="error" if required else "warning",
+                )
+            ]
+        result = result.model_copy(
+            update={
+                "checks": result.checks + ai_checks,
+                "valid": result.valid
+                and all(check.valid or check.severity == "warning" for check in ai_checks),
+            }
+        )
     except RepositoryConfigError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -322,7 +355,8 @@ def repo_doctor(
     else:
         typer.echo(f"Repository: {result.repository}")
         for check in result.checks:
-            typer.echo(f"{'OK' if check.valid else 'FAIL'} {check.name}: {check.detail}")
+            label = "OK" if check.valid else "WARN" if check.severity == "warning" else "FAIL"
+            typer.echo(f"{label} {check.name}: {check.detail}")
     if not result.valid:
         raise typer.Exit(1)
 

@@ -215,9 +215,14 @@ selection requires an available local model and current successful probe.
 Status, detail, safe forget, opt-in sequential probe, and reviewed metadata
 commands are documented in `docs/ai-worker-pool.md`. Tests use fake local
 endpoint responses and make no model-server, cloud, or web-research calls.
-The full `tests import_capability/tests` suite passes 344 tests with the known
+The full `tests import_capability/tests` suite passes 349 tests with the known
 non-blocking Starlette `TestClient` deprecation warning; `pip check` reports no
 broken requirements.
+
+`canto repo doctor` now reports configured AI Worker endpoint, exact model,
+cloud readiness, and local model status. Explicit policy requirements are
+blocking; optional missing local capacity is a warning when cloud use remains
+authorized.
 
 - Working tree validation: `git diff --check` passes.
 

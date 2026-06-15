@@ -38,6 +38,7 @@ class RepositoryDoctorCheck(BaseModel):
     name: str
     valid: bool
     detail: str
+    severity: str = "error"
 
 
 class RepositoryDoctorResult(BaseModel):
