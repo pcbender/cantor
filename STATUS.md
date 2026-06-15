@@ -193,6 +193,14 @@ stdout as advisory evidence, and surfaces likely model/harness compatibility
 problems. Existing task statuses and the frozen orchestration contract are
 unchanged.
 
+Planned maintenance follow-up: CP-1212 — Clean Missing-Task Error for AI
+Worker Launch. During the first governed cloud Worker smoke test,
+`canto delegate launch-ai` received an unknown task ID and exposed the expected
+`DelegationError` as a Python traceback from `canto/cli.py` instead of using the
+existing concise CLI error path. The fix is limited to expected-error handling
+and a network-free regression test; valid selection and launch behavior remain
+unchanged.
+
 - Working tree validation: `git diff --check` passes.
 
 ## Deferred By Specification

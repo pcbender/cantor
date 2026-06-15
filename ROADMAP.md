@@ -807,10 +807,39 @@ Acceptance:
   frozen orchestration contract change is required.
 - Tests use scripted executors and require no Ollama model or network access.
 
+### CP-1212 — Clean Missing-Task Error for AI Worker Launch
+
+Status: **planned maintenance follow-up**. Cloud Worker dogfooding showed that
+`canto delegate launch-ai UNKNOWN_TASK --allow-cloud` lets the expected
+`DelegationError` escape Typer and prints a Python traceback from
+`delegate_launch_ai` instead of a concise CLI error.
+
+Behavior:
+
+- Catch `DelegationError` from task lookup and subsequent delegation
+  operations in `delegate_launch_ai`.
+- Print `Error: Delegation task not found: TASK_ID` through the existing
+  delegation CLI error path.
+- Exit non-zero without a traceback.
+- Preserve current behavior for valid prepared tasks, repository policy
+  failures, selection failures, and Worker launch failures.
+- Audit adjacent AI Worker CLI commands for the same expected-error boundary
+  without broadly refactoring the CLI.
+
+Acceptance:
+
+- A missing task ID exits non-zero with one clear error message and no
+  traceback.
+- A valid `workspace_ready` task still reaches automatic Worker selection.
+- Tests use local state and mocked Workers; no network or API key is required.
+- No status enum, delegation lifecycle, or frozen orchestration contract
+  changes are introduced.
+
 MVP v1.2 is complete. CP-1211 was delivered as the bounded MVP v1.1.1
 maintenance hotfix without reopening the release or completed CP-1300
-workstream. CP-1315 is an MVP v1.2 foundation packet. Delegation HTTP/MCP
-exposure and multi-user executor coordination remain MVP v2 work.
+workstream. CP-1212 is a bounded CLI maintenance follow-up. CP-1315 is an MVP
+v1.2 foundation packet. Delegation HTTP/MCP exposure and multi-user executor
+coordination remain MVP v2 work.
 
 ---
 
