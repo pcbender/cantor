@@ -92,12 +92,20 @@ class HttpDiscoveryAdapter:
     def _parse(endpoint: AIEndpointRecord, payload: Any) -> list[DiscoveredModel]:
         if endpoint.provider == "ollama":
             items = payload.get("models", [])
+            def supports_tools(item: dict[str, Any]) -> bool:
+                capabilities = item.get("capabilities", {})
+                if isinstance(capabilities, list):
+                    return "tools" in capabilities
+                if isinstance(capabilities, dict):
+                    return bool(capabilities.get("tools"))
+                return False
+
             return [
                 DiscoveredModel(
                     provider_model_id=item["name"],
                     resolved_version=item.get("digest") or item["name"],
                     display_name=item.get("model") or item["name"],
-                    capabilities={"tools": bool(item.get("capabilities", {}).get("tools"))},
+                    capabilities={"tools": supports_tools(item)},
                     metadata=item,
                 )
                 for item in items

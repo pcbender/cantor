@@ -43,6 +43,7 @@ def test_policy_composition_never_widens_cloud_or_allowlists():
         priority="economy",
         cloud_allowed=False,
         allowed_providers=["openai"],
+        preferred_models=["openai:small", "openai:large"],
         budget=WorkerBudgetPolicy(enabled=True, max_estimated_usd=1),
     )
 
@@ -50,6 +51,7 @@ def test_policy_composition_never_widens_cloud_or_allowlists():
 
     assert result.cloud_allowed is False
     assert result.allowed_providers == ["openai"]
+    assert result.preferred_models == ["openai:small", "openai:large"]
     assert result.budget.max_estimated_usd == 1
 
 
@@ -71,6 +73,30 @@ def test_selection_is_deterministic_local_first_and_persisted():
 
     assert decision.selected_model_key == "local:coder"
     assert selector.explain(decision.decision_id)["selected"] == "local:coder"
+
+
+def test_explicit_model_preference_controls_first_choice_and_keeps_fallback():
+    store = MemoryStateStore()
+    selector = WorkerSelectionService(store)
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+    smaller = model("local:gemma", "local", "ollama")
+    preferred = model("local:qwen", "local", "ollama")
+    policy = WorkerSelectionPolicy(
+        allowed_models=[smaller.model_key, preferred.model_key],
+        preferred_models=[preferred.model_key, smaller.model_key],
+    )
+
+    first = selector.select(
+        "task-preferred", [smaller, preferred], {"local": endpoint}, policy
+    )
+    fallback = selector.select(
+        "task-fallback", [smaller], {"local": endpoint}, policy
+    )
+
+    assert first.selected_model_key == preferred.model_key
+    assert fallback.selected_model_key == smaller.model_key
 
 
 def test_selection_reports_stale_probe_and_budget_rejections():

@@ -215,7 +215,7 @@ selection requires an available local model and current successful probe.
 Status, detail, safe forget, opt-in sequential probe, and reviewed metadata
 commands are documented in `docs/ai-worker-pool.md`. Tests use fake local
 endpoint responses and make no model-server, cloud, or web-research calls.
-The full `tests import_capability/tests` suite passes 349 tests with the known
+The full `tests import_capability/tests` suite passes 352 tests with the known
 non-blocking Starlette `TestClient` deprecation warning; `pip check` reports no
 broken requirements.
 
@@ -223,6 +223,15 @@ broken requirements.
 cloud readiness, and local model status. Explicit policy requirements are
 blocking; optional missing local capacity is a warning when cloud use remains
 authorized.
+
+Local Ollama dogfooding now validates current list-based capability metadata
+and Ollama-native structured tool-call history. `local-ollama:gemma4:12b`
+passes the implementation probe and is enabled in this repository's local-first
+Worker policy. Provider HTTP errors include bounded response details without
+request data or credentials.
+The repository now prefers `local-ollama:qwen3.6:35b-a3b` and retains
+`local-ollama:gemma4:12b` as an eligible local fallback through explicit
+ordered `preferred_models` policy.
 
 - Working tree validation: `git diff --check` passes.
 

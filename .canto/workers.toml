@@ -6,19 +6,27 @@
   cloud_fallback_allowed = false
   local_first = true
   allowed_endpoints = [
+    "local-ollama",
     "openai-primary",
     "anthropic-primary",
     "google-primary",
   ]
   allowed_providers = [
+    "ollama",
     "openai",
     "anthropic",
     "google",
   ]
   allowed_models = [
+    "local-ollama:qwen3.6:35b-a3b",
+    "local-ollama:gemma4:12b",
     "openai-primary:gpt-4.1-mini-2025-04-14",
     "anthropic-primary:claude-haiku-4-5-20251001",
     "google-primary:gemini-2.5-flash",
+  ]
+  preferred_models = [
+    "local-ollama:qwen3.6:35b-a3b",
+    "local-ollama:gemma4:12b",
   ]
   required_classification = "implementation"
 
