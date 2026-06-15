@@ -43,6 +43,7 @@ class StateStore(Protocol):
     def set_ai_record(self, record_type: str, record_id: str, value: dict[str, Any]) -> None: ...
     def get_ai_record(self, record_type: str, record_id: str) -> dict[str, Any] | None: ...
     def list_ai_records(self, record_type: str) -> list[dict[str, Any]]: ...
+    def delete_ai_record(self, record_type: str, record_id: str) -> bool: ...
 
 
 class SqliteStateStore:
@@ -488,6 +489,14 @@ class SqliteStateStore:
             ).fetchall()
         return [self._load(row[0]) for row in rows]
 
+    def delete_ai_record(self, record_type: str, record_id: str) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                "DELETE FROM ai_records WHERE record_type = ? AND record_id = ?",
+                (record_type, record_id),
+            )
+        return cursor.rowcount > 0
+
 
 class RedisStateStore:
     def __init__(self, url: str):
@@ -694,6 +703,12 @@ class RedisStateStore:
             if (value := self.get_ai_record(record_type, record_id)) is not None
         ]
 
+    def delete_ai_record(self, record_type: str, record_id: str) -> bool:
+        key = f"canto:ai:{record_type}:{record_id}"
+        deleted = bool(self.client.delete(key))
+        self.client.srem(f"canto:ai:{record_type}:ids", record_id)
+        return deleted
+
 
 class MemoryStateStore:
     def __init__(self):
@@ -890,3 +905,7 @@ class MemoryStateStore:
                 for (kind, _), value in sorted(self.ai_records.items())
                 if kind == record_type
             ]
+
+    def delete_ai_record(self, record_type: str, record_id: str) -> bool:
+        with self.lock:
+            return self.ai_records.pop((record_type, record_id), None) is not None

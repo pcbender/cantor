@@ -108,8 +108,15 @@ class WorkerSelectionService:
         catalog_snapshot_ids: list[str] | None = None,
     ) -> WorkerSelectionDecision:
         estimate = estimate or TaskEstimate()
+        endpoint_health = self._latest_endpoint_health()
         candidates = [
-            self._score(model, endpoints.get(model.endpoint_id), policy, estimate)
+            self._score(
+                model,
+                endpoints.get(model.endpoint_id),
+                endpoint_health.get(model.endpoint_id),
+                policy,
+                estimate,
+            )
             for model in models
         ]
         eligible = [candidate for candidate in candidates if candidate.eligible]
@@ -138,12 +145,15 @@ class WorkerSelectionService:
     def _score(
         model: AIModelRecord,
         endpoint: AIEndpointRecord | None,
+        endpoint_healthy: bool | None,
         policy: WorkerSelectionPolicy,
         estimate: TaskEstimate,
     ) -> CandidateScore:
         rejected: list[str] = []
         if endpoint is None or not endpoint.enabled:
             rejected.append("endpoint is missing or disabled")
+        if endpoint_healthy is False:
+            rejected.append("endpoint is currently unhealthy")
         local = bool(endpoint and endpoint_is_local(endpoint))
         if not local and not policy.cloud_allowed:
             rejected.append("cloud use is not authorized")
@@ -153,7 +163,11 @@ class WorkerSelectionService:
             rejected.append("provider is not allowed")
         if policy.allowed_models and model.model_key not in policy.allowed_models:
             rejected.append("model is not allowed")
-        if model.probe_stale:
+        if model.provider == "ollama" and model.availability != "available":
+            rejected.append(f"local model availability is {model.availability}")
+        if model.probe_state == "absent":
+            rejected.append("coding-worker probe is absent")
+        elif model.probe_stale or model.probe_state == "stale":
             rejected.append("coding-worker probe is stale")
         if model.classification != policy.required_classification:
             rejected.append(
@@ -197,6 +211,18 @@ class WorkerSelectionService:
             score=score,
         )
 
+    def _latest_endpoint_health(self) -> dict[str, bool]:
+        latest: dict[str, tuple[str, bool]] = {}
+        for value in self.store.list_ai_records("endpoint_health"):
+            endpoint_id = value.get("endpoint_id")
+            checked_at = value.get("checked_at", "")
+            if not endpoint_id:
+                continue
+            current = latest.get(endpoint_id)
+            if current is None or checked_at > current[0]:
+                latest[endpoint_id] = (checked_at, bool(value.get("available")))
+        return {endpoint_id: value[1] for endpoint_id, value in latest.items()}
+
     def explain(self, decision_id: str) -> dict:
         value = self.store.get_ai_record(self.RECORD_TYPE, decision_id)
         if not value:
@@ -209,4 +235,3 @@ class WorkerSelectionService:
             "priority": decision.policy.priority,
             "candidates": [candidate.model_dump(mode="json") for candidate in decision.candidates],
         }
-

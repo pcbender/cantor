@@ -4,6 +4,7 @@ from canto.core.ai_discovery import HttpDiscoveryAdapter, ModelCatalogService
 from canto.core.ai_endpoints import AIEndpointService
 from canto.core.credentials import CredentialVault
 from canto.core.state import MemoryStateStore
+from canto.models.ai_workers import AIModelRecord
 
 
 class Response:
@@ -93,3 +94,22 @@ def test_catalog_change_marks_previously_probed_model_stale(tmp_path):
     updated = catalog.get("primary:qwen:14b")
     assert updated.resolved_version == "new"
     assert updated.probe_stale is True
+
+
+def test_legacy_model_record_infers_probe_state_without_new_fields():
+    model = AIModelRecord.model_validate(
+        {
+            "model_key": "local:coder",
+            "endpoint_id": "local",
+            "provider": "ollama",
+            "provider_model_id": "coder",
+            "resolved_version": "digest",
+            "classification": "implementation",
+            "probe_version": "1",
+            "probe_stale": False,
+            "catalog_checksum": "checksum",
+        }
+    )
+
+    assert model.availability == "unknown"
+    assert model.probe_state == "current"

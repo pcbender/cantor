@@ -178,6 +178,18 @@ class ModelCatalogService:
                 classification=previous.classification if previous else "unvalidated",
                 probe_version=previous.probe_version if previous else None,
                 probe_stale=changed or not previous or previous.probe_stale,
+                probe_state=(
+                    "stale"
+                    if changed or (previous and previous.probe_stale)
+                    else previous.probe_state
+                    if previous
+                    else "absent"
+                ),
+                availability="available",
+                availability_reason="returned by endpoint discovery",
+                last_seen_at=now,
+                runtime_metadata=discovered.metadata or {},
+                metadata_provenance=["runtime"],
                 catalog_checksum=item_checksum,
                 discovered_at=previous.discovered_at if previous else now,
                 updated_at=now,

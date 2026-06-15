@@ -98,6 +98,8 @@ def run_ai_worker_pool_demo(*, apply: bool = False, keep: bool = False):
         classification="implementation",
         probe_version="1",
         probe_stale=False,
+        probe_state="current",
+        availability="available",
         catalog_checksum="demo",
     )
     store.set_ai_record("model", model.model_key, model.model_dump(mode="json"))
@@ -153,4 +155,3 @@ def run_ai_worker_pool_demo(*, apply: bool = False, keep: bool = False):
         cleanup_delegation_demo(root)
         value = value.model_copy(update={"cleaned_up": True})
     return value
-

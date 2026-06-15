@@ -24,7 +24,7 @@ Supported providers are `openai`, `anthropic`, `google`,
 `openai_compatible`, and `ollama`. Automatically selected Workers do not use
 browser, OAuth, inherited CLI, or external session authentication.
 
-## Discover And Probe
+## Discover, Refresh, And Probe
 
 Discovery contacts only the named configured endpoint. A model is not eligible
 for implementation work until the versioned probe proves structured file edits
@@ -32,12 +32,55 @@ and command execution:
 
 ```bash
 canto ai model discover local-ollama
+canto ai model refresh local-ollama
 canto ai model list --endpoint local-ollama
 canto ai model probe local-ollama:qwen2.5-coder:14b
 ```
 
 Exact provider identifiers and resolved versions are persisted. A changed
 version or catalog checksum makes prior probe evidence stale.
+
+Use `discover` for initial endpoint discovery and compatibility workflows. Use
+`refresh` for authoritative local Ollama reconciliation. A successful refresh
+marks newly seen models available, changed digests stale, and absent models
+missing without deleting their evidence. Endpoint failure is recorded as
+uncertainty and does not falsely mark every model missing.
+
+Probing remains explicit:
+
+```bash
+canto ai model refresh local-ollama --probe-new
+canto ai model refresh local-ollama --probe-stale
+```
+
+These options probe only the named local endpoint's added or changed models,
+sequentially, with no cloud fallback. Without either option, refresh never
+runs a model.
+
+## Inspect And Maintain Local Models
+
+```bash
+canto ai model status --endpoint local-ollama
+canto ai model show local-ollama:qwen2.5-coder:14b
+canto ai model forget local-ollama:removed-model
+```
+
+Status separates availability, observed Worker classification, and probe
+state. Forget is allowed only for a non-available model with no retained probe,
+usage, selection, or delegation references.
+
+Optional reviewed metadata is imported from a local JSON object and remains
+advisory:
+
+```bash
+canto ai model metadata-add local-ollama:qwen2.5-coder:14b model-card.json \
+  --source-kind curated \
+  --source-uri https://example.invalid/official-model-card \
+  --reviewed
+```
+
+Only `declared` and `curated` manual sources are accepted. Metadata never
+overwrites observed probe evidence or grants implementation eligibility.
 
 ## Repository Policy
 

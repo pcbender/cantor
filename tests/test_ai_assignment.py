@@ -91,7 +91,10 @@ def setup(tmp_path):
         provider_model_id="coder",
         resolved_version="digest",
         classification="implementation",
+        probe_version="1",
         probe_stale=False,
+        probe_state="current",
+        availability="available",
         catalog_checksum="checksum",
     )
     store.set_ai_record("model", model.model_key, model.model_dump(mode="json"))
@@ -135,7 +138,10 @@ def test_local_failure_uses_explicitly_authorized_cloud_fallback(tmp_path):
         provider_model_id="cloud-coder",
         resolved_version="2026-01-01",
         classification="implementation",
+        probe_version="1",
         probe_stale=False,
+        probe_state="current",
+        availability="available",
         catalog_checksum="cloud-checksum",
     )
     store.set_ai_record("model", cloud.model_key, cloud.model_dump(mode="json"))

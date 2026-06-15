@@ -1,6 +1,6 @@
 # Canto Implementation Status
 
-Updated: 2026-06-14
+Updated: 2026-06-15
 
 ## Governed AI Worker Pool
 
@@ -12,6 +12,13 @@ health, and exact-version evidence. Cloud use and fallback are never implicit.
 
 Run `canto demo ai-worker-pool` for the offline acceptance flow or add
 `--apply` to prove exact-Result promotion in the disposable demo repository.
+
+CP-1515 now specifies the next bounded Worker-pool maintenance slice: local
+model catalog reconciliation. The proposed direction is explicit
+`canto ai model refresh ENDPOINT_ID` inventory reconciliation, separate
+availability/classification/probe state, preserved evidence for removed or
+changed models, and optional source-labeled metadata enrichment. Runtime code
+has not yet been added for CP-1516 through CP-1521.
 
 ## Release Preparation
 
@@ -200,6 +207,17 @@ Worker Launch. During the first governed cloud Worker smoke test,
 existing concise CLI error path. The fix is limited to expected-error handling
 and a network-free regression test; valid selection and launch behavior remain
 unchanged.
+
+Local model catalog reconciliation is complete through CP-1521. A configured
+loopback Ollama endpoint can be refreshed explicitly; new, changed, missing,
+unchanged, and unreachable states remain distinct. Current implementation
+selection requires an available local model and current successful probe.
+Status, detail, safe forget, opt-in sequential probe, and reviewed metadata
+commands are documented in `docs/ai-worker-pool.md`. Tests use fake local
+endpoint responses and make no model-server, cloud, or web-research calls.
+The full `tests import_capability/tests` suite passes 344 tests with the known
+non-blocking Starlette `TestClient` deprecation warning; `pip check` reports no
+broken requirements.
 
 - Working tree validation: `git diff --check` passes.
 

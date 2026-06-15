@@ -41,7 +41,10 @@ def model():
         provider_model_id="coder",
         resolved_version="digest",
         classification="implementation",
+        probe_version="1",
         probe_stale=False,
+        probe_state="current",
+        availability="available",
         catalog_checksum="checksum",
     )
 

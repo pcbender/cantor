@@ -191,6 +191,7 @@ class CodingWorkerProbeService:
                 "classification": classification,
                 "probe_version": PROBE_VERSION,
                 "probe_stale": False,
+                "probe_state": "current",
                 "updated_at": utc_now(),
             }
         )
@@ -205,3 +206,22 @@ class CodingWorkerProbeService:
             for value in self.store.list_ai_records(self.RECORD_TYPE)
         ]
         return [r for r in results if model_key is None or r.model_key == model_key]
+
+
+class LocalModelProbeQueue:
+    """Run explicit local probes sequentially without any fallback selection."""
+
+    def __init__(self, catalog: ModelCatalogService, probes: CodingWorkerProbeService):
+        self.catalog = catalog
+        self.probes = probes
+
+    def run(self, model_keys: list[str]) -> list[WorkerProbeResult]:
+        results: list[WorkerProbeResult] = []
+        for model_key in sorted(set(model_keys)):
+            model = self.catalog.get(model_key)
+            if model.provider != "ollama" or model.availability != "available":
+                raise WorkerProbeError(
+                    f"Local probe requires an available Ollama model: {model_key}"
+                )
+            results.append(self.probes.probe(model_key))
+        return results

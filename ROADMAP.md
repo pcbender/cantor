@@ -952,6 +952,42 @@ provider-neutral API execution, durable usage evidence, repo bootstrap policy,
 and an offline end-to-end demo. This workstream precedes MVP v2 and preserves
 its server migration path.
 
+### Local Model Catalog Reconciliation
+
+Design source: `docs/local-model-catalog-reconciliation.md`.
+
+Dogfooding established that local model capability must be learned once and
+reused, rather than rediscovered by loading every installed model for every
+task. Canto will reconcile exact local runtime inventory while preserving
+historical probe and usage evidence. Runtime availability, curated metadata,
+and observed Worker classification remain distinct.
+
+Completed packets:
+
+- CP-1515 — Local Model Catalog Reconciliation Design
+- CP-1516 — Model Availability And Metadata Provenance Fields
+- CP-1517 — Local Endpoint Reconciliation Service
+- CP-1518 — `canto ai model refresh` And Change Summary
+- CP-1519 — Model Status, Explain, And Safe Forget
+- CP-1520 — Optional Local Probe Queue And Metadata Enrichment Boundary
+- CP-1521 — Dogfood, Compatibility, Security, And Documentation Pass
+
+CP-1515 through CP-1521 are complete. Local Ollama catalogs now reconcile
+explicitly, preserve removed-model history, invalidate changed-digest probes,
+support opt-in sequential probing, expose status and safe cleanup, and keep
+curated metadata separate from observed Worker evidence.
+
+Hard rules:
+
+- Refresh inventories but does not load, run, pull, or delete models.
+- Removed models become missing; their evidence is not erased.
+- Changed digests invalidate probes without losing history.
+- Web research is optional, source-labeled enrichment and never grants Worker
+  eligibility.
+- Automatic implementation selection requires current availability and a
+  current successful Canto probe.
+- Local refresh and probes never trigger cloud fallback.
+
 ---
 
 ## MVP v2 — Local Team Server

@@ -9,6 +9,7 @@ from canto.core.state import MemoryStateStore
 from canto.models.ai_workers import (
     AIEndpointRecord,
     AIModelRecord,
+    EndpointHealthRecord,
     ModelPricing,
     WorkerBudgetPolicy,
     WorkerSelectionPolicy,
@@ -25,6 +26,8 @@ def model(key, endpoint, provider, *, cost=1.0, context=32000):
         context_tokens=context,
         classification="implementation",
         probe_stale=False,
+        probe_state="current",
+        availability="available",
         catalog_checksum="checksum",
         pricing=ModelPricing(input_per_million=cost, output_per_million=cost),
     )
@@ -93,3 +96,80 @@ def test_selection_reports_stale_probe_and_budget_rejections():
     reasons = {item.model_key: item.rejection_reasons for item in decision.candidates}
     assert "coding-worker probe is stale" in reasons["cloud:stale"]
     assert "estimated cost exceeds task budget" in reasons["cloud:costly"]
+
+
+def test_selection_rejects_missing_local_model_with_specific_reason():
+    store = MemoryStateStore()
+    selector = WorkerSelectionService(store)
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+    missing = model("local:gone", "local", "ollama").model_copy(
+        update={"availability": "missing"}
+    )
+
+    decision = selector.select(
+        "task-3", [missing], {"local": endpoint}, WorkerSelectionPolicy()
+    )
+
+    assert decision.selected_model_key is None
+    assert decision.candidates[0].rejection_reasons == [
+        "local model availability is missing"
+    ]
+
+
+def test_selection_distinguishes_absent_probe_from_stale_probe():
+    store = MemoryStateStore()
+    selector = WorkerSelectionService(store)
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+    unprobed = model("local:new", "local", "ollama").model_copy(
+        update={"probe_state": "absent", "probe_stale": True}
+    )
+
+    decision = selector.select(
+        "task-4", [unprobed], {"local": endpoint}, WorkerSelectionPolicy()
+    )
+
+    assert decision.candidates[0].rejection_reasons == [
+        "coding-worker probe is absent"
+    ]
+
+
+def test_selection_rejects_latest_explicitly_unhealthy_endpoint():
+    store = MemoryStateStore()
+    selector = WorkerSelectionService(store)
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+    store.set_ai_record(
+        "endpoint_health",
+        "health-old",
+        EndpointHealthRecord(
+            health_id="health-old",
+            endpoint_id="local",
+            available=True,
+            checked_at="2026-06-15T10:00:00Z",
+        ).model_dump(mode="json"),
+    )
+    store.set_ai_record(
+        "endpoint_health",
+        "health-new",
+        EndpointHealthRecord(
+            health_id="health-new",
+            endpoint_id="local",
+            available=False,
+            checked_at="2026-06-15T11:00:00Z",
+        ).model_dump(mode="json"),
+    )
+
+    decision = selector.select(
+        "task-5",
+        [model("local:coder", "local", "ollama")],
+        {"local": endpoint},
+        WorkerSelectionPolicy(),
+    )
+
+    assert decision.selected_model_key is None
+    assert "endpoint is currently unhealthy" in decision.candidates[0].rejection_reasons
