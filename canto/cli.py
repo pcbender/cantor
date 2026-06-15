@@ -38,7 +38,13 @@ from canto.core.ai_selection import (
 )
 from canto.core.ai_assignment import AIWorkerAssignmentService, WorkerAssignmentError
 from canto.core.ai_worker import APIWorkerHarness
-from canto.core.ai_probe import APIWorkerProbeRunner, CodingWorkerProbeService
+from canto.core.ai_probe import (
+    APIWorkerProbeRunner,
+    CodingWorkerProbeService,
+    LocalModelProbeQueue,
+    WorkerProbeError,
+)
+from canto.core.ai_metadata import ModelMetadataError, ModelMetadataService
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
@@ -161,6 +167,24 @@ def _ai_reconciliation_service() -> LocalModelReconciliationService:
 
 def _ai_catalog_maintenance_service() -> ModelCatalogMaintenanceService:
     return ModelCatalogMaintenanceService(_ai_endpoint_service().store)
+
+
+def _ai_probe_service() -> CodingWorkerProbeService:
+    endpoints = _ai_endpoint_service()
+    catalog = ModelCatalogService(endpoints.store, endpoints)
+    return CodingWorkerProbeService(
+        endpoints.store,
+        catalog,
+        APIWorkerProbeRunner(catalog, endpoints),
+        _capability_registry().store.paths.root / "work" / "ai-probes",
+    )
+
+
+def _ai_metadata_service() -> ModelMetadataService:
+    endpoints = _ai_endpoint_service()
+    return ModelMetadataService(
+        endpoints.store, ModelCatalogService(endpoints.store, endpoints)
+    )
 
 
 def _ai_selection_service() -> WorkerSelectionService:
@@ -1181,14 +1205,35 @@ def ai_model_discover(endpoint_id: str) -> None:
 def ai_model_refresh(
     endpoint_id: str,
     json_output: bool = typer.Option(False, "--json"),
+    probe_new: bool = typer.Option(False, "--probe-new"),
+    probe_stale: bool = typer.Option(False, "--probe-stale"),
 ) -> None:
     """Reconcile a configured local Ollama endpoint with its saved catalog."""
     try:
         record = _ai_reconciliation_service().refresh(endpoint_id)
     except (AIEndpointError, ModelReconciliationError) as exc:
         raise typer.BadParameter(str(exc)) from exc
+    probe_results = []
+    if probe_new or probe_stale:
+        probe_service = _ai_probe_service()
+        queue = LocalModelProbeQueue(probe_service.catalog, probe_service)
+        model_keys = (record.added if probe_new else []) + (
+            record.changed if probe_stale else []
+        )
+        try:
+            probe_results = queue.run(model_keys)
+        except WorkerProbeError as exc:
+            raise typer.BadParameter(str(exc)) from exc
     if json_output:
-        _print(record.model_dump(mode="json"))
+        if probe_new or probe_stale:
+            _print(
+                {
+                    "reconciliation": record.model_dump(mode="json"),
+                    "probes": [item.model_dump(mode="json") for item in probe_results],
+                }
+            )
+        else:
+            _print(record.model_dump(mode="json"))
         return
     typer.echo(f"Endpoint: {record.endpoint_id}")
     typer.echo(f"Added: {len(record.added)}")
@@ -1202,6 +1247,8 @@ def ai_model_refresh(
     ):
         for model_key in values:
             typer.echo(f"{label}: {model_key}")
+    for result in probe_results:
+        typer.echo(f"probe: {result.model_key} -> {result.classification}")
 
 
 @ai_model_app.command("list")
@@ -1253,15 +1300,33 @@ def ai_model_forget(model_key: str) -> None:
 
 @ai_model_app.command("probe")
 def ai_model_probe(model_key: str) -> None:
-    endpoints = _ai_endpoint_service()
-    catalog = ModelCatalogService(endpoints.store, endpoints)
-    probe = CodingWorkerProbeService(
-        endpoints.store,
-        catalog,
-        APIWorkerProbeRunner(catalog, endpoints),
-        _capability_registry().store.paths.root / "work" / "ai-probes",
-    ).probe(model_key)
+    probe = _ai_probe_service().probe(model_key)
     _print(probe.model_dump(mode="json"))
+
+
+@ai_model_app.command("metadata-add")
+def ai_model_metadata_add(
+    model_key: str,
+    path: Path,
+    source_kind: str = typer.Option(..., "--source-kind"),
+    source_uri: str | None = typer.Option(None, "--source-uri"),
+    confidence: str = typer.Option("medium", "--confidence"),
+    reviewed: bool = typer.Option(False, "--reviewed"),
+) -> None:
+    if confidence not in {"low", "medium", "high"}:
+        raise typer.BadParameter(f"Unsupported confidence: {confidence}")
+    try:
+        record = _ai_metadata_service().add_file(
+            model_key,
+            path,
+            source_kind=source_kind,
+            source_uri=source_uri,
+            confidence=confidence,
+            reviewed=reviewed,
+        )
+    except (ModelDiscoveryError, ModelMetadataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print(record.model_dump(mode="json"))
 
 
 @ai_pool_app.command("select")

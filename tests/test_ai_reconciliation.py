@@ -11,6 +11,7 @@ from canto.core.ai_reconciliation import (
     ModelReconciliationError,
 )
 from canto.core.credentials import CredentialVault
+from canto.core.ai_probe import CodingWorkerProbeService, ProbeObservation
 from canto.core.state import MemoryStateStore
 
 
@@ -152,3 +153,38 @@ def test_refresh_cli_supports_json_and_clean_errors(monkeypatch, tmp_path):
     assert failure.exit_code == 2
     assert "Local model refresh failed for local: ollama unavailable" in failure.stderr
     assert "Traceback" not in failure.stderr
+
+
+class WorkingProbeRunner:
+    def run_probe(self, model_key, workspace):
+        (workspace / "result.txt").write_text("canto-worker-probe\n")
+        (workspace / "command.txt").write_text("probe-ok\n")
+        return ProbeObservation(
+            structured_tool_calls=["write_file", "run_command"], detail="complete"
+        )
+
+
+def test_refresh_probe_new_is_explicit_and_sequential(monkeypatch, tmp_path):
+    store, _, reconciler = service(
+        tmp_path, [model("zeta:7b", "v1"), model("alpha:3b", "v1")]
+    )
+    probes = CodingWorkerProbeService(
+        store, reconciler.catalog, WorkingProbeRunner(), tmp_path / "probes"
+    )
+    monkeypatch.setattr(cli_module, "_ai_reconciliation_service", lambda: reconciler)
+    monkeypatch.setattr(cli_module, "_ai_probe_service", lambda: probes)
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        ["ai", "model", "refresh", "local", "--probe-new"],
+    )
+
+    assert result.exit_code == 0
+    assert result.stdout.splitlines()[-2:] == [
+        "probe: local:alpha:3b -> implementation",
+        "probe: local:zeta:7b -> implementation",
+    ]
+    assert sorted(item.model_key for item in probes.list()) == [
+        "local:alpha:3b",
+        "local:zeta:7b",
+    ]

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from canto.core.ai_discovery import DiscoveredModel, ModelCatalogService
 from canto.core.ai_endpoints import AIEndpointService
-from canto.core.ai_probe import CodingWorkerProbeService, ProbeObservation
+import pytest
+
+from canto.core.ai_probe import (
+    CodingWorkerProbeService,
+    LocalModelProbeQueue,
+    ProbeObservation,
+    WorkerProbeError,
+)
 from canto.core.credentials import CredentialVault
 from canto.core.state import MemoryStateStore
 
@@ -58,3 +65,21 @@ def test_probe_classifies_tool_text_without_actions_as_advisory(tmp_path):
     assert result.classification == "advisory"
     assert result.assertions[0].passed is True
     assert result.assertions[1].passed is False
+
+
+def test_local_probe_queue_is_sorted_and_rejects_missing_models(tmp_path):
+    store, models = catalog(tmp_path)
+    queue = LocalModelProbeQueue(
+        models,
+        CodingWorkerProbeService(store, models, WorkingRunner(), tmp_path / "probes"),
+    )
+
+    results = queue.run(["ollama:coder", "ollama:coder"])
+    assert [result.model_key for result in results] == ["ollama:coder"]
+
+    missing = models.get("ollama:coder").model_copy(
+        update={"availability": "missing"}
+    )
+    store.set_ai_record("model", missing.model_key, missing.model_dump(mode="json"))
+    with pytest.raises(WorkerProbeError, match="available Ollama"):
+        queue.run(["ollama:coder"])
