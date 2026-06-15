@@ -988,6 +988,47 @@ Hard rules:
   current successful Canto probe.
 - Local refresh and probes never trigger cloud fallback.
 
+### Governed Memory Service
+
+Design source: `docs/Canto Memory Service Specification.md`.
+Implementation plan: `docs/canto-memory-service-implementation-plan.md`.
+
+Canto will add a local governed reference and decision layer before the MVP v2
+server transition. Existing Job, Plan, Approval, Delegation, artifact,
+repository, commit, and Graphify records remain authoritative evidence. Memory
+stores compact approved knowledge and typed source pointers for future governed
+work.
+
+Planned work packets:
+
+- CP-1601 - Memory Service Scope and Architecture
+- CP-1602 - StateStore Schema Migration Framework
+- CP-1603 - Memory Domain Models and Persistence
+- CP-1604 - MemoryService Lifecycle and Secret Rejection
+- CP-1605 - Project Identity and Repository Membership
+- CP-1606 - Approval Subject Linkage and Activation
+- CP-1607 - Memory Administration CLI
+- CP-1608 - Scoped Recall and Budget Profiles
+- CP-1609 - Reference Resolver, Aliases, and Conflicts
+- CP-1610 - Context Pack Assembly
+- CP-1611 - Governed Record Source References
+- CP-1612 - Retention, Export, and Audit
+- CP-1613 - Graphify Pointers and Agent Guidance
+- CP-1614 - End-to-End Dogfood, Security, and Stability
+
+CP-1601 and the CP-1602 through CP-1614 implementation sequence are approved.
+CP-1602 is the next unstarted packet.
+
+Hard rules:
+
+- Reuse the existing StateStore and Approval models.
+- Do not add a second execution, approval, registry, or evidence path.
+- Keep retrieval local, deterministic, lexical, scoped, and budgeted.
+- Do not add orchestration HTTP fields or endpoints in this workstream.
+- Defer daemon, MCP, vector search, cloud sync, multi-user authority, and broad
+  global preferences.
+- Stop after CP-1614 for Developer review.
+
 ---
 
 ## MVP v2 — Local Team Server
