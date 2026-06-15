@@ -1,15 +1,27 @@
-version = 1
+  version = 1
 
-[selection]
-priority = "balanced"
-cloud_allowed = false
-cloud_fallback_allowed = false
-local_first = true
-allowed_endpoints = []
-allowed_providers = []
-allowed_models = []
-required_classification = "implementation"
+  [selection]
+  priority = "balanced"
+  cloud_allowed = true
+  cloud_fallback_allowed = false
+  local_first = true
+  allowed_endpoints = [
+    "openai-primary",
+    "anthropic-primary",
+    "google-primary",
+  ]
+  allowed_providers = [
+    "openai",
+    "anthropic",
+    "google",
+  ]
+  allowed_models = [
+    "openai-primary:gpt-4.1-mini-2025-04-14",
+    "anthropic-primary:claude-haiku-4-5-20251001",
+    "google-primary:gemini-2.5-flash",
+  ]
+  required_classification = "implementation"
 
-[selection.budget]
-enabled = false
-allow_unknown_pricing = false
+  [selection.budget]
+  enabled = false
+  allow_unknown_pricing = false
