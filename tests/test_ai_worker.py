@@ -115,11 +115,38 @@ def test_provider_message_translation_preserves_structured_tool_results():
     ]
 
     openai = HttpAgentAdapter._openai_messages(messages)
+    ollama = HttpAgentAdapter._ollama_messages(messages)
     anthropic = HttpAgentAdapter._anthropic_messages(messages)
     google = HttpAgentAdapter._google_messages(messages)
 
     assert openai[0]["tool_calls"][0]["function"]["name"] == "read_file"
+    assert ollama[0]["tool_calls"][0]["function"]["arguments"] == {
+        "path": "src/a"
+    }
+    assert "tool_call_id" not in ollama[1]
     assert anthropic[0]["content"][0]["type"] == "tool_use"
     assert anthropic[1]["content"][0]["type"] == "tool_result"
     assert google[0]["parts"][0]["functionCall"]["name"] == "read_file"
     assert google[1]["parts"][0]["functionResponse"]["name"] == "read_file"
+
+
+def test_worker_http_error_includes_bounded_provider_detail():
+    class Response:
+        status_code = 400
+        headers = {}
+
+        def json(self):
+            return {"error": "model does not support tools"}
+
+    class Session:
+        def post(self, *args, **kwargs):
+            return Response()
+
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+
+    with pytest.raises(APIWorkerError, match="model does not support tools"):
+        HttpAgentAdapter(session=Session()).complete(
+            endpoint, None, "coder", [], []
+        )

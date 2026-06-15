@@ -20,8 +20,8 @@
     "semantic_hash": "8488c6e2a0e3eab2a60d0d88be2bb754"
   },
   "canto/cli.py": {
-    "mtime": 1781543451.4349275,
-    "ast_hash": "0241fb356f5ddf3c9305b7139afdd577",
+    "mtime": 1781543668.1051826,
+    "ast_hash": "a54a86a1386a685ddbe8a854d1a4c278",
     "semantic_hash": ""
   },
   "canto/config.py": {
@@ -650,8 +650,8 @@
     "semantic_hash": "76e6ef76bdb43db45459fde7fd6e0f64"
   },
   "tests/test_repository.py": {
-    "mtime": 1781468789.189648,
-    "ast_hash": "aa836c65e536241a21844a329c0011a2",
+    "mtime": 1781543668.2151828,
+    "ast_hash": "38fab785cc05958f760b093f53e2858e",
     "semantic_hash": ""
   },
   "tests/test_runner_adapters.py": {
@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "STATUS.md": {
-    "mtime": 1781543572.1985626,
-    "ast_hash": "9508c3d6fff740c38b509b47c806ac07",
+    "mtime": 1781543713.9893177,
+    "ast_hash": "f93e90992c7c54a55637107dbb87f963",
     "semantic_hash": ""
   },
   "Vision.md": {
@@ -1100,8 +1100,8 @@
     "semantic_hash": ""
   },
   "canto/core/ai_discovery.py": {
-    "mtime": 1781541384.9516747,
-    "ast_hash": "41ead5f01a0db271c9b13da5dac20cfb",
+    "mtime": 1781544386.8179438,
+    "ast_hash": "b10a46c5beb37a82727df7c577094d16",
     "semantic_hash": ""
   },
   "canto/core/ai_endpoints.py": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "canto/core/ai_worker.py": {
-    "mtime": 1781468789.156648,
-    "ast_hash": "8b93ed3b880f4d783ca469d9a8cc4617",
+    "mtime": 1781544657.505546,
+    "ast_hash": "703023e7b9f6b22030c786ef6256d1d0",
     "semantic_hash": ""
   },
   "canto/core/ai_worker_demo.py": {
@@ -1140,8 +1140,8 @@
     "semantic_hash": ""
   },
   "tests/test_ai_discovery.py": {
-    "mtime": 1781541376.045838,
-    "ast_hash": "33524c838adc00a21b5e445a39666337",
+    "mtime": 1781544378.1261678,
+    "ast_hash": "eae1debe74b9900bbe6d72c65ae6a195",
     "semantic_hash": ""
   },
   "tests/test_ai_endpoints.py": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "tests/test_ai_worker.py": {
-    "mtime": 1781541993.0795894,
-    "ast_hash": "6722adb4be1b6cfd210d6a1c85fe9d57",
+    "mtime": 1781544657.615546,
+    "ast_hash": "03620f8120855b7237f823b20edc7994",
     "semantic_hash": ""
   },
   "tests/test_ai_worker_demo.py": {

@@ -38,6 +38,13 @@ def _minimum(policies: list[WorkerBudgetPolicy], field: str):
     return min(values) if values else None
 
 
+def _preference(layers: list[WorkerSelectionPolicy]) -> list[str]:
+    for layer in reversed(layers):
+        if layer.preferred_models:
+            return list(layer.preferred_models)
+    return []
+
+
 def compose_worker_policy(
     *layers: WorkerSelectionPolicy | None,
 ) -> WorkerSelectionPolicy:
@@ -51,6 +58,7 @@ def compose_worker_policy(
         allowed_endpoints=_narrow(layer.allowed_endpoints for layer in active),
         allowed_providers=_narrow(layer.allowed_providers for layer in active),
         allowed_models=_narrow(layer.allowed_models for layer in active),
+        preferred_models=_preference(active),
         cloud_allowed=all(layer.cloud_allowed for layer in active),
         cloud_fallback_allowed=all(layer.cloud_fallback_allowed for layer in active),
         local_first=any(layer.local_first for layer in active),
@@ -188,18 +196,23 @@ class WorkerSelectionService:
             rejected.append("estimated cost exceeds task budget")
         components: dict[str, float] = {}
         if not rejected:
+            if model.model_key in policy.preferred_models:
+                rank = policy.preferred_models.index(model.model_key)
+                components["preference"] = 10_000.0 - rank
+            else:
+                components["preference"] = 0.0
             components["local"] = 1000.0 if local and policy.local_first else 0.0
             components["cost"] = 100.0 / (1.0 + (cost or 0.0) * 100)
             context = float(model.context_tokens or estimate.minimum_context_tokens)
             components["capacity"] = min(context / 100_000, 10.0)
             if policy.priority == "economy":
-                score = components["local"] + components["cost"] * 10 - components["capacity"]
+                score = components["preference"] + components["local"] + components["cost"] * 10 - components["capacity"]
             elif policy.priority == "quality":
-                score = components["local"] * 0.1 + components["capacity"] * 100 + components["cost"]
+                score = components["preference"] + components["local"] * 0.1 + components["capacity"] * 100 + components["cost"]
             elif policy.priority == "urgent":
-                score = components["local"] * 0.25 + components["capacity"] * 50 + components["cost"]
+                score = components["preference"] + components["local"] * 0.25 + components["capacity"] * 50 + components["cost"]
             else:
-                score = components["local"] * 0.5 + components["cost"] * 5 + components["capacity"] * 20
+                score = components["preference"] + components["local"] * 0.5 + components["cost"] * 5 + components["capacity"] * 20
         else:
             score = None
         return CandidateScore(

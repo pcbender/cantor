@@ -75,6 +75,27 @@ def test_ollama_discovery_uses_digest_as_resolved_version(tmp_path):
     assert session.calls[0][0].endswith("/api/tags")
 
 
+def test_ollama_discovery_accepts_list_capabilities(tmp_path):
+    _, _, _, catalog = service(
+        tmp_path,
+        "ollama",
+        "http://127.0.0.1:11434",
+        {
+            "models": [
+                {
+                    "name": "qwen:14b",
+                    "digest": "sha256:abc",
+                    "capabilities": ["completion", "tools"],
+                }
+            ]
+        },
+    )
+
+    catalog.discover("primary")
+
+    assert catalog.get("primary:qwen:14b").capabilities["tools"] is True
+
+
 def test_catalog_change_marks_previously_probed_model_stale(tmp_path):
     store, _, session, catalog = service(
         tmp_path,

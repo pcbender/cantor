@@ -89,6 +89,8 @@ durable task state. Its default is local-only, with budgets disabled. Priority
 may be `economy`, `balanced`, `quality`, or `urgent`. Policy can narrow
 endpoints, providers, models, token limits, estimated cost, turns, tool calls,
 and wall time. More specific policy cannot widen a parent policy.
+`preferred_models` is an ordered ranking hint within `allowed_models`; it does
+not authorize a model and preserves fallback to later eligible models.
 
 `canto repo doctor` includes AI Worker readiness. It reports policy-required
 endpoints and exact models, current cloud readiness, and local model status.

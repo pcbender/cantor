@@ -80,6 +80,7 @@ local_first = true
 allowed_endpoints = []
 allowed_providers = []
 allowed_models = []
+preferred_models = []
 required_classification = "implementation"
 
 [selection.budget]

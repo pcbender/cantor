@@ -77,12 +77,27 @@ class HttpAgentAdapter:
         if 300 <= response.status_code < 400:
             raise APIWorkerError("AI Worker redirects are not followed")
         if response.status_code >= 400:
-            raise APIWorkerError(f"AI Worker request failed: HTTP {response.status_code}")
+            detail = self._error_detail(response)
+            suffix = f": {detail}" if detail else ""
+            raise APIWorkerError(
+                f"AI Worker request failed: HTTP {response.status_code}{suffix}"
+            )
         try:
             payload = response.json()
         except ValueError as exc:
             raise APIWorkerError("AI Worker returned invalid JSON") from exc
         return self._parse(endpoint.provider, payload, response.headers)
+
+    @staticmethod
+    def _error_detail(response) -> str:
+        try:
+            payload = response.json()
+        except ValueError:
+            return ""
+        value = payload.get("error") if isinstance(payload, dict) else None
+        if isinstance(value, dict):
+            value = value.get("message") or value.get("detail")
+        return str(value)[:500] if value else ""
 
     @staticmethod
     def _request(endpoint, credential, model_id, messages, tools):
@@ -121,7 +136,7 @@ class HttpAgentAdapter:
             }
         return base + "/api/chat", {}, {
             "model": model_id,
-            "messages": HttpAgentAdapter._openai_messages(messages),
+            "messages": HttpAgentAdapter._ollama_messages(messages),
             "tools": [{"type": "function", "function": tool} for tool in tools],
             "stream": False,
         }
@@ -181,6 +196,27 @@ class HttpAgentAdapter:
                 result[-1]["content"].extend(blocks)
             else:
                 result.append({"role": role, "content": blocks})
+        return result
+
+    @staticmethod
+    def _ollama_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        result = []
+        for message in messages:
+            value: dict[str, Any] = {
+                "role": message["role"],
+                "content": message.get("content", ""),
+            }
+            if message.get("tool_calls"):
+                value["tool_calls"] = [
+                    {
+                        "function": {
+                            "name": call["name"],
+                            "arguments": call["arguments"],
+                        }
+                    }
+                    for call in message["tool_calls"]
+                ]
+            result.append(value)
         return result
 
     @staticmethod

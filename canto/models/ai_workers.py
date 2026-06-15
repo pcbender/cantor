@@ -158,6 +158,7 @@ class WorkerSelectionPolicy(BaseModel):
     allowed_endpoints: list[str] = Field(default_factory=list)
     allowed_providers: list[AIProvider] = Field(default_factory=list)
     allowed_models: list[str] = Field(default_factory=list)
+    preferred_models: list[str] = Field(default_factory=list)
     cloud_allowed: bool = False
     cloud_fallback_allowed: bool = False
     local_first: bool = True
