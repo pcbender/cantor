@@ -25,6 +25,10 @@ from canto.core.capability_scaffold import (
 from canto.core.credentials import CredentialError, CredentialVault
 from canto.core.ai_endpoints import AIEndpointError, AIEndpointService
 from canto.core.ai_discovery import ModelCatalogService, ModelDiscoveryError
+from canto.core.ai_reconciliation import (
+    LocalModelReconciliationService,
+    ModelReconciliationError,
+)
 from canto.core.ai_selection import (
     WorkerSelectionError,
     WorkerSelectionService,
@@ -146,6 +150,11 @@ def _ai_endpoint_service() -> AIEndpointService:
 def _ai_catalog_service() -> ModelCatalogService:
     endpoint_service = _ai_endpoint_service()
     return ModelCatalogService(endpoint_service.store, endpoint_service)
+
+
+def _ai_reconciliation_service() -> LocalModelReconciliationService:
+    endpoint_service = _ai_endpoint_service()
+    return LocalModelReconciliationService(endpoint_service.store, endpoint_service)
 
 
 def _ai_selection_service() -> WorkerSelectionService:
@@ -1160,6 +1169,33 @@ def ai_model_discover(endpoint_id: str) -> None:
     except (AIEndpointError, ModelDiscoveryError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     _print(snapshot.model_dump(mode="json"))
+
+
+@ai_model_app.command("refresh")
+def ai_model_refresh(
+    endpoint_id: str,
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Reconcile a configured local Ollama endpoint with its saved catalog."""
+    try:
+        record = _ai_reconciliation_service().refresh(endpoint_id)
+    except (AIEndpointError, ModelReconciliationError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if json_output:
+        _print(record.model_dump(mode="json"))
+        return
+    typer.echo(f"Endpoint: {record.endpoint_id}")
+    typer.echo(f"Added: {len(record.added)}")
+    typer.echo(f"Changed: {len(record.changed)}")
+    typer.echo(f"Missing: {len(record.missing)}")
+    typer.echo(f"Unchanged: {len(record.unchanged)}")
+    for label, values in (
+        ("added", record.added),
+        ("changed", record.changed),
+        ("missing", record.missing),
+    ):
+        for model_key in values:
+            typer.echo(f"{label}: {model_key}")
 
 
 @ai_model_app.command("list")

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import pytest
+from typer.testing import CliRunner
 
+from canto import cli as cli_module
 from canto.core.ai_discovery import DiscoveredModel
 from canto.core.ai_endpoints import AIEndpointService
 from canto.core.ai_reconciliation import (
@@ -112,3 +114,41 @@ def test_refresh_rejects_nonlocal_endpoint(tmp_path):
 
     with pytest.raises(ModelReconciliationError, match="loopback Ollama"):
         reconciler.refresh("cloud")
+
+
+def test_refresh_cli_prints_deterministic_summary(monkeypatch, tmp_path):
+    _, _, reconciler = service(
+        tmp_path, [model("zeta:7b", "v1"), model("alpha:3b", "v1")]
+    )
+    monkeypatch.setattr(cli_module, "_ai_reconciliation_service", lambda: reconciler)
+
+    result = CliRunner().invoke(cli_module.app, ["ai", "model", "refresh", "local"])
+
+    assert result.exit_code == 0
+    assert result.stdout.splitlines() == [
+        "Endpoint: local",
+        "Added: 2",
+        "Changed: 0",
+        "Missing: 0",
+        "Unchanged: 0",
+        "added: local:alpha:3b",
+        "added: local:zeta:7b",
+    ]
+
+
+def test_refresh_cli_supports_json_and_clean_errors(monkeypatch, tmp_path):
+    _, adapter, reconciler = service(tmp_path, [model("coder:7b", "v1")])
+    monkeypatch.setattr(cli_module, "_ai_reconciliation_service", lambda: reconciler)
+    runner = CliRunner()
+
+    success = runner.invoke(
+        cli_module.app, ["ai", "model", "refresh", "local", "--json"]
+    )
+    assert success.exit_code == 0
+    assert '"authoritative_success": true' in success.stdout
+
+    adapter.error = RuntimeError("ollama unavailable")
+    failure = runner.invoke(cli_module.app, ["ai", "model", "refresh", "local"])
+    assert failure.exit_code == 2
+    assert "Local model refresh failed for local: ollama unavailable" in failure.stderr
+    assert "Traceback" not in failure.stderr
