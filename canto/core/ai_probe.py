@@ -191,6 +191,7 @@ class CodingWorkerProbeService:
                 "classification": classification,
                 "probe_version": PROBE_VERSION,
                 "probe_stale": False,
+                "probe_state": "current",
                 "updated_at": utc_now(),
             }
         )

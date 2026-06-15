@@ -1,6 +1,6 @@
 # Canto Implementation Status
 
-Updated: 2026-06-14
+Updated: 2026-06-15
 
 ## Governed AI Worker Pool
 
@@ -12,6 +12,13 @@ health, and exact-version evidence. Cloud use and fallback are never implicit.
 
 Run `canto demo ai-worker-pool` for the offline acceptance flow or add
 `--apply` to prove exact-Result promotion in the disposable demo repository.
+
+CP-1515 now specifies the next bounded Worker-pool maintenance slice: local
+model catalog reconciliation. The proposed direction is explicit
+`canto ai model refresh ENDPOINT_ID` inventory reconciliation, separate
+availability/classification/probe state, preserved evidence for removed or
+changed models, and optional source-labeled metadata enrichment. Runtime code
+has not yet been added for CP-1516 through CP-1521.
 
 ## Release Preparation
 

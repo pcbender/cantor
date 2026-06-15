@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from canto.models.schemas import utc_now
 
@@ -12,6 +12,9 @@ WorkerClassification = Literal[
     "implementation", "advisory", "unavailable", "unvalidated"
 ]
 PriorityLevel = Literal["economy", "balanced", "quality", "urgent"]
+ModelAvailability = Literal["available", "missing", "endpoint_unreachable", "unknown"]
+ProbeState = Literal["current", "stale", "absent"]
+MetadataSourceKind = Literal["runtime", "declared", "curated", "observed"]
 
 
 class AIEndpointRecord(BaseModel):
@@ -53,9 +56,26 @@ class AIModelRecord(BaseModel):
     classification: WorkerClassification = "unvalidated"
     probe_version: str | None = None
     probe_stale: bool = True
+    probe_state: ProbeState = "absent"
+    availability: ModelAvailability = "unknown"
+    availability_reason: str = ""
+    last_seen_at: str | None = None
+    missing_since: str | None = None
+    runtime_metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata_provenance: list[str] = Field(default_factory=list)
     catalog_checksum: str
     discovered_at: str = Field(default_factory=utc_now)
     updated_at: str = Field(default_factory=utc_now)
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_legacy_probe_state(cls, value):
+        if isinstance(value, dict) and "probe_state" not in value:
+            if value.get("probe_version") and not value.get("probe_stale", True):
+                value = {**value, "probe_state": "current"}
+            elif value.get("probe_version"):
+                value = {**value, "probe_state": "stale"}
+        return value
 
 
 class ModelCatalogSnapshot(BaseModel):
@@ -63,7 +83,39 @@ class ModelCatalogSnapshot(BaseModel):
     endpoint_id: str
     models: list[str] = Field(default_factory=list)
     response_checksum: str
+    mode: Literal["discover", "refresh"] = "discover"
+    authoritative_success: bool = True
+    added: list[str] = Field(default_factory=list)
+    changed: list[str] = Field(default_factory=list)
+    missing: list[str] = Field(default_factory=list)
+    unchanged: list[str] = Field(default_factory=list)
     discovered_at: str = Field(default_factory=utc_now)
+
+
+class ModelReconciliationRecord(BaseModel):
+    reconciliation_id: str
+    endpoint_id: str
+    previous_snapshot_id: str | None = None
+    current_snapshot_id: str | None = None
+    authoritative_success: bool
+    added: list[str] = Field(default_factory=list)
+    changed: list[str] = Field(default_factory=list)
+    missing: list[str] = Field(default_factory=list)
+    unchanged: list[str] = Field(default_factory=list)
+    error: str | None = None
+    created_at: str = Field(default_factory=utc_now)
+
+
+class ModelMetadataRecord(BaseModel):
+    metadata_id: str
+    model_key: str
+    source_kind: MetadataSourceKind
+    source_uri: str | None = None
+    source_checksum: str | None = None
+    fields: dict[str, Any] = Field(default_factory=dict)
+    confidence: Literal["low", "medium", "high"] = "medium"
+    reviewed: bool = False
+    created_at: str = Field(default_factory=utc_now)
 
 
 class ProbeAssertion(BaseModel):
