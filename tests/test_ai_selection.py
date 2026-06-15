@@ -115,3 +115,22 @@ def test_selection_rejects_missing_local_model_with_specific_reason():
     assert decision.candidates[0].rejection_reasons == [
         "local model availability is missing"
     ]
+
+
+def test_selection_distinguishes_absent_probe_from_stale_probe():
+    store = MemoryStateStore()
+    selector = WorkerSelectionService(store)
+    endpoint = AIEndpointRecord(
+        endpoint_id="local", provider="ollama", base_url="http://localhost:11434"
+    )
+    unprobed = model("local:new", "local", "ollama").model_copy(
+        update={"probe_state": "absent", "probe_stale": True}
+    )
+
+    decision = selector.select(
+        "task-4", [unprobed], {"local": endpoint}, WorkerSelectionPolicy()
+    )
+
+    assert decision.candidates[0].rejection_reasons == [
+        "coding-worker probe is absent"
+    ]

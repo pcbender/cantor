@@ -962,7 +962,7 @@ task. Canto will reconcile exact local runtime inventory while preserving
 historical probe and usage evidence. Runtime availability, curated metadata,
 and observed Worker classification remain distinct.
 
-Planned packets:
+Completed packets:
 
 - CP-1515 — Local Model Catalog Reconciliation Design
 - CP-1516 — Model Availability And Metadata Provenance Fields
@@ -971,6 +971,11 @@ Planned packets:
 - CP-1519 — Model Status, Explain, And Safe Forget
 - CP-1520 — Optional Local Probe Queue And Metadata Enrichment Boundary
 - CP-1521 — Dogfood, Compatibility, Security, And Documentation Pass
+
+CP-1515 through CP-1521 are complete. Local Ollama catalogs now reconcile
+explicitly, preserve removed-model history, invalidate changed-digest probes,
+support opt-in sequential probing, expose status and safe cleanup, and keep
+curated metadata separate from observed Worker evidence.
 
 Hard rules:
 

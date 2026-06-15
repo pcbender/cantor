@@ -1,5 +1,7 @@
 # CP-1515 — Local Model Catalog Reconciliation Design
 
+Status: **approved and implemented through CP-1521**.
+
 ## Purpose
 
 Canto already discovers exact endpoint model identifiers and requires a

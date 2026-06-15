@@ -155,7 +155,9 @@ class WorkerSelectionService:
             rejected.append("model is not allowed")
         if model.provider == "ollama" and model.availability != "available":
             rejected.append(f"local model availability is {model.availability}")
-        if model.probe_stale or model.probe_state != "current":
+        if model.probe_state == "absent":
+            rejected.append("coding-worker probe is absent")
+        elif model.probe_stale or model.probe_state == "stale":
             rejected.append("coding-worker probe is stale")
         if model.classification != policy.required_classification:
             rejected.append(

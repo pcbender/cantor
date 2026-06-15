@@ -208,6 +208,17 @@ existing concise CLI error path. The fix is limited to expected-error handling
 and a network-free regression test; valid selection and launch behavior remain
 unchanged.
 
+Local model catalog reconciliation is complete through CP-1521. A configured
+loopback Ollama endpoint can be refreshed explicitly; new, changed, missing,
+unchanged, and unreachable states remain distinct. Current implementation
+selection requires an available local model and current successful probe.
+Status, detail, safe forget, opt-in sequential probe, and reviewed metadata
+commands are documented in `docs/ai-worker-pool.md`. Tests use fake local
+endpoint responses and make no model-server, cloud, or web-research calls.
+The full `tests import_capability/tests` suite passes 342 tests with the known
+non-blocking Starlette `TestClient` deprecation warning; `pip check` reports no
+broken requirements.
+
 - Working tree validation: `git diff --check` passes.
 
 ## Deferred By Specification
