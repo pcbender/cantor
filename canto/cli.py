@@ -1459,7 +1459,7 @@ def delegate_launch_ai(
             task_id,
             compose_worker_policy(repository_policy, command_policy),
         )
-    except (WorkerAssignmentError, RepositoryConfigError) as exc:
+    except (DelegationError, WorkerAssignmentError, RepositoryConfigError) as exc:
         _delegation_error(exc)
     _print(launch.model_dump(mode="json"))
 

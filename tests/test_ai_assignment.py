@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from canto.core.ai_assignment import AIWorkerAssignmentService
+from canto.core.ai_assignment import AIWorkerAssignmentService, WorkerAssignmentError
 from canto.core.ai_discovery import ModelCatalogService
 from canto.core.ai_endpoints import AIEndpointService
 from canto.core.ai_selection import WorkerSelectionService
@@ -178,3 +178,35 @@ def test_api_worker_advisory_output_does_not_imply_completed_work(tmp_path):
     assert launch.outcome == "advisory"
     assert launch.workspace_changed is False
     assert delegation.get_task("task-1").status == "executor_done"
+
+
+def test_local_policy_failure_does_not_poison_endpoint_health(tmp_path):
+    store, delegation, service = setup(tmp_path)
+
+    class DisallowedCommand(Adapter):
+        def complete(self, endpoint, credential, model_id, messages, tools):
+            return AgentResponse(
+                tool_calls=[
+                    AgentToolCall(
+                        "1",
+                        "run_command",
+                        {"command": "python -c 'print(1)'"},
+                    )
+                ]
+            )
+
+    service.harness = APIWorkerHarness(DisallowedCommand())
+
+    try:
+        service.launch("task-1", WorkerSelectionPolicy())
+    except WorkerAssignmentError:
+        pass
+    else:
+        raise AssertionError("Expected Worker assignment failure")
+
+    health = store.list_ai_records("endpoint_health")[-1]
+    assert health["endpoint_id"] == "local"
+    assert health["available"] is True
+    assert "Worker failed locally" in health["detail"]
+    assert "Command is not allowed by delegation policy" in health["detail"]
+    assert delegation.get_task("task-1").status == "failed"
