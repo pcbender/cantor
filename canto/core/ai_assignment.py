@@ -207,7 +207,15 @@ class AIWorkerAssignmentService:
             stderr_path.write_text(str(exc), encoding="utf-8")
             launch = launch.model_copy(update={"exit_code": 1, "ended_at": utc_now()})
             self.delegation.append_record(task.task_id, "launches", launch)
-            self._health(endpoint.endpoint_id, False, str(exc), started)
+            if isinstance(exc, APIWorkerError) and not exc.endpoint_failure:
+                self._health(
+                    endpoint.endpoint_id,
+                    True,
+                    f"Endpoint reached; Worker failed locally: {exc}",
+                    started,
+                )
+            else:
+                self._health(endpoint.endpoint_id, False, str(exc), started)
             raise
 
     def _record_usage(self, task_id: str, usage: WorkerUsageRecord) -> None:

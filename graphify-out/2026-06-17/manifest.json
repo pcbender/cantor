@@ -20,8 +20,8 @@
     "semantic_hash": "8488c6e2a0e3eab2a60d0d88be2bb754"
   },
   "canto/cli.py": {
-    "mtime": 1781713887.616987,
-    "ast_hash": "2ac1d16357d2f513a481ef903695b649",
+    "mtime": 1781551726.6066334,
+    "ast_hash": "010342254c3f1cafa6a6092729b9b9b4",
     "semantic_hash": ""
   },
   "canto/config.py": {
@@ -100,8 +100,8 @@
     "semantic_hash": "80290528da725c51ce2eacb533300778"
   },
   "canto/core/delegation_promotion.py": {
-    "mtime": 1781713917.3515844,
-    "ast_hash": "ebd496ae5deb4e50a23eae8e28df8aec",
+    "mtime": 1781468789.156648,
+    "ast_hash": "abdba7a0c18c62a49762324306905e5e",
     "semantic_hash": ""
   },
   "canto/core/delegation_queue.py": {
@@ -140,7 +140,7 @@
     "semantic_hash": "8b00bf8f065aebb3fc623cea375d6eec"
   },
   "canto/core/jobs.py": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781551401.962195,
     "ast_hash": "7ea9673096b15c0962446ed6e35c2df2",
     "semantic_hash": ""
   },
@@ -165,7 +165,7 @@
     "semantic_hash": "477316e8158bb30fdb2df3166cd1e38c"
   },
   "canto/core/repository.py": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781551768.9094374,
     "ast_hash": "e5b6cae0179c678a347c77ba2b43c79c",
     "semantic_hash": ""
   },
@@ -190,7 +190,7 @@
     "semantic_hash": "7ca1f6635db449043525d15d5cdc7c32"
   },
   "canto/core/state.py": {
-    "mtime": 1781621761.1546545,
+    "mtime": 1781552170.8266203,
     "ast_hash": "c60961932ed85150169779f92ba73f75",
     "semantic_hash": ""
   },
@@ -215,7 +215,7 @@
     "semantic_hash": ""
   },
   "canto/models/schemas.py": {
-    "mtime": 1781621761.1546545,
+    "mtime": 1781551292.8954458,
     "ast_hash": "46c29c1dd8a96c65ec8ed8fe86c52f49",
     "semantic_hash": ""
   },
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "tests/test_delegation_cli.py": {
-    "mtime": 1781713944.3880486,
-    "ast_hash": "79146b2d75c923bbc5e96bec11ce9954",
+    "mtime": 1781468789.189648,
+    "ast_hash": "65911f9c773b767eb4743cf7206d7d06",
     "semantic_hash": ""
   },
   "tests/test_delegation_commands.py": {
@@ -555,8 +555,8 @@
     "semantic_hash": "aaa6f1d40a3736330e5540b63ccd7580"
   },
   "tests/test_delegation_promotion.py": {
-    "mtime": 1781714012.682768,
-    "ast_hash": "917936b974638aa82ec37daf05c75944",
+    "mtime": 1781468789.189648,
+    "ast_hash": "7b8a58bf97eb904e87f9b655a865a47f",
     "semantic_hash": ""
   },
   "tests/test_delegation_queue.py": {
@@ -695,17 +695,17 @@
     "semantic_hash": "39a85f39abd5e4248216f818aa94debb"
   },
   ".canto/agents/executor.md": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781551769.1954374,
     "ast_hash": "fc73df3b6afc0e3a6dfe0842e6b3163e",
     "semantic_hash": ""
   },
   ".canto/agents/orchestrator.md": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781551769.0964375,
     "ast_hash": "3dbeb5e8f552e70499c9c6f50401cedd",
     "semantic_hash": ""
   },
   ".canto/agents/shared.md": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781551769.0084374,
     "ast_hash": "5a101f1017ef4d822cc1f0258d15e7ee",
     "semantic_hash": ""
   },
@@ -720,12 +720,12 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781551840.916589,
     "ast_hash": "1f9cf534489902036a96d2273ecd44d1",
     "semantic_hash": ""
   },
   "ROADMAP.md": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781553614.3285336,
     "ast_hash": "6ecdfa89d4f7a90925e2e7ac9f5f426f",
     "semantic_hash": ""
   },
@@ -735,7 +735,7 @@
     "semantic_hash": ""
   },
   "STATUS.md": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781553614.4385335,
     "ast_hash": "ca6c5e8c497231399aed0918b4134b09",
     "semantic_hash": ""
   },
@@ -850,7 +850,7 @@
     "semantic_hash": ""
   },
   "docs/local-installation.md": {
-    "mtime": 1781621761.1546545,
+    "mtime": 1781551841.026589,
     "ast_hash": "ae1f5816084e4cfdab779935d90e9c85",
     "semantic_hash": ""
   },
@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "canto/core/ai_assignment.py": {
-    "mtime": 1781713904.2262564,
-    "ast_hash": "b49dcfdf7ce920730b6ac2d46422a14e",
+    "mtime": 1781471000.6004117,
+    "ast_hash": "cbd24c437e8ad74e4a1dd02e5af90bc9",
     "semantic_hash": ""
   },
   "canto/core/ai_discovery.py": {
@@ -1120,8 +1120,8 @@
     "semantic_hash": ""
   },
   "canto/core/ai_worker.py": {
-    "mtime": 1781713897.3797472,
-    "ast_hash": "ac6982f806e9961b12fd81549c67f28d",
+    "mtime": 1781545829.1449623,
+    "ast_hash": "703023e7b9f6b22030c786ef6256d1d0",
     "semantic_hash": ""
   },
   "canto/core/ai_worker_demo.py": {
@@ -1135,8 +1135,8 @@
     "semantic_hash": ""
   },
   "tests/test_ai_assignment.py": {
-    "mtime": 1781714003.042143,
-    "ast_hash": "843ef21158046a3c280cc64a161ac505",
+    "mtime": 1781545829.1669624,
+    "ast_hash": "89d57245a9b1aef1a635a778589c696d",
     "semantic_hash": ""
   },
   "tests/test_ai_discovery.py": {
@@ -1220,27 +1220,27 @@
     "semantic_hash": ""
   },
   "canto/core/memory.py": {
-    "mtime": 1781621761.144654,
+    "mtime": 1781554006.3594778,
     "ast_hash": "2a4a822682dce843f34a39262ff2f0fa",
     "semantic_hash": ""
   },
   "canto/models/memory.py": {
-    "mtime": 1781621761.1546545,
+    "mtime": 1781553466.9569006,
     "ast_hash": "c78804ba532a4a4704164a27f2be4845",
     "semantic_hash": ""
   },
   "tests/test_memory.py": {
-    "mtime": 1781621761.1746552,
+    "mtime": 1781553585.1693578,
     "ast_hash": "d7d868feff5297c2e27aeb0056e00855",
     "semantic_hash": ""
   },
   "tests/test_memory_cli.py": {
-    "mtime": 1781621761.1746552,
+    "mtime": 1781553585.279358,
     "ast_hash": "33a895fb3944dc936709986cee17c2b0",
     "semantic_hash": ""
   },
   "tests/test_memory_e2e.py": {
-    "mtime": 1781621761.1746552,
+    "mtime": 1781553554.5858412,
     "ast_hash": "389892a07340af74598f32828e21f950",
     "semantic_hash": ""
   },
@@ -1250,12 +1250,12 @@
     "semantic_hash": ""
   },
   "docs/canto-memory-service-implementation-plan.md": {
-    "mtime": 1781621761.1546545,
+    "mtime": 1781553614.1085336,
     "ast_hash": "eb3e8d15330bb8e3c10d809a63c2944b",
     "semantic_hash": ""
   },
   "docs/memory-service.md": {
-    "mtime": 1781621761.1546545,
+    "mtime": 1781553614.2185335,
     "ast_hash": "fbc6533752745043d0ae85d90563e351",
     "semantic_hash": ""
   }

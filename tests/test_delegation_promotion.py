@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import subprocess
 from pathlib import Path
 
@@ -54,6 +55,34 @@ def test_promote_verifies_new_untracked_files_without_changing_index(tmp_path):
     ).stdout
     assert status == "?? src/new.py\n"
     assert result.workspace_patch_sha256
+
+
+def test_promote_accepts_equivalent_patch_with_different_diff_format(tmp_path):
+    service, workspaces, workspace, repository, _ = accepted(tmp_path)
+    artifact_root = workspace.parent / "artifacts" / "revision-1"
+    abbreviated_patch = subprocess.run(
+        ["git", "-C", str(workspace), "diff", "--binary", "HEAD", "--", "src/app.py"],
+        capture_output=True,
+        check=True,
+    ).stdout
+    assert abbreviated_patch
+    proposal = artifact_root / "proposal.diff"
+    proposal.chmod(0o600)
+    proposal.write_bytes(abbreviated_patch)
+    proposal.chmod(0o400)
+    checksum = hashlib.sha256(abbreviated_patch).hexdigest()
+    stored = service.store.delegation_records[("task_1", "results")][0]
+    for artifact in stored["artifacts"]:
+        if artifact["name"] == "proposal.diff":
+            artifact["sha256"] = checksum
+    stored["workspace_patch_sha256"] = checksum
+
+    promotion = DelegationPromotionService(service, workspaces).promote(
+        "task_1", "orchestrator"
+    )
+
+    assert promotion.status == "promoted"
+    assert (repository / "src" / "app.py").read_text() == "value = 2\n"
 
 
 def test_promote_blocks_dirty_affected_canonical_path(tmp_path):

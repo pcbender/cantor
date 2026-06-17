@@ -90,6 +90,22 @@ def test_manual_delegation_cli_workflow(tmp_path, monkeypatch):
     ]
 
 
+def test_launch_ai_missing_task_reports_clean_cli_error(tmp_path, monkeypatch):
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app, ["delegate", "launch-ai", "missing-task", "--allow-cloud"]
+    )
+
+    assert result.exit_code == 1
+    assert "Error: Delegation task not found: missing-task" in result.output
+    assert "Traceback" not in result.output
+
+
 def test_assign_accepts_registered_codex_profile(tmp_path, monkeypatch):
     service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
     workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")

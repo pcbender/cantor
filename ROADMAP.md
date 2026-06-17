@@ -809,9 +809,9 @@ Acceptance:
 
 ### CP-1212 — Clean Missing-Task Error for AI Worker Launch
 
-Status: **planned maintenance follow-up**. Cloud Worker dogfooding showed that
-`canto delegate launch-ai UNKNOWN_TASK --allow-cloud` lets the expected
-`DelegationError` escape Typer and prints a Python traceback from
+Status: **complete in MVP v1.1.2 hotfix**. Cloud Worker dogfooding showed that
+`canto delegate launch-ai UNKNOWN_TASK --allow-cloud` let the expected
+`DelegationError` escape Typer and printed a Python traceback from
 `delegate_launch_ai` instead of a concise CLI error.
 
 Behavior:
@@ -837,9 +837,10 @@ Acceptance:
 
 MVP v1.2 is complete. CP-1211 was delivered as the bounded MVP v1.1.1
 maintenance hotfix without reopening the release or completed CP-1300
-workstream. CP-1212 is a bounded CLI maintenance follow-up. CP-1315 is an MVP
-v1.2 foundation packet. Delegation HTTP/MCP exposure and multi-user executor
-coordination remain MVP v2 work.
+workstream. CP-1212 and adjacent Worker/delegation maintenance fixes were
+delivered in the bounded MVP v1.1.2 hotfix. CP-1315 is an MVP v1.2 foundation
+packet. Delegation HTTP/MCP exposure and multi-user executor coordination
+remain MVP v2 work.
 
 ---
 

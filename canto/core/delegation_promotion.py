@@ -190,26 +190,36 @@ class DelegationPromotionService:
     def _verify_applied(
         self, repository: Path, base_commit: str, patch: bytes, changed_files: list[str]
     ) -> None:
-        # Build the comparison in an isolated index so new, untracked files are
-        # included without changing the canonical repository's real index.
+        # Compare the accepted patch and canonical worktree through isolated
+        # indexes. Equivalent tree state is what matters; raw Git diff bytes can
+        # differ even when the accepted paths and blobs are identical.
         with tempfile.TemporaryDirectory(prefix="canto-promotion-index-") as root:
-            index = Path(root) / "index"
-            env = {"GIT_INDEX_FILE": str(index)}
-            _git(repository, "read-tree", base_commit, env=env)
-            _git(repository, "add", "-A", "--", *changed_files, env=env)
-            actual = _git(
+            expected_env = {"GIT_INDEX_FILE": str(Path(root) / "expected-index")}
+            actual_env = {"GIT_INDEX_FILE": str(Path(root) / "actual-index")}
+            _git(repository, "read-tree", base_commit, env=expected_env)
+            _git(
                 repository,
-                "diff",
+                "apply",
                 "--cached",
                 "--binary",
-                "--full-index",
-                base_commit,
-                "--",
-                *changed_files,
-                env=env,
+                "-",
+                stdin=patch,
+                env=expected_env,
             )
-        if hashlib.sha256(actual).hexdigest() != hashlib.sha256(patch).hexdigest():
-            raise PromotionError("Applied canonical diff does not match accepted patch")
+            _git(repository, "read-tree", base_commit, env=actual_env)
+            _git(repository, "add", "-A", "--", *changed_files, env=actual_env)
+            expected = self._index_entries(repository, changed_files, expected_env)
+            actual = self._index_entries(repository, changed_files, actual_env)
+        if expected != actual:
+            raise PromotionError(
+                "Applied canonical content does not match accepted patch"
+            )
+
+    @staticmethod
+    def _index_entries(
+        repository: Path, changed_files: list[str], env: dict[str, str]
+    ) -> bytes:
+        return _git(repository, "ls-files", "-s", "--", *changed_files, env=env)
 
     @staticmethod
     def _rollback(repository: Path, patch: bytes) -> bool:

@@ -22,8 +22,15 @@ from canto.models.schemas import utc_now
 
 
 class APIWorkerError(RuntimeError):
-    def __init__(self, message: str, usage: WorkerUsageRecord | None = None):
+    def __init__(
+        self,
+        message: str,
+        usage: WorkerUsageRecord | None = None,
+        *,
+        endpoint_failure: bool = False,
+    ):
         self.usage = usage
+        self.endpoint_failure = endpoint_failure
         super().__init__(message)
 
 
@@ -75,17 +82,22 @@ class HttpAgentAdapter:
             allow_redirects=False,
         )
         if 300 <= response.status_code < 400:
-            raise APIWorkerError("AI Worker redirects are not followed")
+            raise APIWorkerError(
+                "AI Worker redirects are not followed", endpoint_failure=True
+            )
         if response.status_code >= 400:
             detail = self._error_detail(response)
             suffix = f": {detail}" if detail else ""
             raise APIWorkerError(
-                f"AI Worker request failed: HTTP {response.status_code}{suffix}"
+                f"AI Worker request failed: HTTP {response.status_code}{suffix}",
+                endpoint_failure=True,
             )
         try:
             payload = response.json()
         except ValueError as exc:
-            raise APIWorkerError("AI Worker returned invalid JSON") from exc
+            raise APIWorkerError(
+                "AI Worker returned invalid JSON", endpoint_failure=True
+            ) from exc
         return self._parse(endpoint.provider, payload, response.headers)
 
     @staticmethod
@@ -418,7 +430,12 @@ class APIWorkerHarness:
             try:
                 response = self.adapter.complete(endpoint, credential, model.provider_model_id, messages, TOOLS)
             except Exception as exc:
-                raise APIWorkerError(str(exc), usage) from exc
+                endpoint_failure = (
+                    exc.endpoint_failure if isinstance(exc, APIWorkerError) else True
+                )
+                raise APIWorkerError(
+                    str(exc), usage, endpoint_failure=endpoint_failure
+                ) from exc
             usage.input_tokens += response.input_tokens
             usage.cached_input_tokens += response.cached_input_tokens
             usage.output_tokens += response.output_tokens

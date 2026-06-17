@@ -197,12 +197,7 @@ identifiers, existing commands and JSON fields, and orchestration
 recorded in `docs/architecture-language-freeze.md`.
 
 Architecture Language verification: focused bootstrap and Worker launch tests
-pass 21 tests; the full `tests import_capability/tests` suite passes 281 tests
-with the existing non-blocking Starlette `TestClient` deprecation warning.
-
-Known non-blocking issue: Starlette's current `TestClient` emits a deprecation
-warning recommending a future `httpx2` migration. Runtime behavior and tests
-remain successful under the versions pinned in `pyproject.toml`.
+pass 21 tests; the full `tests import_capability/tests` suite passes 281 tests.
 
 MVP v1.1.1 hotfix complete: CP-1211 — Worker Outcome Validation. A local
 Ollama dogfood session using `qwen2.5-coder:14b` emitted tool-call JSON as text
@@ -214,13 +209,14 @@ stdout as advisory evidence, and surfaces likely model/harness compatibility
 problems. Existing task statuses and the frozen orchestration contract are
 unchanged.
 
-Planned maintenance follow-up: CP-1212 — Clean Missing-Task Error for AI
-Worker Launch. During the first governed cloud Worker smoke test,
-`canto delegate launch-ai` received an unknown task ID and exposed the expected
-`DelegationError` as a Python traceback from `canto/cli.py` instead of using the
-existing concise CLI error path. The fix is limited to expected-error handling
-and a network-free regression test; valid selection and launch behavior remain
-unchanged.
+MVP v1.1.2 hotfix is in progress: CP-1212 — Clean Missing-Task Error for AI
+Worker Launch now reports unknown AI delegation task IDs through the existing
+concise CLI error path without a traceback. The same hotfix keeps Canto-side
+Worker policy/tool failures from poisoning local endpoint health, verifies
+promotion by accepted content rather than brittle diff byte identity, and
+filters the known Starlette `TestClient` dependency warning in the test
+harness. Valid selection, launch, promotion, delegation statuses, and the
+frozen orchestration contract remain unchanged.
 
 Local model catalog reconciliation is complete through CP-1521. A configured
 loopback Ollama endpoint can be refreshed explicitly; new, changed, missing,
@@ -229,9 +225,8 @@ selection requires an available local model and current successful probe.
 Status, detail, safe forget, opt-in sequential probe, and reviewed metadata
 commands are documented in `docs/ai-worker-pool.md`. Tests use fake local
 endpoint responses and make no model-server, cloud, or web-research calls.
-The full `tests import_capability/tests` suite passes 352 tests with the known
-non-blocking Starlette `TestClient` deprecation warning; `pip check` reports no
-broken requirements.
+The full `tests import_capability/tests` suite passes 352 tests; `pip check`
+reports no broken requirements.
 
 `canto repo doctor` now reports configured AI Worker endpoint, exact model,
 cloud readiness, and local model status. Explicit policy requirements are

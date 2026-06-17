@@ -56,7 +56,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "api_server_create_app",
-      "community": 1,
+      "community": 26,
       "norm_label": "create_app()"
     },
     {
@@ -176,7 +176,7 @@
       "source_location": "L167",
       "_origin": "ast",
       "id": "canto_cli_ai_endpoint_service",
-      "community": 203,
+      "community": 47,
       "norm_label": "_ai_endpoint_service()"
     },
     {
@@ -196,7 +196,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "canto_cli_ai_catalog_service",
-      "community": 203,
+      "community": 47,
       "norm_label": "_ai_catalog_service()"
     },
     {
@@ -216,7 +216,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "canto_cli_ai_readiness_store",
-      "community": 203,
+      "community": 47,
       "norm_label": "_ai_readiness_store()"
     },
     {
@@ -236,7 +236,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "canto_cli_ai_reconciliation_service",
-      "community": 14,
+      "community": 47,
       "norm_label": "_ai_reconciliation_service()"
     },
     {
@@ -296,7 +296,7 @@
       "source_location": "L206",
       "_origin": "ast",
       "id": "canto_cli_ai_metadata_service",
-      "community": 203,
+      "community": 7,
       "norm_label": "_ai_metadata_service()"
     },
     {
@@ -316,7 +316,7 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "canto_cli_ai_selection_service",
-      "community": 203,
+      "community": 47,
       "norm_label": "_ai_selection_service()"
     },
     {
@@ -526,7 +526,7 @@
       "source_location": "L333",
       "_origin": "ast",
       "id": "canto_cli_repo_doctor",
-      "community": 203,
+      "community": 47,
       "norm_label": "repo_doctor()"
     },
     {
@@ -696,7 +696,7 @@
       "source_location": "L693",
       "_origin": "ast",
       "id": "canto_cli_delegate_profile_check",
-      "community": 202,
+      "community": 6,
       "norm_label": "delegate_profile_check()"
     },
     {
@@ -706,7 +706,7 @@
       "source_location": "L705",
       "_origin": "ast",
       "id": "canto_cli_delegate_launch",
-      "community": 202,
+      "community": 6,
       "norm_label": "delegate_launch()"
     },
     {
@@ -716,7 +716,7 @@
       "source_location": "L722",
       "_origin": "ast",
       "id": "canto_cli_delegate_compare_create",
-      "community": 202,
+      "community": 6,
       "norm_label": "delegate_compare_create()"
     },
     {
@@ -786,7 +786,7 @@
       "source_location": "L859",
       "_origin": "ast",
       "id": "canto_cli_delegate_reject",
-      "community": 6,
+      "community": 14,
       "norm_label": "delegate_reject()"
     },
     {
@@ -986,7 +986,7 @@
       "source_location": "L1216",
       "_origin": "ast",
       "id": "canto_cli_ai_endpoint_list",
-      "community": 203,
+      "community": 47,
       "norm_label": "ai_endpoint_list()"
     },
     {
@@ -996,7 +996,7 @@
       "source_location": "L1227",
       "_origin": "ast",
       "id": "canto_cli_ai_endpoint_show",
-      "community": 203,
+      "community": 47,
       "norm_label": "ai_endpoint_show()"
     },
     {
@@ -1006,7 +1006,7 @@
       "source_location": "L1236",
       "_origin": "ast",
       "id": "canto_cli_ai_endpoint_disable",
-      "community": 203,
+      "community": 47,
       "norm_label": "ai_endpoint_disable()"
     },
     {
@@ -1026,7 +1026,7 @@
       "source_location": "L1255",
       "_origin": "ast",
       "id": "canto_cli_ai_model_refresh",
-      "community": 14,
+      "community": 47,
       "norm_label": "ai_model_refresh()"
     },
     {
@@ -1036,7 +1036,7 @@
       "source_location": "L1305",
       "_origin": "ast",
       "id": "canto_cli_ai_model_list",
-      "community": 203,
+      "community": 47,
       "norm_label": "ai_model_list()"
     },
     {
@@ -1086,7 +1086,7 @@
       "source_location": "L1358",
       "_origin": "ast",
       "id": "canto_cli_ai_model_metadata_add",
-      "community": 203,
+      "community": 14,
       "norm_label": "ai_model_metadata_add()"
     },
     {
@@ -1096,7 +1096,7 @@
       "source_location": "L1383",
       "_origin": "ast",
       "id": "canto_cli_ai_pool_select",
-      "community": 203,
+      "community": 47,
       "norm_label": "ai_pool_select()"
     },
     {
@@ -1116,7 +1116,7 @@
       "source_location": "L1417",
       "_origin": "ast",
       "id": "canto_cli_ai_usage_list",
-      "community": 203,
+      "community": 47,
       "norm_label": "ai_usage_list()"
     },
     {
@@ -1126,7 +1126,7 @@
       "source_location": "L1423",
       "_origin": "ast",
       "id": "canto_cli_ai_usage_health",
-      "community": 203,
+      "community": 47,
       "norm_label": "ai_usage_health()"
     },
     {
@@ -1156,7 +1156,7 @@
       "source_location": "L1477",
       "_origin": "ast",
       "id": "canto_cli_migrate_state",
-      "community": 47,
+      "community": 14,
       "norm_label": "migrate_state()"
     },
     {
@@ -1286,7 +1286,7 @@
       "source_location": "L1669",
       "_origin": "ast",
       "id": "canto_cli_pack",
-      "community": 14,
+      "community": 17,
       "norm_label": "pack()"
     },
     {
@@ -1296,7 +1296,7 @@
       "source_location": "L1683",
       "_origin": "ast",
       "id": "canto_cli_validate_capability_package",
-      "community": 14,
+      "community": 17,
       "norm_label": "validate_capability_package()"
     },
     {
@@ -1686,7 +1686,7 @@
       "source_location": "L337",
       "_origin": "ast",
       "id": "canto_cli_rationale_337",
-      "community": 203,
+      "community": 47,
       "norm_label": "verify repository identity, agent instructions, and git readiness."
     },
     {
@@ -1846,7 +1846,7 @@
       "source_location": "L694",
       "_origin": "ast",
       "id": "canto_cli_rationale_694",
-      "community": 202,
+      "community": 6,
       "norm_label": "check a saved profile without mutating task state."
     },
     {
@@ -1856,7 +1856,7 @@
       "source_location": "L710",
       "_origin": "ast",
       "id": "canto_cli_rationale_710",
-      "community": 202,
+      "community": 6,
       "norm_label": "launch the assigned codex cli profile in its prepared worktree."
     },
     {
@@ -1866,7 +1866,7 @@
       "source_location": "L726",
       "_origin": "ast",
       "id": "canto_cli_rationale_726",
-      "community": 202,
+      "community": 6,
       "norm_label": "create isolated sibling tasks from name=supplement variant values."
     },
     {
@@ -1936,7 +1936,7 @@
       "source_location": "L864",
       "_origin": "ast",
       "id": "canto_cli_rationale_864",
-      "community": 6,
+      "community": 14,
       "norm_label": "reject the latest result revision."
     },
     {
@@ -2126,7 +2126,7 @@
       "source_location": "L1217",
       "_origin": "ast",
       "id": "canto_cli_rationale_1217",
-      "community": 203,
+      "community": 47,
       "norm_label": "list configured endpoints without decrypting credentials."
     },
     {
@@ -2146,7 +2146,7 @@
       "source_location": "L1261",
       "_origin": "ast",
       "id": "canto_cli_rationale_1261",
-      "community": 14,
+      "community": 47,
       "norm_label": "reconcile a configured local ollama endpoint with its saved catalog."
     },
     {
@@ -2176,7 +2176,7 @@
       "source_location": "L1482",
       "_origin": "ast",
       "id": "canto_cli_rationale_1482",
-      "community": 47,
+      "community": 14,
       "norm_label": "copy legacy redis and filesystem-plan state into sqlite."
     },
     {
@@ -2296,7 +2296,7 @@
       "source_location": "L1673",
       "_origin": "ast",
       "id": "canto_cli_rationale_1673",
-      "community": 14,
+      "community": 17,
       "norm_label": "pack a capability directory into a deterministic .canto archive."
     },
     {
@@ -2306,7 +2306,7 @@
       "source_location": "L1684",
       "_origin": "ast",
       "id": "canto_cli_rationale_1684",
-      "community": 14,
+      "community": 17,
       "norm_label": "validate a .canto archive and its checksums."
     },
     {
@@ -2366,7 +2366,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "canto_config",
-      "community": 17,
+      "community": 3,
       "norm_label": "config.py"
     },
     {
@@ -2376,7 +2376,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "canto_config_settings",
-      "community": 28,
+      "community": 3,
       "norm_label": "settings"
     },
     {
@@ -2386,7 +2386,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "canto_config_settings_skills_dir",
-      "community": 28,
+      "community": 3,
       "norm_label": ".skills_dir()"
     },
     {
@@ -2396,7 +2396,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "canto_config_py_path",
-      "community": 28,
+      "community": 3,
       "norm_label": "path"
     },
     {
@@ -2406,7 +2406,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "canto_config_settings_tools_dir",
-      "community": 28,
+      "community": 3,
       "norm_label": ".tools_dir()"
     },
     {
@@ -2416,7 +2416,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "canto_config_settings_jobs_dir",
-      "community": 28,
+      "community": 3,
       "norm_label": ".jobs_dir()"
     },
     {
@@ -2426,7 +2426,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "canto_config_settings_scaffolds_dir",
-      "community": 28,
+      "community": 3,
       "norm_label": ".scaffolds_dir()"
     },
     {
@@ -2456,7 +2456,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_assignment",
-      "community": 10,
+      "community": 24,
       "norm_label": "ai_assignment.py"
     },
     {
@@ -2476,7 +2476,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice",
-      "community": 10,
+      "community": 24,
       "norm_label": "aiworkerassignmentservice"
     },
     {
@@ -2486,7 +2486,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_init",
-      "community": 10,
+      "community": 24,
       "norm_label": ".__init__()"
     },
     {
@@ -2496,7 +2496,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_delegationservice",
-      "community": 10,
+      "community": 24,
       "norm_label": "delegationservice"
     },
     {
@@ -2506,7 +2506,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_delegationworkspaceservice",
-      "community": 10,
+      "community": 24,
       "norm_label": "delegationworkspaceservice"
     },
     {
@@ -2516,7 +2516,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_aiendpointservice",
-      "community": 10,
+      "community": 24,
       "norm_label": "aiendpointservice"
     },
     {
@@ -2526,7 +2526,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_modelcatalogservice",
-      "community": 10,
+      "community": 24,
       "norm_label": "modelcatalogservice"
     },
     {
@@ -2536,7 +2536,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_workerselectionservice",
-      "community": 10,
+      "community": 24,
       "norm_label": "workerselectionservice"
     },
     {
@@ -2546,7 +2546,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_apiworkerharness",
-      "community": 10,
+      "community": 24,
       "norm_label": "apiworkerharness"
     },
     {
@@ -2556,7 +2556,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_launch",
-      "community": 10,
+      "community": 24,
       "norm_label": ".launch()"
     },
     {
@@ -2566,7 +2566,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_workerselectionpolicy",
-      "community": 10,
+      "community": 24,
       "norm_label": "workerselectionpolicy"
     },
     {
@@ -2576,7 +2576,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_executorlaunch",
-      "community": 10,
+      "community": 24,
       "norm_label": "executorlaunch"
     },
     {
@@ -2586,7 +2586,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_record_selection",
-      "community": 10,
+      "community": 24,
       "norm_label": "._record_selection()"
     },
     {
@@ -2596,67 +2596,67 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_run_attempt",
-      "community": 10,
+      "community": 24,
       "norm_label": "._run_attempt()"
     },
     {
       "label": "._record_usage()",
       "file_type": "code",
       "source_file": "canto/core/ai_assignment.py",
-      "source_location": "L221",
+      "source_location": "L213",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_record_usage",
-      "community": 10,
+      "community": 24,
       "norm_label": "._record_usage()"
     },
     {
       "label": "WorkerUsageRecord",
       "file_type": "code",
       "source_file": "canto/core/ai_assignment.py",
-      "source_location": "L221",
+      "source_location": "L213",
       "_origin": "ast",
       "id": "canto_core_ai_assignment_py_workerusagerecord",
-      "community": 10,
+      "community": 24,
       "norm_label": "workerusagerecord"
     },
     {
       "label": "._health()",
       "file_type": "code",
       "source_file": "canto/core/ai_assignment.py",
-      "source_location": "L227",
+      "source_location": "L219",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_health",
-      "community": 10,
+      "community": 24,
       "norm_label": "._health()"
     },
     {
       "label": "._price()",
       "file_type": "code",
       "source_file": "canto/core/ai_assignment.py",
-      "source_location": "L242",
+      "source_location": "L234",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_price",
-      "community": 10,
+      "community": 24,
       "norm_label": "._price()"
     },
     {
       "label": "._workspace_state()",
       "file_type": "code",
       "source_file": "canto/core/ai_assignment.py",
-      "source_location": "L254",
+      "source_location": "L246",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_workspace_state",
-      "community": 10,
+      "community": 24,
       "norm_label": "._workspace_state()"
     },
     {
       "label": "._prompt()",
       "file_type": "code",
       "source_file": "canto/core/ai_assignment.py",
-      "source_location": "L265",
+      "source_location": "L257",
       "_origin": "ast",
       "id": "core_ai_assignment_aiworkerassignmentservice_prompt",
-      "community": 10,
+      "community": 24,
       "norm_label": "._prompt()"
     },
     {
@@ -2666,7 +2666,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_discovery",
-      "community": 15,
+      "community": 7,
       "norm_label": "ai_discovery.py"
     },
     {
@@ -2696,7 +2696,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "core_ai_discovery_checksum",
-      "community": 15,
+      "community": 7,
       "norm_label": "_checksum()"
     },
     {
@@ -2706,7 +2706,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "canto_core_ai_discovery_py_any",
-      "community": 15,
+      "community": 7,
       "norm_label": "any"
     },
     {
@@ -2716,7 +2716,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "core_ai_discovery_discoveredmodel",
-      "community": 18,
+      "community": 7,
       "norm_label": "discoveredmodel"
     },
     {
@@ -2726,7 +2726,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "core_ai_discovery_discoveryadapter",
-      "community": 15,
+      "community": 7,
       "norm_label": "discoveryadapter"
     },
     {
@@ -2736,7 +2736,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "protocol",
-      "community": 25,
+      "community": 20,
       "norm_label": "protocol"
     },
     {
@@ -2746,7 +2746,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "core_ai_discovery_discoveryadapter_list_models",
-      "community": 15,
+      "community": 7,
       "norm_label": ".list_models()"
     },
     {
@@ -2756,7 +2756,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "canto_core_ai_discovery_py_aiendpointrecord",
-      "community": 15,
+      "community": 7,
       "norm_label": "aiendpointrecord"
     },
     {
@@ -2766,7 +2766,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "core_ai_discovery_httpdiscoveryadapter",
-      "community": 15,
+      "community": 7,
       "norm_label": "httpdiscoveryadapter"
     },
     {
@@ -2776,7 +2776,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "core_ai_discovery_httpdiscoveryadapter_init",
-      "community": 15,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -2786,7 +2786,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "canto_core_ai_discovery_py_session",
-      "community": 15,
+      "community": 7,
       "norm_label": "session"
     },
     {
@@ -2796,7 +2796,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "core_ai_discovery_httpdiscoveryadapter_list_models",
-      "community": 15,
+      "community": 7,
       "norm_label": ".list_models()"
     },
     {
@@ -2806,7 +2806,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "core_ai_discovery_httpdiscoveryadapter_request",
-      "community": 15,
+      "community": 7,
       "norm_label": "._request()"
     },
     {
@@ -2816,7 +2816,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "core_ai_discovery_httpdiscoveryadapter_parse",
-      "community": 15,
+      "community": 7,
       "norm_label": "._parse()"
     },
     {
@@ -2826,7 +2826,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "core_ai_discovery_modelcatalogservice",
-      "community": 10,
+      "community": 7,
       "norm_label": "modelcatalogservice"
     },
     {
@@ -2836,7 +2836,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "core_ai_discovery_modelcatalogservice_init",
-      "community": 15,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -2846,7 +2846,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "canto_core_ai_discovery_py_statestore",
-      "community": 15,
+      "community": 7,
       "norm_label": "statestore"
     },
     {
@@ -2856,7 +2856,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "canto_core_ai_discovery_py_aiendpointservice",
-      "community": 15,
+      "community": 7,
       "norm_label": "aiendpointservice"
     },
     {
@@ -2866,7 +2866,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "core_ai_discovery_modelcatalogservice_discover",
-      "community": 15,
+      "community": 7,
       "norm_label": ".discover()"
     },
     {
@@ -2876,7 +2876,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "canto_core_ai_discovery_py_modelcatalogsnapshot",
-      "community": 15,
+      "community": 24,
       "norm_label": "modelcatalogsnapshot"
     },
     {
@@ -2886,7 +2886,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "core_ai_discovery_modelcatalogservice_get",
-      "community": 15,
+      "community": 7,
       "norm_label": ".get()"
     },
     {
@@ -2896,7 +2896,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "canto_core_ai_discovery_py_aimodelrecord",
-      "community": 15,
+      "community": 24,
       "norm_label": "aimodelrecord"
     },
     {
@@ -2906,7 +2906,7 @@
       "source_location": "L240",
       "_origin": "ast",
       "id": "core_ai_discovery_modelcatalogservice_list",
-      "community": 15,
+      "community": 24,
       "norm_label": ".list()"
     },
     {
@@ -2916,7 +2916,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_endpoints",
-      "community": 25,
+      "community": 24,
       "norm_label": "ai_endpoints.py"
     },
     {
@@ -2936,7 +2936,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "valueerror",
-      "community": 4,
+      "community": 28,
       "norm_label": "valueerror"
     },
     {
@@ -2946,7 +2946,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "core_ai_endpoints_endpoint_is_local",
-      "community": 25,
+      "community": 24,
       "norm_label": "endpoint_is_local()"
     },
     {
@@ -2956,7 +2956,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "canto_core_ai_endpoints_py_aiendpointrecord",
-      "community": 25,
+      "community": 7,
       "norm_label": "aiendpointrecord"
     },
     {
@@ -2966,7 +2966,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice",
-      "community": 25,
+      "community": 7,
       "norm_label": "aiendpointservice"
     },
     {
@@ -2976,7 +2976,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_init",
-      "community": 24,
+      "community": 0,
       "norm_label": ".__init__()"
     },
     {
@@ -2986,7 +2986,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "canto_core_ai_endpoints_py_statestore",
-      "community": 24,
+      "community": 0,
       "norm_label": "statestore"
     },
     {
@@ -2996,7 +2996,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "canto_core_ai_endpoints_py_credentialvault",
-      "community": 24,
+      "community": 0,
       "norm_label": "credentialvault"
     },
     {
@@ -3006,7 +3006,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "canto_core_ai_endpoints_py_path",
-      "community": 24,
+      "community": 0,
       "norm_label": "path"
     },
     {
@@ -3016,7 +3016,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_add",
-      "community": 25,
+      "community": 7,
       "norm_label": ".add()"
     },
     {
@@ -3026,7 +3026,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "aiprovider",
-      "community": 25,
+      "community": 0,
       "norm_label": "aiprovider"
     },
     {
@@ -3036,7 +3036,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_save",
-      "community": 25,
+      "community": 7,
       "norm_label": ".save()"
     },
     {
@@ -3046,7 +3046,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_get",
-      "community": 25,
+      "community": 7,
       "norm_label": ".get()"
     },
     {
@@ -3056,7 +3056,7 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_list",
-      "community": 25,
+      "community": 7,
       "norm_label": ".list()"
     },
     {
@@ -3066,7 +3066,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_disable",
-      "community": 25,
+      "community": 7,
       "norm_label": ".disable()"
     },
     {
@@ -3076,7 +3076,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_credential",
-      "community": 25,
+      "community": 7,
       "norm_label": ".credential()"
     },
     {
@@ -3086,7 +3086,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_write_config",
-      "community": 25,
+      "community": 7,
       "norm_label": "._write_config()"
     },
     {
@@ -3096,7 +3096,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "core_ai_endpoints_aiendpointservice_export_json",
-      "community": 25,
+      "community": 7,
       "norm_label": ".export_json()"
     },
     {
@@ -3106,7 +3106,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_metadata",
-      "community": 15,
+      "community": 7,
       "norm_label": "ai_metadata.py"
     },
     {
@@ -3136,7 +3136,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "core_ai_metadata_modelmetadataservice_init",
-      "community": 15,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -3146,7 +3146,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "canto_core_ai_metadata_py_statestore",
-      "community": 15,
+      "community": 7,
       "norm_label": "statestore"
     },
     {
@@ -3156,7 +3156,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "canto_core_ai_metadata_py_modelcatalogservice",
-      "community": 15,
+      "community": 7,
       "norm_label": "modelcatalogservice"
     },
     {
@@ -3166,7 +3166,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "core_ai_metadata_modelmetadataservice_add_file",
-      "community": 15,
+      "community": 7,
       "norm_label": ".add_file()"
     },
     {
@@ -3176,7 +3176,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "canto_core_ai_metadata_py_path",
-      "community": 15,
+      "community": 7,
       "norm_label": "path"
     },
     {
@@ -3186,7 +3186,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "modelmetadatarecord",
-      "community": 15,
+      "community": 7,
       "norm_label": "modelmetadatarecord"
     },
     {
@@ -3196,7 +3196,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_probe",
-      "community": 25,
+      "community": 7,
       "norm_label": "ai_probe.py"
     },
     {
@@ -3216,7 +3216,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "core_ai_probe_probeobservation",
-      "community": 18,
+      "community": 7,
       "norm_label": "probeobservation"
     },
     {
@@ -3226,7 +3226,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "core_ai_probe_workerproberunner",
-      "community": 25,
+      "community": 7,
       "norm_label": "workerproberunner"
     },
     {
@@ -3236,7 +3236,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "core_ai_probe_workerproberunner_run_probe",
-      "community": 25,
+      "community": 7,
       "norm_label": ".run_probe()"
     },
     {
@@ -3246,7 +3246,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "canto_core_ai_probe_py_path",
-      "community": 25,
+      "community": 7,
       "norm_label": "path"
     },
     {
@@ -3266,7 +3266,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "core_ai_probe_apiworkerproberunner_init",
-      "community": 25,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -3276,7 +3276,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "canto_core_ai_probe_py_modelcatalogservice",
-      "community": 25,
+      "community": 7,
       "norm_label": "modelcatalogservice"
     },
     {
@@ -3286,7 +3286,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "canto_core_ai_probe_py_aiendpointservice",
-      "community": 25,
+      "community": 7,
       "norm_label": "aiendpointservice"
     },
     {
@@ -3296,7 +3296,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "canto_core_ai_probe_py_apiworkerharness",
-      "community": 25,
+      "community": 7,
       "norm_label": "apiworkerharness"
     },
     {
@@ -3306,7 +3306,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "core_ai_probe_apiworkerproberunner_run_probe",
-      "community": 25,
+      "community": 7,
       "norm_label": ".run_probe()"
     },
     {
@@ -3316,7 +3316,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "core_ai_probe_codingworkerprobeservice",
-      "community": 18,
+      "community": 7,
       "norm_label": "codingworkerprobeservice"
     },
     {
@@ -3326,7 +3326,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "core_ai_probe_codingworkerprobeservice_init",
-      "community": 25,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -3336,7 +3336,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "canto_core_ai_probe_py_statestore",
-      "community": 25,
+      "community": 7,
       "norm_label": "statestore"
     },
     {
@@ -3346,7 +3346,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "core_ai_probe_codingworkerprobeservice_probe",
-      "community": 25,
+      "community": 7,
       "norm_label": ".probe()"
     },
     {
@@ -3356,7 +3356,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "workerproberesult",
-      "community": 25,
+      "community": 7,
       "norm_label": "workerproberesult"
     },
     {
@@ -3366,7 +3366,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "core_ai_probe_codingworkerprobeservice_list",
-      "community": 25,
+      "community": 7,
       "norm_label": ".list()"
     },
     {
@@ -3386,7 +3386,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "core_ai_probe_localmodelprobequeue_init",
-      "community": 25,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -3396,7 +3396,7 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "core_ai_probe_localmodelprobequeue_run",
-      "community": 25,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -3416,7 +3416,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_readiness",
-      "community": 172,
+      "community": 24,
       "norm_label": "ai_readiness.py"
     },
     {
@@ -3426,7 +3426,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "core_ai_readiness_ai_worker_readiness_checks",
-      "community": 172,
+      "community": 24,
       "norm_label": "ai_worker_readiness_checks()"
     },
     {
@@ -3436,7 +3436,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "canto_core_ai_readiness_py_statestore",
-      "community": 172,
+      "community": 24,
       "norm_label": "statestore"
     },
     {
@@ -3446,7 +3446,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "canto_core_ai_readiness_py_workerselectionpolicy",
-      "community": 172,
+      "community": 24,
       "norm_label": "workerselectionpolicy"
     },
     {
@@ -3456,7 +3456,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "repositorydoctorcheck",
-      "community": 172,
+      "community": 24,
       "norm_label": "repositorydoctorcheck"
     },
     {
@@ -3466,7 +3466,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "core_ai_readiness_endpoint_check",
-      "community": 172,
+      "community": 24,
       "norm_label": "_endpoint_check()"
     },
     {
@@ -3476,7 +3476,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "canto_core_ai_readiness_py_aiendpointrecord",
-      "community": 172,
+      "community": 24,
       "norm_label": "aiendpointrecord"
     },
     {
@@ -3486,7 +3486,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "core_ai_readiness_model_check",
-      "community": 172,
+      "community": 24,
       "norm_label": "_model_check()"
     },
     {
@@ -3496,7 +3496,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "canto_core_ai_readiness_py_aimodelrecord",
-      "community": 172,
+      "community": 24,
       "norm_label": "aimodelrecord"
     },
     {
@@ -3506,7 +3506,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "core_ai_readiness_local_check",
-      "community": 172,
+      "community": 24,
       "norm_label": "_local_check()"
     },
     {
@@ -3516,7 +3516,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "core_ai_readiness_cloud_check",
-      "community": 172,
+      "community": 24,
       "norm_label": "_cloud_check()"
     },
     {
@@ -3526,7 +3526,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "core_ai_readiness_model_status",
-      "community": 172,
+      "community": 24,
       "norm_label": "_model_status()"
     },
     {
@@ -3536,7 +3536,7 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "core_ai_readiness_latest_health",
-      "community": 172,
+      "community": 24,
       "norm_label": "_latest_health()"
     },
     {
@@ -3546,7 +3546,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_reconciliation",
-      "community": 15,
+      "community": 7,
       "norm_label": "ai_reconciliation.py"
     },
     {
@@ -3566,7 +3566,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "core_ai_reconciliation_modelreconciliationerror_init",
-      "community": 15,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -3576,7 +3576,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "modelreconciliationrecord",
-      "community": 15,
+      "community": 7,
       "norm_label": "modelreconciliationrecord"
     },
     {
@@ -3586,7 +3586,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice",
-      "community": 15,
+      "community": 7,
       "norm_label": "localmodelreconciliationservice"
     },
     {
@@ -3596,7 +3596,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_init",
-      "community": 15,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -3606,7 +3606,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "canto_core_ai_reconciliation_py_statestore",
-      "community": 15,
+      "community": 7,
       "norm_label": "statestore"
     },
     {
@@ -3616,7 +3616,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "canto_core_ai_reconciliation_py_aiendpointservice",
-      "community": 15,
+      "community": 7,
       "norm_label": "aiendpointservice"
     },
     {
@@ -3626,7 +3626,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "discoveryadapter",
-      "community": 15,
+      "community": 7,
       "norm_label": "discoveryadapter"
     },
     {
@@ -3636,7 +3636,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_refresh",
-      "community": 15,
+      "community": 7,
       "norm_label": ".refresh()"
     },
     {
@@ -3646,7 +3646,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_list_reconciliations",
-      "community": 15,
+      "community": 7,
       "norm_label": ".list_reconciliations()"
     },
     {
@@ -3656,7 +3656,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_latest_reconciliation",
-      "community": 15,
+      "community": 7,
       "norm_label": ".latest_reconciliation()"
     },
     {
@@ -3666,7 +3666,7 @@
       "source_location": "L220",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_latest_successful_snapshot",
-      "community": 15,
+      "community": 7,
       "norm_label": "._latest_successful_snapshot()"
     },
     {
@@ -3676,7 +3676,7 @@
       "source_location": "L220",
       "_origin": "ast",
       "id": "canto_core_ai_reconciliation_py_modelcatalogsnapshot",
-      "community": 15,
+      "community": 7,
       "norm_label": "modelcatalogsnapshot"
     },
     {
@@ -3686,7 +3686,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_save_model",
-      "community": 15,
+      "community": 7,
       "norm_label": "._save_model()"
     },
     {
@@ -3696,7 +3696,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "canto_core_ai_reconciliation_py_aimodelrecord",
-      "community": 15,
+      "community": 7,
       "norm_label": "aimodelrecord"
     },
     {
@@ -3706,7 +3706,7 @@
       "source_location": "L236",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_save_reconciliation",
-      "community": 15,
+      "community": 7,
       "norm_label": "._save_reconciliation()"
     },
     {
@@ -3716,7 +3716,7 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "core_ai_reconciliation_localmodelreconciliationservice_save_health",
-      "community": 15,
+      "community": 7,
       "norm_label": "._save_health()"
     },
     {
@@ -3746,7 +3746,7 @@
       "source_location": "L260",
       "_origin": "ast",
       "id": "core_ai_reconciliation_modelcatalogmaintenanceservice_init",
-      "community": 15,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -3806,7 +3806,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_selection",
-      "community": 41,
+      "community": 24,
       "norm_label": "ai_selection.py"
     },
     {
@@ -3826,7 +3826,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "core_ai_selection_narrow",
-      "community": 41,
+      "community": 24,
       "norm_label": "_narrow()"
     },
     {
@@ -3836,7 +3836,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "t",
-      "community": 41,
+      "community": 24,
       "norm_label": "t"
     },
     {
@@ -3846,7 +3846,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "core_ai_selection_minimum",
-      "community": 41,
+      "community": 24,
       "norm_label": "_minimum()"
     },
     {
@@ -3856,7 +3856,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "canto_core_ai_selection_py_workerbudgetpolicy",
-      "community": 41,
+      "community": 24,
       "norm_label": "workerbudgetpolicy"
     },
     {
@@ -3866,7 +3866,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "core_ai_selection_preference",
-      "community": 41,
+      "community": 24,
       "norm_label": "_preference()"
     },
     {
@@ -3876,7 +3876,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "canto_core_ai_selection_py_workerselectionpolicy",
-      "community": 41,
+      "community": 24,
       "norm_label": "workerselectionpolicy"
     },
     {
@@ -3886,7 +3886,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "core_ai_selection_compose_worker_policy",
-      "community": 41,
+      "community": 24,
       "norm_label": "compose_worker_policy()"
     },
     {
@@ -3896,7 +3896,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "core_ai_selection_taskestimate",
-      "community": 41,
+      "community": 24,
       "norm_label": "taskestimate"
     },
     {
@@ -3906,7 +3906,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "core_ai_selection_estimate_model_cost",
-      "community": 41,
+      "community": 24,
       "norm_label": "estimate_model_cost()"
     },
     {
@@ -3916,7 +3916,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "canto_core_ai_selection_py_aimodelrecord",
-      "community": 41,
+      "community": 24,
       "norm_label": "aimodelrecord"
     },
     {
@@ -3926,7 +3926,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "core_ai_selection_workerselectionservice",
-      "community": 10,
+      "community": 24,
       "norm_label": "workerselectionservice"
     },
     {
@@ -3936,7 +3936,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "core_ai_selection_workerselectionservice_init",
-      "community": 41,
+      "community": 24,
       "norm_label": ".__init__()"
     },
     {
@@ -3946,7 +3946,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "canto_core_ai_selection_py_statestore",
-      "community": 41,
+      "community": 24,
       "norm_label": "statestore"
     },
     {
@@ -3956,7 +3956,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "core_ai_selection_workerselectionservice_select",
-      "community": 41,
+      "community": 24,
       "norm_label": ".select()"
     },
     {
@@ -3966,7 +3966,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "canto_core_ai_selection_py_aiendpointrecord",
-      "community": 41,
+      "community": 24,
       "norm_label": "aiendpointrecord"
     },
     {
@@ -3976,7 +3976,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "workerselectiondecision",
-      "community": 41,
+      "community": 24,
       "norm_label": "workerselectiondecision"
     },
     {
@@ -3986,7 +3986,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "core_ai_selection_workerselectionservice_score",
-      "community": 41,
+      "community": 24,
       "norm_label": "._score()"
     },
     {
@@ -3996,7 +3996,7 @@
       "source_location": "L153",
       "_origin": "ast",
       "id": "candidatescore",
-      "community": 41,
+      "community": 24,
       "norm_label": "candidatescore"
     },
     {
@@ -4006,7 +4006,7 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "core_ai_selection_workerselectionservice_latest_endpoint_health",
-      "community": 41,
+      "community": 24,
       "norm_label": "._latest_endpoint_health()"
     },
     {
@@ -4016,7 +4016,7 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "core_ai_selection_workerselectionservice_explain",
-      "community": 10,
+      "community": 24,
       "norm_label": ".explain()"
     },
     {
@@ -4026,7 +4026,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "core_ai_selection_rationale_51",
-      "community": 41,
+      "community": 24,
       "norm_label": "compose global, repository, and task policy without widening authority."
     },
     {
@@ -4073,7 +4073,7 @@
       "label": "AgentToolCall",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L38",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "core_ai_worker_agenttoolcall",
       "community": 24,
@@ -4083,7 +4083,7 @@
       "label": "AgentResponse",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L45",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "core_ai_worker_agentresponse",
       "community": 24,
@@ -4093,7 +4093,7 @@
       "label": "AgentAdapter",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L55",
+      "source_location": "L48",
       "_origin": "ast",
       "id": "core_ai_worker_agentadapter",
       "community": 24,
@@ -4103,7 +4103,7 @@
       "label": ".complete()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L56",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "core_ai_worker_agentadapter_complete",
       "community": 24,
@@ -4113,7 +4113,7 @@
       "label": "AIEndpointRecord",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L56",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "canto_core_ai_worker_py_aiendpointrecord",
       "community": 24,
@@ -4123,7 +4123,7 @@
       "label": "Any",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L56",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "canto_core_ai_worker_py_any",
       "community": 24,
@@ -4133,7 +4133,7 @@
       "label": "HttpAgentAdapter",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L66",
+      "source_location": "L59",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter",
       "community": 24,
@@ -4143,7 +4143,7 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L69",
+      "source_location": "L62",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_init",
       "community": 24,
@@ -4153,7 +4153,7 @@
       "label": "Session",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L69",
+      "source_location": "L62",
       "_origin": "ast",
       "id": "canto_core_ai_worker_py_session",
       "community": 24,
@@ -4163,7 +4163,7 @@
       "label": ".complete()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L73",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_complete",
       "community": 24,
@@ -4173,7 +4173,7 @@
       "label": "._error_detail()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L104",
+      "source_location": "L92",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_error_detail",
       "community": 24,
@@ -4183,7 +4183,7 @@
       "label": "._request()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L115",
+      "source_location": "L103",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_request",
       "community": 24,
@@ -4193,7 +4193,7 @@
       "label": "._openai_messages()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L157",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_openai_messages",
       "community": 24,
@@ -4203,7 +4203,7 @@
       "label": "._anthropic_messages()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L181",
+      "source_location": "L169",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_anthropic_messages",
       "community": 24,
@@ -4213,7 +4213,7 @@
       "label": "._ollama_messages()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L214",
+      "source_location": "L202",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_ollama_messages",
       "community": 24,
@@ -4223,7 +4223,7 @@
       "label": "._google_messages()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L235",
+      "source_location": "L223",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_google_messages",
       "community": 24,
@@ -4233,7 +4233,7 @@
       "label": "._parse()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L264",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "core_ai_worker_httpagentadapter_parse",
       "community": 24,
@@ -4243,7 +4243,7 @@
       "label": "WorkspaceTools",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L340",
+      "source_location": "L328",
       "_origin": "ast",
       "id": "core_ai_worker_workspacetools",
       "community": 24,
@@ -4253,7 +4253,7 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L341",
+      "source_location": "L329",
       "_origin": "ast",
       "id": "core_ai_worker_workspacetools_init",
       "community": 24,
@@ -4263,7 +4263,7 @@
       "label": "Path",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L341",
+      "source_location": "L329",
       "_origin": "ast",
       "id": "canto_core_ai_worker_py_path",
       "community": 24,
@@ -4273,7 +4273,7 @@
       "label": "DelegationScope",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L341",
+      "source_location": "L329",
       "_origin": "ast",
       "id": "delegationscope",
       "community": 24,
@@ -4283,7 +4283,7 @@
       "label": ".execute()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L345",
+      "source_location": "L333",
       "_origin": "ast",
       "id": "core_ai_worker_workspacetools_execute",
       "community": 24,
@@ -4293,7 +4293,7 @@
       "label": "._path()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L372",
+      "source_location": "L360",
       "_origin": "ast",
       "id": "core_ai_worker_workspacetools_path",
       "community": 24,
@@ -4303,17 +4303,17 @@
       "label": "APIWorkerHarness",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L392",
+      "source_location": "L380",
       "_origin": "ast",
       "id": "core_ai_worker_apiworkerharness",
-      "community": 10,
+      "community": 24,
       "norm_label": "apiworkerharness"
     },
     {
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L393",
+      "source_location": "L381",
       "_origin": "ast",
       "id": "core_ai_worker_apiworkerharness_init",
       "community": 24,
@@ -4323,7 +4323,7 @@
       "label": ".run()",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L396",
+      "source_location": "L384",
       "_origin": "ast",
       "id": "core_ai_worker_apiworkerharness_run",
       "community": 24,
@@ -4333,7 +4333,7 @@
       "label": "AIModelRecord",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L396",
+      "source_location": "L384",
       "_origin": "ast",
       "id": "canto_core_ai_worker_py_aimodelrecord",
       "community": 24,
@@ -4343,7 +4343,7 @@
       "label": "WorkerBudgetPolicy",
       "file_type": "code",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L396",
+      "source_location": "L384",
       "_origin": "ast",
       "id": "canto_core_ai_worker_py_workerbudgetpolicy",
       "community": 24,
@@ -4353,9 +4353,9 @@
       "label": "Provider transport with one normalized tool-call contract.",
       "file_type": "rationale",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L67",
+      "source_location": "L60",
       "_origin": "ast",
-      "id": "core_ai_worker_rationale_67",
+      "id": "core_ai_worker_rationale_60",
       "community": 24,
       "norm_label": "provider transport with one normalized tool-call contract."
     },
@@ -4366,7 +4366,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_ai_worker_demo",
-      "community": 10,
+      "community": 22,
       "norm_label": "ai_worker_demo.py"
     },
     {
@@ -4376,7 +4376,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "core_ai_worker_demo_aiworkerpooldemoresult",
-      "community": 10,
+      "community": 22,
       "norm_label": "aiworkerpooldemoresult"
     },
     {
@@ -4396,7 +4396,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "core_ai_worker_demo_scriptedagentadapter",
-      "community": 10,
+      "community": 24,
       "norm_label": "scriptedagentadapter"
     },
     {
@@ -4406,7 +4406,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "core_ai_worker_demo_scriptedagentadapter_init",
-      "community": 10,
+      "community": 24,
       "norm_label": ".__init__()"
     },
     {
@@ -4426,7 +4426,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "core_ai_worker_demo_git",
-      "community": 10,
+      "community": 22,
       "norm_label": "_git()"
     },
     {
@@ -4436,7 +4436,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "canto_core_ai_worker_demo_py_path",
-      "community": 10,
+      "community": 22,
       "norm_label": "path"
     },
     {
@@ -4446,7 +4446,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "core_ai_worker_demo_run_ai_worker_pool_demo",
-      "community": 10,
+      "community": 22,
       "norm_label": "run_ai_worker_pool_demo()"
     },
     {
@@ -4536,7 +4536,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_capability_manifest",
-      "community": 1,
+      "community": 15,
       "norm_label": "capability_manifest.py"
     },
     {
@@ -4546,7 +4546,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilitymanifesterror",
-      "community": 11,
+      "community": 41,
       "norm_label": "capabilitymanifesterror"
     },
     {
@@ -4556,7 +4556,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilityrisk",
-      "community": 1,
+      "community": 15,
       "norm_label": "capabilityrisk"
     },
     {
@@ -4566,7 +4566,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilityproviderbinding",
-      "community": 1,
+      "community": 15,
       "norm_label": "capabilityproviderbinding"
     },
     {
@@ -4576,7 +4576,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilityexecution",
-      "community": 1,
+      "community": 15,
       "norm_label": "capabilityexecution"
     },
     {
@@ -4596,7 +4596,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilitymanifest_load",
-      "community": 11,
+      "community": 41,
       "norm_label": ".load()"
     },
     {
@@ -4606,7 +4606,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "canto_core_capability_manifest_py_path",
-      "community": 11,
+      "community": 41,
       "norm_label": "path"
     },
     {
@@ -4616,7 +4616,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilitymanifest_from_yaml",
-      "community": 11,
+      "community": 41,
       "norm_label": ".from_yaml()"
     },
     {
@@ -4626,7 +4626,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilityvalidationresult",
-      "community": 1,
+      "community": 15,
       "norm_label": "capabilityvalidationresult"
     },
     {
@@ -4646,7 +4646,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilitymanifestvalidator_validate",
-      "community": 1,
+      "community": 15,
       "norm_label": ".validate()"
     },
     {
@@ -4656,7 +4656,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "canto_core_capability_manifest_py_any",
-      "community": 1,
+      "community": 15,
       "norm_label": "any"
     },
     {
@@ -4666,7 +4666,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "core_capability_manifest_capabilitymanifestvalidator_validate_yaml",
-      "community": 1,
+      "community": 15,
       "norm_label": ".validate_yaml()"
     },
     {
@@ -4676,7 +4676,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "core_capability_manifest_rationale_12",
-      "community": 11,
+      "community": 41,
       "norm_label": "raised when a capability manifest cannot be parsed or validated."
     },
     {
@@ -4686,7 +4686,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_capability_package",
-      "community": 17,
+      "community": 25,
       "norm_label": "capability_package.py"
     },
     {
@@ -4706,7 +4706,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "core_capability_package_packagevalidationresult",
-      "community": 17,
+      "community": 25,
       "norm_label": "packagevalidationresult"
     },
     {
@@ -4716,7 +4716,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "core_capability_package_provider_binding_errors",
-      "community": 17,
+      "community": 25,
       "norm_label": "provider_binding_errors()"
     },
     {
@@ -4726,7 +4726,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "canto_core_capability_package_py_capabilitymanifest",
-      "community": 17,
+      "community": 25,
       "norm_label": "capabilitymanifest"
     },
     {
@@ -4736,7 +4736,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "core_capability_package_source_manifest_path",
-      "community": 17,
+      "community": 25,
       "norm_label": "_source_manifest_path()"
     },
     {
@@ -4746,7 +4746,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "canto_core_capability_package_py_path",
-      "community": 17,
+      "community": 25,
       "norm_label": "path"
     },
     {
@@ -4756,7 +4756,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "core_capability_package_validate_source",
-      "community": 17,
+      "community": 25,
       "norm_label": "_validate_source()"
     },
     {
@@ -4766,7 +4766,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "core_capability_package_excluded",
-      "community": 17,
+      "community": 25,
       "norm_label": "_excluded()"
     },
     {
@@ -4776,7 +4776,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "core_capability_package_collect_package_files",
-      "community": 17,
+      "community": 25,
       "norm_label": "collect_package_files()"
     },
     {
@@ -4786,7 +4786,7 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "core_capability_package_build_checksums",
-      "community": 17,
+      "community": 25,
       "norm_label": "build_checksums()"
     },
     {
@@ -4796,7 +4796,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "core_capability_package_zip_info",
-      "community": 17,
+      "community": 25,
       "norm_label": "_zip_info()"
     },
     {
@@ -4806,7 +4806,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "zipinfo",
-      "community": 17,
+      "community": 25,
       "norm_label": "zipinfo"
     },
     {
@@ -4826,7 +4826,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "core_capability_package_safe_archive_path",
-      "community": 17,
+      "community": 25,
       "norm_label": "safe_archive_path()"
     },
     {
@@ -4836,7 +4836,7 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "core_capability_package_parse_checksums",
-      "community": 17,
+      "community": 25,
       "norm_label": "_parse_checksums()"
     },
     {
@@ -4856,7 +4856,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "core_capability_package_extract_package",
-      "community": 17,
+      "community": 41,
       "norm_label": "extract_package()"
     },
     {
@@ -4996,7 +4996,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_delegation",
-      "community": 29,
+      "community": 118,
       "norm_label": "delegation.py"
     },
     {
@@ -5266,7 +5266,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "core_delegation_artifacts_classify_worker_outcome",
-      "community": 10,
+      "community": 195,
       "norm_label": "classify_worker_outcome()"
     },
     {
@@ -5386,7 +5386,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_delegation_commands",
-      "community": 2,
+      "community": 22,
       "norm_label": "delegation_commands.py"
     },
     {
@@ -5406,7 +5406,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "core_delegation_commands_parse_command",
-      "community": 16,
+      "community": 22,
       "norm_label": "parse_command()"
     },
     {
@@ -5416,7 +5416,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "core_delegation_commands_delegationcommandservice",
-      "community": 16,
+      "community": 22,
       "norm_label": "delegationcommandservice"
     },
     {
@@ -5456,7 +5456,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "core_delegation_commands_delegationcommandservice_run",
-      "community": 16,
+      "community": 22,
       "norm_label": ".run()"
     },
     {
@@ -5466,7 +5466,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "commandrecord",
-      "community": 16,
+      "community": 22,
       "norm_label": "commandrecord"
     },
     {
@@ -5476,7 +5476,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "core_delegation_commands_delegationcommandservice_report",
-      "community": 16,
+      "community": 22,
       "norm_label": ".report()"
     },
     {
@@ -5486,7 +5486,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "core_delegation_commands_delegationcommandservice_waive",
-      "community": 16,
+      "community": 22,
       "norm_label": ".waive()"
     },
     {
@@ -5496,7 +5496,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "core_delegation_commands_delegationcommandservice_unmet_required",
-      "community": 16,
+      "community": 22,
       "norm_label": ".unmet_required()"
     },
     {
@@ -5696,7 +5696,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_delegation_dashboard",
-      "community": 118,
+      "community": 204,
       "norm_label": "delegation_dashboard.py"
     },
     {
@@ -5706,7 +5706,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "core_delegation_dashboard_attention",
-      "community": 118,
+      "community": 204,
       "norm_label": "_attention()"
     },
     {
@@ -5716,7 +5716,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "core_delegation_dashboard_actions",
-      "community": 118,
+      "community": 204,
       "norm_label": "_actions()"
     },
     {
@@ -5736,7 +5736,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "core_delegation_dashboard_delegationdashboardservice_init",
-      "community": 2,
+      "community": 29,
       "norm_label": ".__init__()"
     },
     {
@@ -5746,7 +5746,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "canto_core_delegation_dashboard_py_delegationservice",
-      "community": 2,
+      "community": 29,
       "norm_label": "delegationservice"
     },
     {
@@ -5756,7 +5756,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "canto_core_delegation_dashboard_py_delegationworkspaceservice",
-      "community": 2,
+      "community": 29,
       "norm_label": "delegationworkspaceservice"
     },
     {
@@ -5766,7 +5766,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "core_delegation_dashboard_delegationdashboardservice_list",
-      "community": 118,
+      "community": 204,
       "norm_label": ".list()"
     },
     {
@@ -5776,7 +5776,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "delegationdashboardtask",
-      "community": 118,
+      "community": 204,
       "norm_label": "delegationdashboardtask"
     },
     {
@@ -5786,7 +5786,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "core_delegation_dashboard_delegationdashboardservice_detail",
-      "community": 118,
+      "community": 7,
       "norm_label": ".detail()"
     },
     {
@@ -5796,7 +5796,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "delegationdashboarddetail",
-      "community": 118,
+      "community": 7,
       "norm_label": "delegationdashboarddetail"
     },
     {
@@ -5806,7 +5806,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_delegation_demo",
-      "community": 16,
+      "community": 118,
       "norm_label": "delegation_demo.py"
     },
     {
@@ -5826,7 +5826,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "core_delegation_demo_delegationdemoerror_init",
-      "community": 16,
+      "community": 118,
       "norm_label": ".__init__()"
     },
     {
@@ -5836,7 +5836,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "canto_core_delegation_demo_py_path",
-      "community": 16,
+      "community": 118,
       "norm_label": "path"
     },
     {
@@ -5856,7 +5856,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "core_delegation_demo_delegationdemoresult",
-      "community": 16,
+      "community": 2,
       "norm_label": "delegationdemoresult"
     },
     {
@@ -5866,7 +5866,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "core_delegation_demo_git",
-      "community": 16,
+      "community": 118,
       "norm_label": "_git()"
     },
     {
@@ -5876,7 +5876,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "core_delegation_demo_cleanup_delegation_demo",
-      "community": 16,
+      "community": 118,
       "norm_label": "cleanup_delegation_demo()"
     },
     {
@@ -5886,7 +5886,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "core_delegation_demo_run_delegation_demo",
-      "community": 16,
+      "community": 118,
       "norm_label": "run_delegation_demo()"
     },
     {
@@ -5916,7 +5916,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "core_delegation_executor_codexcliexecutor",
-      "community": 118,
+      "community": 7,
       "norm_label": "codexcliexecutor"
     },
     {
@@ -5956,7 +5956,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "core_delegation_executor_codexcliexecutor_available",
-      "community": 118,
+      "community": 2,
       "norm_label": ".available()"
     },
     {
@@ -5966,7 +5966,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "canto_core_delegation_executor_py_executorprofile",
-      "community": 118,
+      "community": 2,
       "norm_label": "executorprofile"
     },
     {
@@ -5976,7 +5976,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "core_delegation_executor_codexcliexecutor_command",
-      "community": 118,
+      "community": 2,
       "norm_label": ".command()"
     },
     {
@@ -5986,7 +5986,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "canto_core_delegation_executor_py_path",
-      "community": 118,
+      "community": 2,
       "norm_label": "path"
     },
     {
@@ -5996,7 +5996,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "core_delegation_executor_codexcliexecutor_prompt",
-      "community": 118,
+      "community": 2,
       "norm_label": ".prompt()"
     },
     {
@@ -6006,7 +6006,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "core_delegation_executor_codexcliexecutor_projected_sessions",
-      "community": 118,
+      "community": 7,
       "norm_label": ".projected_sessions()"
     },
     {
@@ -6016,7 +6016,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "core_delegation_executor_codexcliexecutor_launch",
-      "community": 118,
+      "community": 2,
       "norm_label": ".launch()"
     },
     {
@@ -6036,7 +6036,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_delegation_pool",
-      "community": 118,
+      "community": 7,
       "norm_label": "delegation_pool.py"
     },
     {
@@ -6056,7 +6056,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "core_delegation_pool_delegationpoolservice_init",
-      "community": 118,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -6066,7 +6066,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "canto_core_delegation_pool_py_delegationservice",
-      "community": 118,
+      "community": 7,
       "norm_label": "delegationservice"
     },
     {
@@ -6076,7 +6076,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "core_delegation_pool_delegationpoolservice_executors",
-      "community": 118,
+      "community": 7,
       "norm_label": ".executors()"
     },
     {
@@ -6086,7 +6086,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "executorpoolentry",
-      "community": 118,
+      "community": 7,
       "norm_label": "executorpoolentry"
     },
     {
@@ -6096,7 +6096,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "core_delegation_pool_delegationpoolservice_tasks",
-      "community": 118,
+      "community": 7,
       "norm_label": ".tasks()"
     },
     {
@@ -6106,7 +6106,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "delegationtaskstatus",
-      "community": 118,
+      "community": 7,
       "norm_label": "delegationtaskstatus"
     },
     {
@@ -6166,7 +6166,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "core_delegation_promotion_delegationpromotionservice",
-      "community": 16,
+      "community": 22,
       "norm_label": "delegationpromotionservice"
     },
     {
@@ -6176,7 +6176,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "core_delegation_promotion_delegationpromotionservice_init",
-      "community": 2,
+      "community": 22,
       "norm_label": ".__init__()"
     },
     {
@@ -6186,7 +6186,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "canto_core_delegation_promotion_py_delegationservice",
-      "community": 2,
+      "community": 22,
       "norm_label": "delegationservice"
     },
     {
@@ -6196,7 +6196,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "canto_core_delegation_promotion_py_delegationworkspaceservice",
-      "community": 2,
+      "community": 22,
       "norm_label": "delegationworkspaceservice"
     },
     {
@@ -6216,7 +6216,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "promotionresult",
-      "community": 2,
+      "community": 22,
       "norm_label": "promotionresult"
     },
     {
@@ -6250,20 +6250,10 @@
       "norm_label": "._verify_applied()"
     },
     {
-      "label": "._index_entries()",
-      "file_type": "code",
-      "source_file": "canto/core/delegation_promotion.py",
-      "source_location": "L219",
-      "_origin": "ast",
-      "id": "core_delegation_promotion_delegationpromotionservice_index_entries",
-      "community": 22,
-      "norm_label": "._index_entries()"
-    },
-    {
       "label": "._rollback()",
       "file_type": "code",
       "source_file": "canto/core/delegation_promotion.py",
-      "source_location": "L225",
+      "source_location": "L215",
       "_origin": "ast",
       "id": "core_delegation_promotion_delegationpromotionservice_rollback",
       "community": 22,
@@ -6316,7 +6306,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "core_delegation_queue_delegationpromotionqueue_init",
-      "community": 2,
+      "community": 16,
       "norm_label": ".__init__()"
     },
     {
@@ -6326,7 +6316,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "canto_core_delegation_queue_py_delegationservice",
-      "community": 2,
+      "community": 16,
       "norm_label": "delegationservice"
     },
     {
@@ -6336,7 +6326,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "canto_core_delegation_queue_py_delegationworkspaceservice",
-      "community": 2,
+      "community": 16,
       "norm_label": "delegationworkspaceservice"
     },
     {
@@ -6416,7 +6406,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_delegation_review",
-      "community": 2,
+      "community": 204,
       "norm_label": "delegation_review.py"
     },
     {
@@ -6446,7 +6436,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "core_delegation_review_delegationreviewservice_init",
-      "community": 2,
+      "community": 16,
       "norm_label": ".__init__()"
     },
     {
@@ -6456,7 +6446,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "canto_core_delegation_review_py_delegationservice",
-      "community": 2,
+      "community": 16,
       "norm_label": "delegationservice"
     },
     {
@@ -6466,7 +6456,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "canto_core_delegation_review_py_delegationworkspaceservice",
-      "community": 2,
+      "community": 16,
       "norm_label": "delegationworkspaceservice"
     },
     {
@@ -6586,7 +6576,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "core_delegation_review_summary_git",
-      "community": 16,
+      "community": 195,
       "norm_label": "_git()"
     },
     {
@@ -6596,7 +6586,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "canto_core_delegation_review_summary_py_path",
-      "community": 16,
+      "community": 195,
       "norm_label": "path"
     },
     {
@@ -6606,7 +6596,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "core_delegation_review_summary_delegationreviewsummaryservice",
-      "community": 8,
+      "community": 7,
       "norm_label": "delegationreviewsummaryservice"
     },
     {
@@ -6646,7 +6636,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "core_delegation_review_summary_delegationreviewsummaryservice_summarize",
-      "community": 16,
+      "community": 195,
       "norm_label": ".summarize()"
     },
     {
@@ -6656,7 +6646,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "delegationreviewsummary",
-      "community": 16,
+      "community": 195,
       "norm_label": "delegationreviewsummary"
     },
     {
@@ -6706,7 +6696,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "core_delegation_timeline_delegationtimelineservice_init",
-      "community": 2,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -6716,7 +6706,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "canto_core_delegation_timeline_py_delegationservice",
-      "community": 2,
+      "community": 7,
       "norm_label": "delegationservice"
     },
     {
@@ -6746,7 +6736,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_delegation_workspace",
-      "community": 190,
+      "community": 29,
       "norm_label": "delegation_workspace.py"
     },
     {
@@ -6756,7 +6746,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "core_delegation_workspace_workspaceerror",
-      "community": 190,
+      "community": 7,
       "norm_label": "workspaceerror"
     },
     {
@@ -6766,7 +6756,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "core_delegation_workspace_git",
-      "community": 190,
+      "community": 29,
       "norm_label": "_git()"
     },
     {
@@ -6776,7 +6766,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "canto_core_delegation_workspace_py_path",
-      "community": 190,
+      "community": 29,
       "norm_label": "path"
     },
     {
@@ -6786,7 +6776,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "core_delegation_workspace_inspect_repository",
-      "community": 190,
+      "community": 118,
       "norm_label": "inspect_repository()"
     },
     {
@@ -6796,7 +6786,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "repositoryidentity",
-      "community": 190,
+      "community": 2,
       "norm_label": "repositoryidentity"
     },
     {
@@ -6806,7 +6796,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "core_delegation_workspace_verify_repository_identity",
-      "community": 190,
+      "community": 29,
       "norm_label": "verify_repository_identity()"
     },
     {
@@ -6816,7 +6806,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "core_delegation_workspace_normalize_scope_path",
-      "community": 190,
+      "community": 29,
       "norm_label": "_normalize_scope_path()"
     },
     {
@@ -6826,7 +6816,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "core_delegation_workspace_overlaps",
-      "community": 190,
+      "community": 29,
       "norm_label": "_overlaps()"
     },
     {
@@ -6836,7 +6826,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "core_delegation_workspace_delegationworkspaceservice",
-      "community": 2,
+      "community": 29,
       "norm_label": "delegationworkspaceservice"
     },
     {
@@ -6846,7 +6836,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "core_delegation_workspace_delegationworkspaceservice_init",
-      "community": 190,
+      "community": 29,
       "norm_label": ".__init__()"
     },
     {
@@ -6866,7 +6856,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "core_delegation_workspace_delegationworkspaceservice_prepare",
-      "community": 190,
+      "community": 29,
       "norm_label": ".prepare()"
     },
     {
@@ -6876,7 +6866,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "delegationworkspace",
-      "community": 190,
+      "community": 29,
       "norm_label": "delegationworkspace"
     },
     {
@@ -6886,7 +6876,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "core_delegation_workspace_delegationworkspaceservice_get",
-      "community": 190,
+      "community": 29,
       "norm_label": ".get()"
     },
     {
@@ -6896,7 +6886,7 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "core_delegation_workspace_delegationworkspaceservice_inspect",
-      "community": 190,
+      "community": 29,
       "norm_label": ".inspect()"
     },
     {
@@ -6906,7 +6896,7 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "core_delegation_workspace_delegationworkspaceservice_remove",
-      "community": 190,
+      "community": 29,
       "norm_label": ".remove()"
     },
     {
@@ -6946,7 +6936,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_executor_profiles",
-      "community": 207,
+      "community": 2,
       "norm_label": "executor_profiles.py"
     },
     {
@@ -6966,7 +6956,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "core_executor_profiles_merge",
-      "community": 207,
+      "community": 9,
       "norm_label": "_merge()"
     },
     {
@@ -6976,7 +6966,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "canto_core_executor_profiles_py_any",
-      "community": 207,
+      "community": 9,
       "norm_label": "any"
     },
     {
@@ -6986,7 +6976,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "core_executor_profiles_reject_secrets",
-      "community": 207,
+      "community": 9,
       "norm_label": "_reject_secrets()"
     },
     {
@@ -7036,7 +7026,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "core_executor_profiles_executorprofilemanager_presets",
-      "community": 207,
+      "community": 9,
       "norm_label": ".presets()"
     },
     {
@@ -7046,7 +7036,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "core_executor_profiles_executorprofilemanager_resolve",
-      "community": 207,
+      "community": 9,
       "norm_label": ".resolve()"
     },
     {
@@ -7056,7 +7046,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "canto_core_executor_profiles_py_executorprofile",
-      "community": 207,
+      "community": 9,
       "norm_label": "executorprofile"
     },
     {
@@ -7066,7 +7056,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "core_executor_profiles_executorprofilemanager_save",
-      "community": 207,
+      "community": 9,
       "norm_label": ".save()"
     },
     {
@@ -7076,7 +7066,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "core_executor_profiles_executorprofilemanager_check",
-      "community": 207,
+      "community": 9,
       "norm_label": ".check()"
     },
     {
@@ -7456,7 +7446,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_local_registry",
-      "community": 11,
+      "community": 41,
       "norm_label": "local_registry.py"
     },
     {
@@ -7466,7 +7456,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "core_local_registry_localregistryerror",
-      "community": 11,
+      "community": 10,
       "norm_label": "localregistryerror"
     },
     {
@@ -7476,7 +7466,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "core_local_registry_registryentry",
-      "community": 11,
+      "community": 1,
       "norm_label": "registryentry"
     },
     {
@@ -7486,7 +7476,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "core_local_registry_installedcapability",
-      "community": 11,
+      "community": 41,
       "norm_label": "installedcapability"
     },
     {
@@ -7496,7 +7486,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "core_local_registry_installedvalidationresult",
-      "community": 11,
+      "community": 41,
       "norm_label": "installedvalidationresult"
     },
     {
@@ -7506,7 +7496,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "core_local_registry_installresult",
-      "community": 11,
+      "community": 41,
       "norm_label": "installresult"
     },
     {
@@ -7516,7 +7506,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths",
-      "community": 11,
+      "community": 18,
       "norm_label": "localregistrypaths"
     },
     {
@@ -7526,7 +7516,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_state_file",
-      "community": 11,
+      "community": 18,
       "norm_label": ".state_file()"
     },
     {
@@ -7536,7 +7526,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "canto_core_local_registry_py_path",
-      "community": 11,
+      "community": 18,
       "norm_label": "path"
     },
     {
@@ -7546,7 +7536,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_legacy_state_file",
-      "community": 11,
+      "community": 18,
       "norm_label": ".legacy_state_file()"
     },
     {
@@ -7556,7 +7546,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_work",
-      "community": 11,
+      "community": 18,
       "norm_label": ".work()"
     },
     {
@@ -7566,7 +7556,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_config",
-      "community": 11,
+      "community": 18,
       "norm_label": ".config()"
     },
     {
@@ -7576,7 +7566,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_vault",
-      "community": 11,
+      "community": 18,
       "norm_label": ".vault()"
     },
     {
@@ -7586,7 +7576,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_plans",
-      "community": 11,
+      "community": 18,
       "norm_label": ".plans()"
     },
     {
@@ -7596,7 +7586,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_index_file",
-      "community": 11,
+      "community": 18,
       "norm_label": ".index_file()"
     },
     {
@@ -7606,7 +7596,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_from_home",
-      "community": 11,
+      "community": 18,
       "norm_label": ".from_home()"
     },
     {
@@ -7616,7 +7606,7 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_create",
-      "community": 11,
+      "community": 18,
       "norm_label": ".create()"
     },
     {
@@ -7626,7 +7616,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "core_local_registry_localregistrypaths_migrate_legacy_state",
-      "community": 11,
+      "community": 18,
       "norm_label": "._migrate_legacy_state()"
     },
     {
@@ -7636,7 +7626,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "core_local_registry_registrystore",
-      "community": 11,
+      "community": 10,
       "norm_label": "registrystore"
     },
     {
@@ -7646,7 +7636,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_init",
-      "community": 11,
+      "community": 18,
       "norm_label": ".__init__()"
     },
     {
@@ -7656,7 +7646,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_from_home",
-      "community": 11,
+      "community": 18,
       "norm_label": ".from_home()"
     },
     {
@@ -7666,7 +7656,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_initialize",
-      "community": 11,
+      "community": 18,
       "norm_label": ".initialize()"
     },
     {
@@ -7676,7 +7666,7 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_load",
-      "community": 11,
+      "community": 10,
       "norm_label": ".load()"
     },
     {
@@ -7686,7 +7676,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_save",
-      "community": 11,
+      "community": 10,
       "norm_label": ".save()"
     },
     {
@@ -7696,7 +7686,7 @@
       "source_location": "L192",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_load_manifest",
-      "community": 11,
+      "community": 10,
       "norm_label": ".load_manifest()"
     },
     {
@@ -7706,7 +7696,7 @@
       "source_location": "L192",
       "_origin": "ast",
       "id": "canto_core_local_registry_py_capabilitymanifest",
-      "community": 11,
+      "community": 41,
       "norm_label": "capabilitymanifest"
     },
     {
@@ -7716,7 +7706,7 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_remove_installed_directory",
-      "community": 11,
+      "community": 10,
       "norm_label": ".remove_installed_directory()"
     },
     {
@@ -7726,7 +7716,7 @@
       "source_location": "L215",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_checksum_directory",
-      "community": 11,
+      "community": 10,
       "norm_label": ".checksum_directory()"
     },
     {
@@ -7736,7 +7726,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_reject_symbolic_links",
-      "community": 11,
+      "community": 10,
       "norm_label": ".reject_symbolic_links()"
     },
     {
@@ -7746,7 +7736,7 @@
       "source_location": "L246",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_install_directory",
-      "community": 11,
+      "community": 10,
       "norm_label": ".install_directory()"
     },
     {
@@ -7756,7 +7746,7 @@
       "source_location": "L265",
       "_origin": "ast",
       "id": "core_local_registry_registrystore_discard_installed_directory",
-      "community": 11,
+      "community": 10,
       "norm_label": ".discard_installed_directory()"
     },
     {
@@ -7766,7 +7756,7 @@
       "source_location": "L275",
       "_origin": "ast",
       "id": "core_local_registry_registry",
-      "community": 11,
+      "community": 1,
       "norm_label": "registry"
     },
     {
@@ -7776,7 +7766,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "core_local_registry_registry_init",
-      "community": 11,
+      "community": 10,
       "norm_label": ".__init__()"
     },
     {
@@ -7786,7 +7776,7 @@
       "source_location": "L280",
       "_origin": "ast",
       "id": "core_local_registry_registry_local",
-      "community": 11,
+      "community": 18,
       "norm_label": ".local()"
     },
     {
@@ -7796,7 +7786,7 @@
       "source_location": "L285",
       "_origin": "ast",
       "id": "core_local_registry_registry_list_installed",
-      "community": 11,
+      "community": 10,
       "norm_label": ".list_installed()"
     },
     {
@@ -7806,7 +7796,7 @@
       "source_location": "L291",
       "_origin": "ast",
       "id": "core_local_registry_registry_search",
-      "community": 11,
+      "community": 1,
       "norm_label": ".search()"
     },
     {
@@ -7816,7 +7806,7 @@
       "source_location": "L302",
       "_origin": "ast",
       "id": "core_local_registry_registry_inspect",
-      "community": 11,
+      "community": 10,
       "norm_label": ".inspect()"
     },
     {
@@ -7826,7 +7816,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "core_local_registry_registry_remove",
-      "community": 11,
+      "community": 10,
       "norm_label": ".remove()"
     },
     {
@@ -7836,7 +7826,7 @@
       "source_location": "L334",
       "_origin": "ast",
       "id": "core_local_registry_registry_validate_installed",
-      "community": 11,
+      "community": 10,
       "norm_label": ".validate_installed()"
     },
     {
@@ -7846,7 +7836,7 @@
       "source_location": "L382",
       "_origin": "ast",
       "id": "core_local_registry_registry_install_directory",
-      "community": 11,
+      "community": 10,
       "norm_label": ".install_directory()"
     },
     {
@@ -7856,7 +7846,7 @@
       "source_location": "L459",
       "_origin": "ast",
       "id": "core_local_registry_registry_install_package",
-      "community": 11,
+      "community": 41,
       "norm_label": ".install_package()"
     },
     {
@@ -7866,7 +7856,7 @@
       "source_location": "L484",
       "_origin": "ast",
       "id": "core_local_registry_registry_export",
-      "community": 11,
+      "community": 10,
       "norm_label": ".export()"
     },
     {
@@ -7876,7 +7866,7 @@
       "source_location": "L505",
       "_origin": "ast",
       "id": "core_local_registry_registry_execution_roots",
-      "community": 11,
+      "community": 10,
       "norm_label": ".execution_roots()"
     },
     {
@@ -7886,7 +7876,7 @@
       "source_location": "L517",
       "_origin": "ast",
       "id": "core_local_registry_registry_installed_matches",
-      "community": 11,
+      "community": 10,
       "norm_label": "._installed_matches()"
     },
     {
@@ -7896,7 +7886,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "core_local_registry_rationale_30",
-      "community": 11,
+      "community": 10,
       "norm_label": "raised when local registry metadata cannot be loaded."
     },
     {
@@ -8556,7 +8546,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "core_orchestration_planstore_init",
-      "community": 26,
+      "community": 1,
       "norm_label": ".__init__()"
     },
     {
@@ -8566,7 +8556,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "canto_core_orchestration_py_statestore",
-      "community": 26,
+      "community": 1,
       "norm_label": "statestore"
     },
     {
@@ -8576,7 +8566,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "canto_core_orchestration_py_path",
-      "community": 26,
+      "community": 1,
       "norm_label": "path"
     },
     {
@@ -8906,7 +8896,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_policy",
-      "community": 26,
+      "community": 1,
       "norm_label": "policy.py"
     },
     {
@@ -8926,7 +8916,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "core_policy_domain_is_approved",
-      "community": 26,
+      "community": 1,
       "norm_label": "domain_is_approved()"
     },
     {
@@ -8936,7 +8926,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "core_policy_evaluate_policy",
-      "community": 26,
+      "community": 1,
       "norm_label": "evaluate_policy()"
     },
     {
@@ -8946,7 +8936,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "canto_core_policy_py_any",
-      "community": 26,
+      "community": 1,
       "norm_label": "any"
     },
     {
@@ -8956,7 +8946,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "policy",
-      "community": 26,
+      "community": 1,
       "norm_label": "policy"
     },
     {
@@ -9026,7 +9016,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "canto_core_registry_py_any",
-      "community": 209,
+      "community": 4,
       "norm_label": "any"
     },
     {
@@ -9036,7 +9026,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "core_registry_registry",
-      "community": 28,
+      "community": 3,
       "norm_label": "registry"
     },
     {
@@ -9066,7 +9056,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "core_registry_registry_refresh_if_changed",
-      "community": 209,
+      "community": 4,
       "norm_label": ".refresh_if_changed()"
     },
     {
@@ -9096,7 +9086,7 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "core_registry_registry_public",
-      "community": 209,
+      "community": 4,
       "norm_label": "._public()"
     },
     {
@@ -9106,7 +9096,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "core_registry_registry_snapshot",
-      "community": 209,
+      "community": 4,
       "norm_label": ".snapshot()"
     },
     {
@@ -9116,7 +9106,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "core_registry_registry_get_skill",
-      "community": 209,
+      "community": 4,
       "norm_label": ".get_skill()"
     },
     {
@@ -9126,7 +9116,7 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "core_registry_registry_get_provider",
-      "community": 209,
+      "community": 4,
       "norm_label": ".get_provider()"
     },
     {
@@ -9136,7 +9126,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "core_registry_registry_provider_internal",
-      "community": 209,
+      "community": 4,
       "norm_label": ".provider_internal()"
     },
     {
@@ -9186,7 +9176,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "core_repository_repositorydoctorcheck",
-      "community": 172,
+      "community": 7,
       "norm_label": "repositorydoctorcheck"
     },
     {
@@ -9416,7 +9406,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "core_runner_runnererror",
-      "community": 28,
+      "community": 194,
       "norm_label": "runnererror"
     },
     {
@@ -9626,7 +9616,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "core_security_redact_sensitive",
-      "community": 28,
+      "community": 194,
       "norm_label": "redact_sensitive()"
     },
     {
@@ -9736,7 +9726,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "core_state",
-      "community": 35,
+      "community": 5,
       "norm_label": "state.py"
     },
     {
@@ -10786,7 +10776,7 @@
       "source_location": "L807",
       "_origin": "ast",
       "id": "core_state_redisstatestore_ping",
-      "community": 35,
+      "community": 5,
       "norm_label": ".ping()"
     },
     {
@@ -11246,7 +11236,7 @@
       "source_location": "L1124",
       "_origin": "ast",
       "id": "core_state_memorystatestore_ping",
-      "community": 35,
+      "community": 5,
       "norm_label": ".ping()"
     },
     {
@@ -11846,7 +11836,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "models_ai_workers",
-      "community": 15,
+      "community": 24,
       "norm_label": "ai_workers.py"
     },
     {
@@ -11866,7 +11856,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "models_ai_workers_modelpricing",
-      "community": 10,
+      "community": 24,
       "norm_label": "modelpricing"
     },
     {
@@ -11876,7 +11866,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "models_ai_workers_aimodelrecord",
-      "community": 41,
+      "community": 24,
       "norm_label": "aimodelrecord"
     },
     {
@@ -11886,7 +11876,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "models_ai_workers_aimodelrecord_infer_legacy_probe_state",
-      "community": 41,
+      "community": 24,
       "norm_label": ".infer_legacy_probe_state()"
     },
     {
@@ -11896,7 +11886,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "models_ai_workers_modelcatalogsnapshot",
-      "community": 15,
+      "community": 7,
       "norm_label": "modelcatalogsnapshot"
     },
     {
@@ -11906,7 +11896,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "models_ai_workers_modelreconciliationrecord",
-      "community": 15,
+      "community": 7,
       "norm_label": "modelreconciliationrecord"
     },
     {
@@ -11916,7 +11906,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "models_ai_workers_modelmetadatarecord",
-      "community": 15,
+      "community": 7,
       "norm_label": "modelmetadatarecord"
     },
     {
@@ -11926,7 +11916,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "models_ai_workers_probeassertion",
-      "community": 25,
+      "community": 7,
       "norm_label": "probeassertion"
     },
     {
@@ -11936,7 +11926,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "models_ai_workers_workerproberesult",
-      "community": 15,
+      "community": 7,
       "norm_label": "workerproberesult"
     },
     {
@@ -11956,7 +11946,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "models_ai_workers_workerselectionpolicy",
-      "community": 10,
+      "community": 24,
       "norm_label": "workerselectionpolicy"
     },
     {
@@ -11966,7 +11956,7 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "models_ai_workers_candidatescore",
-      "community": 41,
+      "community": 24,
       "norm_label": "candidatescore"
     },
     {
@@ -11976,7 +11966,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "models_ai_workers_workerselectiondecision",
-      "community": 41,
+      "community": 24,
       "norm_label": "workerselectiondecision"
     },
     {
@@ -11996,7 +11986,7 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "models_ai_workers_endpointhealthrecord",
-      "community": 10,
+      "community": 24,
       "norm_label": "endpointhealthrecord"
     },
     {
@@ -12026,7 +12016,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "models_delegation_delegationscope",
-      "community": 24,
+      "community": 118,
       "norm_label": "delegationscope"
     },
     {
@@ -12036,7 +12026,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "models_delegation_delegationtask",
-      "community": 29,
+      "community": 118,
       "norm_label": "delegationtask"
     },
     {
@@ -12046,7 +12036,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "models_delegation_delegationworkspace",
-      "community": 10,
+      "community": 24,
       "norm_label": "delegationworkspace"
     },
     {
@@ -12056,7 +12046,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "models_delegation_executorpermissions",
-      "community": 204,
+      "community": 1,
       "norm_label": "executorpermissions"
     },
     {
@@ -12066,7 +12056,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "models_delegation_executorprofile",
-      "community": 29,
+      "community": 118,
       "norm_label": "executorprofile"
     },
     {
@@ -12076,7 +12066,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "models_delegation_executorsession",
-      "community": 205,
+      "community": 24,
       "norm_label": "executorsession"
     },
     {
@@ -12086,7 +12076,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "models_delegation_executorlaunch",
-      "community": 205,
+      "community": 35,
       "norm_label": "executorlaunch"
     },
     {
@@ -12096,7 +12086,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "models_delegation_delegationmessage",
-      "community": 192,
+      "community": 204,
       "norm_label": "delegationmessage"
     },
     {
@@ -12116,7 +12106,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "models_delegation_delegationresult",
-      "community": 205,
+      "community": 204,
       "norm_label": "delegationresult"
     },
     {
@@ -12156,7 +12146,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "models_delegation_commandrecord",
-      "community": 192,
+      "community": 204,
       "norm_label": "commandrecord"
     },
     {
@@ -12166,7 +12156,7 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "models_delegation_delegationevent",
-      "community": 29,
+      "community": 204,
       "norm_label": "delegationevent"
     },
     {
@@ -12176,7 +12166,7 @@
       "source_location": "L225",
       "_origin": "ast",
       "id": "models_delegation_executorpoolentry",
-      "community": 204,
+      "community": 1,
       "norm_label": "executorpoolentry"
     },
     {
@@ -12186,7 +12176,7 @@
       "source_location": "L234",
       "_origin": "ast",
       "id": "models_delegation_delegationtaskstatus",
-      "community": 204,
+      "community": 1,
       "norm_label": "delegationtaskstatus"
     },
     {
@@ -12196,7 +12186,7 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "models_delegation_promotionqueueentry",
-      "community": 204,
+      "community": 8,
       "norm_label": "promotionqueueentry"
     },
     {
@@ -12236,7 +12226,7 @@
       "source_location": "L296",
       "_origin": "ast",
       "id": "models_delegation_delegationvariant",
-      "community": 211,
+      "community": 118,
       "norm_label": "delegationvariant"
     },
     {
@@ -12266,7 +12256,7 @@
       "source_location": "L326",
       "_origin": "ast",
       "id": "models_delegation_delegationreviewsummary",
-      "community": 204,
+      "community": 195,
       "norm_label": "delegationreviewsummary"
     },
     {
@@ -12276,7 +12266,7 @@
       "source_location": "L349",
       "_origin": "ast",
       "id": "models_delegation_delegationblocker",
-      "community": 204,
+      "community": 8,
       "norm_label": "delegationblocker"
     },
     {
@@ -12286,7 +12276,7 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "models_delegation_delegationconflictreport",
-      "community": 204,
+      "community": 8,
       "norm_label": "delegationconflictreport"
     },
     {
@@ -12396,7 +12386,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "models_schemas",
-      "community": 26,
+      "community": 1,
       "norm_label": "schemas.py"
     },
     {
@@ -12406,7 +12396,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "models_schemas_utc_now",
-      "community": 25,
+      "community": 28,
       "norm_label": "utc_now()"
     },
     {
@@ -12416,7 +12406,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "models_schemas_policy",
-      "community": 26,
+      "community": 1,
       "norm_label": "policy"
     },
     {
@@ -13700,7 +13690,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_py_scripts_demo_delegated_executors",
-      "community": 16,
+      "community": 118,
       "norm_label": "demo_delegated_executors.py"
     },
     {
@@ -13710,7 +13700,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_git",
-      "community": 16,
+      "community": 172,
       "norm_label": "git()"
     },
     {
@@ -13720,7 +13710,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_py_path",
-      "community": 16,
+      "community": 172,
       "norm_label": "path"
     },
     {
@@ -13730,7 +13720,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_repository",
-      "community": 16,
+      "community": 172,
       "norm_label": "repository()"
     },
     {
@@ -13740,7 +13730,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_create_task",
-      "community": 16,
+      "community": 118,
       "norm_label": "create_task()"
     },
     {
@@ -13750,7 +13740,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_py_delegationservice",
-      "community": 16,
+      "community": 172,
       "norm_label": "delegationservice"
     },
     {
@@ -13760,7 +13750,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_review_and_promote",
-      "community": 16,
+      "community": 172,
       "norm_label": "review_and_promote()"
     },
     {
@@ -13770,7 +13760,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_py_delegationworkspaceservice",
-      "community": 16,
+      "community": 172,
       "norm_label": "delegationworkspaceservice"
     },
     {
@@ -13780,7 +13770,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "scripts_demo_delegated_executors_main",
-      "community": 16,
+      "community": 172,
       "norm_label": "main()"
     },
     {
@@ -13790,7 +13780,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_demo_mvp_v1_py_scripts_demo_mvp_v1",
-      "community": 17,
+      "community": 19,
       "norm_label": "demo_mvp_v1.py"
     },
     {
@@ -13800,7 +13790,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_demo_mvp_v1_main",
-      "community": 17,
+      "community": 19,
       "norm_label": "main()"
     },
     {
@@ -13810,7 +13800,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_demo_v2_2_py_scripts_demo_v2_2",
-      "community": 17,
+      "community": 3,
       "norm_label": "demo_v2_2.py"
     },
     {
@@ -13820,7 +13810,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "scripts_demo_v2_2_show",
-      "community": 17,
+      "community": 3,
       "norm_label": "show()"
     },
     {
@@ -13830,7 +13820,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "scripts_demo_v2_2_main",
-      "community": 17,
+      "community": 3,
       "norm_label": "main()"
     },
     {
@@ -14222,7 +14212,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_conftest",
-      "community": 28,
+      "community": 3,
       "norm_label": "conftest.py"
     },
     {
@@ -14232,7 +14222,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_conftest_runtime",
-      "community": 28,
+      "community": 3,
       "norm_label": "runtime()"
     },
     {
@@ -14242,7 +14232,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_conftest_py_path",
-      "community": 28,
+      "community": 3,
       "norm_label": "path"
     },
     {
@@ -14252,7 +14242,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_assignment",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_ai_assignment.py"
     },
     {
@@ -14262,7 +14252,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_workspaces",
-      "community": 10,
+      "community": 24,
       "norm_label": "workspaces"
     },
     {
@@ -14272,7 +14262,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_workspaces_init",
-      "community": 10,
+      "community": 24,
       "norm_label": ".__init__()"
     },
     {
@@ -14292,7 +14282,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_adapter",
-      "community": 10,
+      "community": 24,
       "norm_label": "adapter"
     },
     {
@@ -14302,7 +14292,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_adapter_init",
-      "community": 10,
+      "community": 24,
       "norm_label": ".__init__()"
     },
     {
@@ -14322,7 +14312,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_setup",
-      "community": 10,
+      "community": 24,
       "norm_label": "setup()"
     },
     {
@@ -14332,7 +14322,7 @@
       "source_location": "L113",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_test_assignment_uses_existing_delegation_lifecycle_and_records_usage",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_assignment_uses_existing_delegation_lifecycle_and_records_usage()"
     },
     {
@@ -14342,7 +14332,7 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_test_local_failure_uses_explicitly_authorized_cloud_fallback",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_local_failure_uses_explicitly_authorized_cloud_fallback()"
     },
     {
@@ -14352,18 +14342,8 @@
       "source_location": "L167",
       "_origin": "ast",
       "id": "tests_test_ai_assignment_test_api_worker_advisory_output_does_not_imply_completed_work",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_api_worker_advisory_output_does_not_imply_completed_work()"
-    },
-    {
-      "label": "test_local_policy_failure_does_not_poison_endpoint_health()",
-      "file_type": "code",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L183",
-      "_origin": "ast",
-      "id": "tests_test_ai_assignment_test_local_policy_failure_does_not_poison_endpoint_health",
-      "community": 10,
-      "norm_label": "test_local_policy_failure_does_not_poison_endpoint_health()"
     },
     {
       "label": "test_ai_catalog_maintenance.py",
@@ -14372,7 +14352,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance",
-      "community": 205,
+      "community": 35,
       "norm_label": "test_ai_catalog_maintenance.py"
     },
     {
@@ -14382,7 +14362,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance_model",
-      "community": 205,
+      "community": 35,
       "norm_label": "model()"
     },
     {
@@ -14392,7 +14372,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance_py_aimodelrecord",
-      "community": 7,
+      "community": 35,
       "norm_label": "aimodelrecord"
     },
     {
@@ -14402,7 +14382,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance_test_ai_record_delete_round_trip",
-      "community": 205,
+      "community": 35,
       "norm_label": "test_ai_record_delete_round_trip()"
     },
     {
@@ -14412,7 +14392,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance_test_status_groups_lifecycle_fields_and_show_includes_evidence",
-      "community": 205,
+      "community": 35,
       "norm_label": "test_status_groups_lifecycle_fields_and_show_includes_evidence()"
     },
     {
@@ -14422,7 +14402,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance_test_forget_requires_unavailable_unreferenced_model",
-      "community": 205,
+      "community": 35,
       "norm_label": "test_forget_requires_unavailable_unreferenced_model()"
     },
     {
@@ -14432,7 +14412,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance_test_status_show_and_forget_cli",
-      "community": 205,
+      "community": 35,
       "norm_label": "test_status_show_and_forget_cli()"
     },
     {
@@ -14442,7 +14422,7 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "tests_test_ai_catalog_maintenance_test_forget_detects_retained_session_and_result_after_task_selection_changes",
-      "community": 205,
+      "community": 35,
       "norm_label": "test_forget_detects_retained_session_and_result_after_task_selection_changes()"
     },
     {
@@ -14642,7 +14622,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_metadata",
-      "community": 41,
+      "community": 7,
       "norm_label": "test_ai_metadata.py"
     },
     {
@@ -14652,7 +14632,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_test_ai_metadata_catalog_with_model",
-      "community": 41,
+      "community": 7,
       "norm_label": "catalog_with_model()"
     },
     {
@@ -14662,7 +14642,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "tests_test_ai_metadata_test_reviewed_metadata_is_source_labeled_without_changing_model",
-      "community": 41,
+      "community": 7,
       "norm_label": "test_reviewed_metadata_is_source_labeled_without_changing_model()"
     },
     {
@@ -14672,7 +14652,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "tests_test_ai_metadata_test_metadata_requires_review_and_rejects_observed_source",
-      "community": 41,
+      "community": 7,
       "norm_label": "test_metadata_requires_review_and_rejects_observed_source()"
     },
     {
@@ -14682,7 +14662,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "tests_test_ai_metadata_test_metadata_cli_requires_explicit_review",
-      "community": 41,
+      "community": 7,
       "norm_label": "test_metadata_cli_requires_explicit_review()"
     },
     {
@@ -14692,7 +14672,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_probe",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_ai_probe.py"
     },
     {
@@ -14702,7 +14682,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_ai_probe_catalogadapter",
-      "community": 18,
+      "community": 7,
       "norm_label": "catalogadapter"
     },
     {
@@ -14712,7 +14692,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "tests_test_ai_probe_catalogadapter_list_models",
-      "community": 18,
+      "community": 7,
       "norm_label": ".list_models()"
     },
     {
@@ -14722,7 +14702,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_test_ai_probe_workingrunner",
-      "community": 18,
+      "community": 7,
       "norm_label": "workingrunner"
     },
     {
@@ -14732,7 +14712,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tests_test_ai_probe_workingrunner_run_probe",
-      "community": 18,
+      "community": 7,
       "norm_label": ".run_probe()"
     },
     {
@@ -14742,7 +14722,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "tests_test_ai_probe_textonlyrunner",
-      "community": 18,
+      "community": 7,
       "norm_label": "textonlyrunner"
     },
     {
@@ -14752,7 +14732,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "tests_test_ai_probe_textonlyrunner_run_probe",
-      "community": 18,
+      "community": 7,
       "norm_label": ".run_probe()"
     },
     {
@@ -14762,7 +14742,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_test_ai_probe_catalog",
-      "community": 18,
+      "community": 7,
       "norm_label": "catalog()"
     },
     {
@@ -14772,7 +14752,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "tests_test_ai_probe_test_probe_classifies_structured_editing_worker_for_implementation",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_probe_classifies_structured_editing_worker_for_implementation()"
     },
     {
@@ -14782,7 +14762,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "tests_test_ai_probe_test_probe_classifies_tool_text_without_actions_as_advisory",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_probe_classifies_tool_text_without_actions_as_advisory()"
     },
     {
@@ -14792,7 +14772,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "tests_test_ai_probe_test_local_probe_queue_is_sorted_and_rejects_missing_models",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_local_probe_queue_is_sorted_and_rejects_missing_models()"
     },
     {
@@ -14802,7 +14782,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_readiness",
-      "community": 172,
+      "community": 24,
       "norm_label": "test_ai_readiness.py"
     },
     {
@@ -14812,7 +14792,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "tests_test_ai_readiness_save",
-      "community": 172,
+      "community": 24,
       "norm_label": "save()"
     },
     {
@@ -14822,7 +14802,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_test_ai_readiness_model",
-      "community": 172,
+      "community": 24,
       "norm_label": "model()"
     },
     {
@@ -14832,7 +14812,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "tests_test_ai_readiness_test_readiness_reports_missing_policy_cloud_models_and_optional_local_warning",
-      "community": 172,
+      "community": 24,
       "norm_label": "test_readiness_reports_missing_policy_cloud_models_and_optional_local_warning()"
     },
     {
@@ -14842,7 +14822,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "tests_test_ai_readiness_test_readiness_reports_ready_local_and_cloud_models",
-      "community": 172,
+      "community": 24,
       "norm_label": "test_readiness_reports_ready_local_and_cloud_models()"
     },
     {
@@ -14852,7 +14832,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "tests_test_ai_readiness_test_unconfigured_default_policy_reports_warning_without_blocking",
-      "community": 172,
+      "community": 24,
       "norm_label": "test_unconfigured_default_policy_reports_warning_without_blocking()"
     },
     {
@@ -14862,7 +14842,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "tests_test_ai_readiness_test_explicit_local_only_policy_blocks_when_model_is_missing",
-      "community": 172,
+      "community": 24,
       "norm_label": "test_explicit_local_only_policy_blocks_when_model_is_missing()"
     },
     {
@@ -14872,7 +14852,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_ai_reconciliation.py"
     },
     {
@@ -14882,7 +14862,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_adapter",
-      "community": 18,
+      "community": 7,
       "norm_label": "adapter"
     },
     {
@@ -14892,7 +14872,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_adapter_init",
-      "community": 18,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -14902,7 +14882,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_adapter_list_models",
-      "community": 18,
+      "community": 7,
       "norm_label": ".list_models()"
     },
     {
@@ -14912,7 +14892,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_model",
-      "community": 18,
+      "community": 7,
       "norm_label": "model()"
     },
     {
@@ -14922,7 +14902,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_service",
-      "community": 18,
+      "community": 7,
       "norm_label": "service()"
     },
     {
@@ -14932,7 +14912,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_test_refresh_adds_changes_and_marks_missing_without_deleting_history",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_refresh_adds_changes_and_marks_missing_without_deleting_history()"
     },
     {
@@ -14942,7 +14922,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_test_unchanged_model_keeps_current_probe",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_unchanged_model_keeps_current_probe()"
     },
     {
@@ -14952,7 +14932,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_test_failed_refresh_records_uncertainty_without_marking_models_missing",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_failed_refresh_records_uncertainty_without_marking_models_missing()"
     },
     {
@@ -14962,7 +14942,7 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_test_refresh_rejects_nonlocal_endpoint",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_refresh_rejects_nonlocal_endpoint()"
     },
     {
@@ -14972,7 +14952,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_test_refresh_cli_prints_deterministic_summary",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_refresh_cli_prints_deterministic_summary()"
     },
     {
@@ -14982,7 +14962,7 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_test_refresh_cli_supports_json_and_clean_errors",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_refresh_cli_supports_json_and_clean_errors()"
     },
     {
@@ -14992,7 +14972,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_workingproberunner",
-      "community": 18,
+      "community": 7,
       "norm_label": "workingproberunner"
     },
     {
@@ -15002,7 +14982,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_workingproberunner_run_probe",
-      "community": 18,
+      "community": 7,
       "norm_label": ".run_probe()"
     },
     {
@@ -15012,7 +14992,7 @@
       "source_location": "L167",
       "_origin": "ast",
       "id": "tests_test_ai_reconciliation_test_refresh_probe_new_is_explicit_and_sequential",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_refresh_probe_new_is_explicit_and_sequential()"
     },
     {
@@ -15022,7 +15002,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_selection",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_ai_selection.py"
     },
     {
@@ -15032,7 +15012,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_test_ai_selection_model",
-      "community": 10,
+      "community": 24,
       "norm_label": "model()"
     },
     {
@@ -15042,7 +15022,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "tests_test_ai_selection_test_policy_composition_never_widens_cloud_or_allowlists",
-      "community": 41,
+      "community": 24,
       "norm_label": "test_policy_composition_never_widens_cloud_or_allowlists()"
     },
     {
@@ -15052,7 +15032,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "tests_test_ai_selection_test_selection_is_deterministic_local_first_and_persisted",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_selection_is_deterministic_local_first_and_persisted()"
     },
     {
@@ -15062,7 +15042,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "tests_test_ai_selection_test_explicit_model_preference_controls_first_choice_and_keeps_fallback",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_explicit_model_preference_controls_first_choice_and_keeps_fallback()"
     },
     {
@@ -15072,7 +15052,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "tests_test_ai_selection_test_selection_reports_stale_probe_and_budget_rejections",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_selection_reports_stale_probe_and_budget_rejections()"
     },
     {
@@ -15082,7 +15062,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "tests_test_ai_selection_test_selection_rejects_missing_local_model_with_specific_reason",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_selection_rejects_missing_local_model_with_specific_reason()"
     },
     {
@@ -15092,7 +15072,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "tests_test_ai_selection_test_selection_distinguishes_absent_probe_from_stale_probe",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_selection_distinguishes_absent_probe_from_stale_probe()"
     },
     {
@@ -15102,7 +15082,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "tests_test_ai_selection_test_selection_rejects_latest_explicitly_unhealthy_endpoint",
-      "community": 10,
+      "community": 24,
       "norm_label": "test_selection_rejects_latest_explicitly_unhealthy_endpoint()"
     },
     {
@@ -15212,7 +15192,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_ai_worker_demo",
-      "community": 10,
+      "community": 22,
       "norm_label": "test_ai_worker_demo.py"
     },
     {
@@ -15222,7 +15202,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "tests_test_ai_worker_demo_test_ai_worker_pool_demo_selects_runs_captures_and_accepts",
-      "community": 10,
+      "community": 22,
       "norm_label": "test_ai_worker_pool_demo_selects_runs_captures_and_accepts()"
     },
     {
@@ -15232,7 +15212,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_test_ai_worker_demo_test_ai_worker_pool_demo_can_apply_exact_accepted_result",
-      "community": 10,
+      "community": 22,
       "norm_label": "test_ai_worker_pool_demo_can_apply_exact_accepted_result()"
     },
     {
@@ -15652,7 +15632,7 @@
       "source_location": "L259",
       "_origin": "ast",
       "id": "tests_test_capability_package_make_executable_capability",
-      "community": 28,
+      "community": 17,
       "norm_label": "make_executable_capability()"
     },
     {
@@ -15662,7 +15642,7 @@
       "source_location": "L326",
       "_origin": "ast",
       "id": "tests_test_capability_package_test_end_to_end_pack_install_list_inspect_execute",
-      "community": 28,
+      "community": 3,
       "norm_label": "test_end_to_end_pack_install_list_inspect_execute()"
     },
     {
@@ -15892,7 +15872,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation",
-      "community": 192,
+      "community": 204,
       "norm_label": "test_delegation.py"
     },
     {
@@ -15902,7 +15882,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_test_delegation_store",
-      "community": 192,
+      "community": 35,
       "norm_label": "store()"
     },
     {
@@ -15912,7 +15892,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "tests_test_delegation_task",
-      "community": 192,
+      "community": 204,
       "norm_label": "task()"
     },
     {
@@ -15932,7 +15912,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "tests_test_delegation_test_delegation_models_reject_unknown_status",
-      "community": 29,
+      "community": 204,
       "norm_label": "test_delegation_models_reject_unknown_status()"
     },
     {
@@ -15942,7 +15922,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "tests_test_delegation_test_service_persists_tasks_profiles_records_and_ordered_events",
-      "community": 192,
+      "community": 204,
       "norm_label": "test_service_persists_tasks_profiles_records_and_ordered_events()"
     },
     {
@@ -15952,7 +15932,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "tests_test_delegation_test_service_rejects_invalid_transition",
-      "community": 192,
+      "community": 204,
       "norm_label": "test_service_rejects_invalid_transition()"
     },
     {
@@ -15962,7 +15942,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "tests_test_delegation_test_delegation_store_compare_and_set",
-      "community": 192,
+      "community": 204,
       "norm_label": "test_delegation_store_compare_and_set()"
     },
     {
@@ -15972,7 +15952,7 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "tests_test_delegation_test_sqlite_delegation_state_survives_reopen",
-      "community": 192,
+      "community": 204,
       "norm_label": "test_sqlite_delegation_state_survives_reopen()"
     },
     {
@@ -16116,20 +16096,10 @@
       "norm_label": "test_manual_delegation_cli_workflow()"
     },
     {
-      "label": "test_launch_ai_missing_task_reports_clean_cli_error()",
-      "file_type": "code",
-      "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L93",
-      "_origin": "ast",
-      "id": "tests_test_delegation_cli_test_launch_ai_missing_task_reports_clean_cli_error",
-      "community": 2,
-      "norm_label": "test_launch_ai_missing_task_reports_clean_cli_error()"
-    },
-    {
       "label": "test_assign_accepts_registered_codex_profile()",
       "file_type": "code",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L109",
+      "source_location": "L93",
       "_origin": "ast",
       "id": "tests_test_delegation_cli_test_assign_accepts_registered_codex_profile",
       "community": 29,
@@ -16139,7 +16109,7 @@
       "label": "test_delegate_pool_reports_read_only_state_error_without_traceback()",
       "file_type": "code",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L143",
+      "source_location": "L127",
       "_origin": "ast",
       "id": "tests_test_delegation_cli_test_delegate_pool_reports_read_only_state_error_without_traceback",
       "community": 29,
@@ -16149,17 +16119,17 @@
       "label": "test_delegate_status_uses_read_only_state()",
       "file_type": "code",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L157",
+      "source_location": "L141",
       "_origin": "ast",
       "id": "tests_test_delegation_cli_test_delegate_status_uses_read_only_state",
-      "community": 2,
+      "community": 29,
       "norm_label": "test_delegate_status_uses_read_only_state()"
     },
     {
       "label": "test_delegate_revise_recovers_executor_done_task_without_result()",
       "file_type": "code",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L177",
+      "source_location": "L161",
       "_origin": "ast",
       "id": "tests_test_delegation_cli_test_delegate_revise_recovers_executor_done_task_without_result",
       "community": 29,
@@ -16169,7 +16139,7 @@
       "label": "test_delegate_wait_returns_when_worker_finishes()",
       "file_type": "code",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L214",
+      "source_location": "L198",
       "_origin": "ast",
       "id": "tests_test_delegation_cli_test_delegate_wait_returns_when_worker_finishes",
       "community": 29,
@@ -16179,7 +16149,7 @@
       "label": "test_delegate_wait_times_out_with_current_status()",
       "file_type": "code",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L251",
+      "source_location": "L235",
       "_origin": "ast",
       "id": "tests_test_delegation_cli_test_delegate_wait_times_out_with_current_status",
       "community": 29,
@@ -16192,7 +16162,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_commands",
-      "community": 16,
+      "community": 22,
       "norm_label": "test_delegation_commands.py"
     },
     {
@@ -16202,7 +16172,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_test_delegation_commands_working_with_command",
-      "community": 16,
+      "community": 22,
       "norm_label": "working_with_command()"
     },
     {
@@ -16212,7 +16182,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_delegation_commands_test_observed_command_records_output_and_satisfies_requirement",
-      "community": 16,
+      "community": 22,
       "norm_label": "test_observed_command_records_output_and_satisfies_requirement()"
     },
     {
@@ -16222,7 +16192,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "tests_test_delegation_commands_test_manual_report_does_not_satisfy_required_command",
-      "community": 16,
+      "community": 22,
       "norm_label": "test_manual_report_does_not_satisfy_required_command()"
     },
     {
@@ -16232,7 +16202,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "tests_test_delegation_commands_test_command_rejects_shell_operators_and_workspace_escape",
-      "community": 16,
+      "community": 22,
       "norm_label": "test_command_rejects_shell_operators_and_workspace_escape()"
     },
     {
@@ -16242,7 +16212,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "tests_test_delegation_commands_test_promotion_requires_observed_command_or_waiver",
-      "community": 16,
+      "community": 22,
       "norm_label": "test_promotion_requires_observed_command_or_waiver()"
     },
     {
@@ -16252,7 +16222,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_comparison",
-      "community": 211,
+      "community": 118,
       "norm_label": "test_delegation_comparison.py"
     },
     {
@@ -16262,7 +16232,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "tests_test_delegation_comparison_git",
-      "community": 211,
+      "community": 118,
       "norm_label": "git()"
     },
     {
@@ -16282,7 +16252,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_test_delegation_comparison_source_task",
-      "community": 211,
+      "community": 118,
       "norm_label": "source_task()"
     },
     {
@@ -16292,7 +16262,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "tests_test_delegation_comparison_test_comparison_variants_are_isolated_sibling_tasks",
-      "community": 211,
+      "community": 118,
       "norm_label": "test_comparison_variants_are_isolated_sibling_tasks()"
     },
     {
@@ -16302,7 +16272,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "tests_test_delegation_comparison_test_comparison_requires_two_unique_variants",
-      "community": 211,
+      "community": 118,
       "norm_label": "test_comparison_requires_two_unique_variants()"
     },
     {
@@ -16312,7 +16282,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "tests_test_delegation_comparison_test_comparison_projection_does_not_select_a_winner",
-      "community": 211,
+      "community": 118,
       "norm_label": "test_comparison_projection_does_not_select_a_winner()"
     },
     {
@@ -16362,7 +16332,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard",
-      "community": 208,
+      "community": 29,
       "norm_label": "test_delegation_dashboard.py"
     },
     {
@@ -16372,7 +16342,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard_dashboard_runtime",
-      "community": 208,
+      "community": 29,
       "norm_label": "dashboard_runtime()"
     },
     {
@@ -16382,7 +16352,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard_test_dashboard_prioritizes_review_attention_and_projects_next_action",
-      "community": 208,
+      "community": 29,
       "norm_label": "test_dashboard_prioritizes_review_attention_and_projects_next_action()"
     },
     {
@@ -16392,7 +16362,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard_test_dashboard_detail_groups_command_evidence",
-      "community": 208,
+      "community": 29,
       "norm_label": "test_dashboard_detail_groups_command_evidence()"
     },
     {
@@ -16402,7 +16372,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard_test_dashboard_cli_has_human_and_json_views",
-      "community": 208,
+      "community": 29,
       "norm_label": "test_dashboard_cli_has_human_and_json_views()"
     },
     {
@@ -16412,7 +16382,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard_test_executor_done_dashboard_allows_revision_when_capture_has_no_result",
-      "community": 208,
+      "community": 29,
       "norm_label": "test_executor_done_dashboard_allows_revision_when_capture_has_no_result()"
     },
     {
@@ -16422,7 +16392,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard_test_executor_done_advisory_output_blocks_capture_and_points_to_evidence",
-      "community": 208,
+      "community": 29,
       "norm_label": "test_executor_done_advisory_output_blocks_capture_and_points_to_evidence()"
     },
     {
@@ -16432,7 +16402,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "tests_test_delegation_dashboard_test_dashboard_cli_prints_advisory_outcome_and_output_path",
-      "community": 208,
+      "community": 29,
       "norm_label": "test_dashboard_cli_prints_advisory_outcome_and_output_path()"
     },
     {
@@ -16442,7 +16412,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_demo",
-      "community": 16,
+      "community": 118,
       "norm_label": "test_delegation_demo.py"
     },
     {
@@ -16452,7 +16422,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "tests_test_delegation_demo_test_scripted_demo_is_offline_isolated_and_cleans_success",
-      "community": 16,
+      "community": 118,
       "norm_label": "test_scripted_demo_is_offline_isolated_and_cleans_success()"
     },
     {
@@ -16462,7 +16432,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "tests_test_delegation_demo_test_scripted_demo_promotes_only_when_requested_and_can_be_kept",
-      "community": 16,
+      "community": 118,
       "norm_label": "test_scripted_demo_promotes_only_when_requested_and_can_be_kept()"
     },
     {
@@ -16472,7 +16442,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_e2e",
-      "community": 16,
+      "community": 118,
       "norm_label": "test_delegation_e2e.py"
     },
     {
@@ -16482,7 +16452,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_delegation_e2e_git",
-      "community": 16,
+      "community": 118,
       "norm_label": "git()"
     },
     {
@@ -16492,7 +16462,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_delegation_e2e_py_path",
-      "community": 16,
+      "community": 2,
       "norm_label": "path"
     },
     {
@@ -16502,7 +16472,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "tests_test_delegation_e2e_test_local_delegated_executor_revision_promotion_survives_restart",
-      "community": 16,
+      "community": 118,
       "norm_label": "test_local_delegated_executor_revision_promotion_survives_restart()"
     },
     {
@@ -16572,7 +16542,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "tests_test_delegation_executor_test_codex_cli_profile_requires_available_executable",
-      "community": 29,
+      "community": 118,
       "norm_label": "test_codex_cli_profile_requires_available_executable()"
     },
     {
@@ -16582,7 +16552,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "tests_test_delegation_executor_test_ollama_profile_command_has_no_cloud_fallback",
-      "community": 29,
+      "community": 118,
       "norm_label": "test_ollama_profile_command_has_no_cloud_fallback()"
     },
     {
@@ -16669,7 +16639,7 @@
       "label": "accepted()",
       "file_type": "code",
       "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L16",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "tests_test_delegation_promotion_accepted",
       "community": 16,
@@ -16679,7 +16649,7 @@
       "label": "test_promote_applies_exact_accepted_patch_without_commit()",
       "file_type": "code",
       "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L23",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "tests_test_delegation_promotion_test_promote_applies_exact_accepted_patch_without_commit",
       "community": 16,
@@ -16689,27 +16659,17 @@
       "label": "test_promote_verifies_new_untracked_files_without_changing_index()",
       "file_type": "code",
       "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L37",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "tests_test_delegation_promotion_test_promote_verifies_new_untracked_files_without_changing_index",
       "community": 16,
       "norm_label": "test_promote_verifies_new_untracked_files_without_changing_index()"
     },
     {
-      "label": "test_promote_accepts_equivalent_patch_with_different_diff_format()",
-      "file_type": "code",
-      "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L60",
-      "_origin": "ast",
-      "id": "tests_test_delegation_promotion_test_promote_accepts_equivalent_patch_with_different_diff_format",
-      "community": 16,
-      "norm_label": "test_promote_accepts_equivalent_patch_with_different_diff_format()"
-    },
-    {
       "label": "test_promote_blocks_dirty_affected_canonical_path()",
       "file_type": "code",
       "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L88",
+      "source_location": "L59",
       "_origin": "ast",
       "id": "tests_test_delegation_promotion_test_promote_blocks_dirty_affected_canonical_path",
       "community": 16,
@@ -16719,7 +16679,7 @@
       "label": "test_post_apply_failure_rolls_back_and_records_failure()",
       "file_type": "code",
       "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L100",
+      "source_location": "L71",
       "_origin": "ast",
       "id": "tests_test_delegation_promotion_test_post_apply_failure_rolls_back_and_records_failure",
       "community": 16,
@@ -16729,7 +16689,7 @@
       "label": "test_safely_rolled_back_promotion_can_be_retried()",
       "file_type": "code",
       "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L116",
+      "source_location": "L87",
       "_origin": "ast",
       "id": "tests_test_delegation_promotion_test_safely_rolled_back_promotion_can_be_retried",
       "community": 16,
@@ -16872,7 +16832,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_review_summary",
-      "community": 8,
+      "community": 16,
       "norm_label": "test_delegation_review_summary.py"
     },
     {
@@ -16882,7 +16842,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "tests_test_delegation_review_summary_test_review_summary_reports_evidence_and_acceptance_readiness",
-      "community": 8,
+      "community": 16,
       "norm_label": "test_review_summary_reports_evidence_and_acceptance_readiness()"
     },
     {
@@ -16892,7 +16852,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "tests_test_delegation_review_summary_test_review_summary_reports_checksum_and_workspace_blockers",
-      "community": 8,
+      "community": 16,
       "norm_label": "test_review_summary_reports_checksum_and_workspace_blockers()"
     },
     {
@@ -16902,7 +16862,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "tests_test_delegation_review_summary_test_review_summary_reports_promotion_readiness_after_acceptance",
-      "community": 8,
+      "community": 16,
       "norm_label": "test_review_summary_reports_promotion_readiness_after_acceptance()"
     },
     {
@@ -16912,7 +16872,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_timeline",
-      "community": 192,
+      "community": 204,
       "norm_label": "test_delegation_timeline.py"
     },
     {
@@ -16922,7 +16882,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "tests_test_delegation_timeline_test_timeline_is_deterministic_and_restart_safe",
-      "community": 192,
+      "community": 204,
       "norm_label": "test_timeline_is_deterministic_and_restart_safe()"
     },
     {
@@ -16932,7 +16892,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_delegation_ux_e2e",
-      "community": 16,
+      "community": 118,
       "norm_label": "test_delegation_ux_e2e.py"
     },
     {
@@ -16942,7 +16902,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "tests_test_delegation_ux_e2e_git",
-      "community": 16,
+      "community": 118,
       "norm_label": "git()"
     },
     {
@@ -16952,7 +16912,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "tests_test_delegation_ux_e2e_py_path",
-      "community": 16,
+      "community": 22,
       "norm_label": "path"
     },
     {
@@ -16962,7 +16922,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "tests_test_delegation_ux_e2e_test_mvp_v1_2_delegation_daily_workflow",
-      "community": 16,
+      "community": 118,
       "norm_label": "test_mvp_v1_2_delegation_daily_workflow()"
     },
     {
@@ -17352,7 +17312,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_local_model_catalog_flow",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_local_model_catalog_flow.py"
     },
     {
@@ -17362,7 +17322,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "tests_test_local_model_catalog_flow_fakeollama",
-      "community": 18,
+      "community": 7,
       "norm_label": "fakeollama"
     },
     {
@@ -17372,7 +17332,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_local_model_catalog_flow_fakeollama_init",
-      "community": 18,
+      "community": 7,
       "norm_label": ".__init__()"
     },
     {
@@ -17382,7 +17342,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_local_model_catalog_flow_fakeollama_list_models",
-      "community": 18,
+      "community": 7,
       "norm_label": ".list_models()"
     },
     {
@@ -17392,7 +17352,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "tests_test_local_model_catalog_flow_workingrunner",
-      "community": 18,
+      "community": 7,
       "norm_label": "workingrunner"
     },
     {
@@ -17402,7 +17362,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "tests_test_local_model_catalog_flow_workingrunner_run_probe",
-      "community": 18,
+      "community": 7,
       "norm_label": ".run_probe()"
     },
     {
@@ -17412,7 +17372,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "tests_test_local_model_catalog_flow_test_offline_local_catalog_refresh_probe_select_and_remove",
-      "community": 18,
+      "community": 7,
       "norm_label": "test_offline_local_catalog_refresh_probe_select_and_remove()"
     },
     {
@@ -17532,7 +17492,7 @@
       "source_location": "L183",
       "_origin": "ast",
       "id": "tests_test_local_registry_test_registry_delegates_index_loading_to_store",
-      "community": 11,
+      "community": 1,
       "norm_label": "test_registry_delegates_index_loading_to_store()"
     },
     {
@@ -17562,7 +17522,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "tests_test_local_registry_test_registry_inspect_requires_version_when_ambiguous",
-      "community": 11,
+      "community": 1,
       "norm_label": "test_registry_inspect_requires_version_when_ambiguous()"
     },
     {
@@ -18352,7 +18312,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_registry_unification",
-      "community": 28,
+      "community": 3,
       "norm_label": "test_registry_unification.py"
     },
     {
@@ -18362,7 +18322,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "tests_test_registry_unification_test_v21_registry_unification_end_to_end",
-      "community": 28,
+      "community": 3,
       "norm_label": "test_v21_registry_unification_end_to_end()"
     },
     {
@@ -18392,7 +18352,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "tests_test_repository_py_path",
-      "community": 9,
+      "community": 2,
       "norm_label": "path"
     },
     {
@@ -18532,7 +18492,7 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "tests_test_repository_test_delegated_sparse_workspace_includes_committed_role_instructions",
-      "community": 9,
+      "community": 118,
       "norm_label": "test_delegated_sparse_workspace_includes_committed_role_instructions()"
     },
     {
@@ -18632,7 +18592,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "tests_test_runner_adapters_test_runner_contract_rejects_invalid_container",
-      "community": 4,
+      "community": 194,
       "norm_label": "test_runner_contract_rejects_invalid_container()"
     },
     {
@@ -18852,7 +18812,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tests_test_write_contract",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_write_contract.py"
     },
     {
@@ -18872,7 +18832,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_registry_rejects_malformed_write_provider",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_registry_rejects_malformed_write_provider()"
     },
     {
@@ -18882,7 +18842,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_reference_write_provider_dry_run_is_deterministic_and_read_only",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_reference_write_provider_dry_run_is_deterministic_and_read_only()"
     },
     {
@@ -18892,7 +18852,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "tests_test_write_contract_dry_run",
-      "community": 198,
+      "community": 4,
       "norm_label": "_dry_run()"
     },
     {
@@ -18902,7 +18862,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_write_promotion_uses_approval_and_job_service",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_write_promotion_uses_approval_and_job_service()"
     },
     {
@@ -18922,7 +18882,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_promotion_rejects_tampered_change_set",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_promotion_rejects_tampered_change_set()"
     },
     {
@@ -18932,7 +18892,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_live_retry_returns_prior_result_without_mutation",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_live_retry_returns_prior_result_without_mutation()"
     },
     {
@@ -18942,7 +18902,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_recovery_requires_approval_and_rolls_back",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_recovery_requires_approval_and_rolls_back()"
     },
     {
@@ -18952,7 +18912,7 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_live_write_fails_safely_when_target_changed_after_review",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_live_write_fails_safely_when_target_changed_after_review()"
     },
     {
@@ -18962,7 +18922,7 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_tampered_validation_artifact_blocks_promotion",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_tampered_validation_artifact_blocks_promotion()"
     },
     {
@@ -18972,7 +18932,7 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "tests_test_write_contract_test_failed_post_write_verification_prevents_completion",
-      "community": 198,
+      "community": 4,
       "norm_label": "test_failed_post_write_verification_prevents_completion()"
     },
     {
@@ -51803,37 +51763,6 @@
       "target": "models_ai_workers_workerusagerecord"
     },
     {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L5",
-      "weight": 1.0,
-      "source": "tests_test_ai_assignment",
-      "target": "core_ai_assignment_workerassignmenterror",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L5",
-      "weight": 0.8,
-      "source": "tests_test_ai_assignment_adapter",
-      "target": "core_ai_assignment_workerassignmenterror",
-      "confidence_score": 0.5
-    },
-    {
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L5",
-      "weight": 0.8,
-      "source": "tests_test_ai_assignment_workspaces",
-      "target": "core_ai_assignment_workerassignmenterror",
-      "confidence_score": 0.5
-    },
-    {
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "canto/core/ai_worker_demo.py",
@@ -63347,17 +63276,6 @@
       "target": "core_ai_worker_agenttoolcall"
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L190",
-      "weight": 1.0,
-      "source": "tests_test_ai_assignment_test_local_policy_failure_does_not_poison_endpoint_health",
-      "target": "core_ai_worker_agenttoolcall",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "tests/test_ai_assignment.py",
@@ -63566,17 +63484,6 @@
       "confidence_score": 1.0,
       "source": "tests_test_ai_assignment_test_api_worker_advisory_output_does_not_imply_completed_work",
       "target": "core_ai_worker_agentresponse"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L188",
-      "weight": 1.0,
-      "source": "tests_test_ai_assignment_test_local_policy_failure_does_not_poison_endpoint_health",
-      "target": "core_ai_worker_agentresponse",
-      "confidence_score": 1.0
     },
     {
       "relation": "uses",
@@ -64005,11 +63912,11 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "canto/core/ai_worker.py",
-      "source_location": "L67",
+      "source_location": "L60",
       "weight": 1.0,
-      "source": "core_ai_worker_rationale_67",
-      "target": "core_ai_worker_httpagentadapter",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "core_ai_worker_rationale_60",
+      "target": "core_ai_worker_httpagentadapter"
     },
     {
       "relation": "imports",
@@ -64617,17 +64524,6 @@
       "confidence_score": 1.0,
       "source": "tests_test_ai_assignment_test_local_failure_uses_explicitly_authorized_cloud_fallback",
       "target": "core_ai_worker_apiworkerharness"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L198",
-      "weight": 1.0,
-      "source": "tests_test_ai_assignment_test_local_policy_failure_does_not_poison_endpoint_health",
-      "target": "core_ai_worker_apiworkerharness",
-      "confidence_score": 1.0
     },
     {
       "relation": "uses",
@@ -71442,17 +71338,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L94",
-      "weight": 1.0,
-      "source": "tests_test_delegation_cli_test_launch_ai_missing_task_reports_clean_cli_error",
-      "target": "core_delegation_delegationservice",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_delegation_cli.py",
       "source_location": "L42",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -77610,17 +77495,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "canto/core/delegation_promotion.py",
-      "source_location": "L222",
-      "weight": 1.0,
-      "source": "core_delegation_promotion_delegationpromotionservice_index_entries",
-      "target": "core_delegation_promotion_git",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "canto/core/delegation_promotion.py",
       "source_location": "L69",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -77680,17 +77554,6 @@
       "confidence_score": 1.0,
       "source": "core_delegation_promotion_delegationpromotionservice_apply",
       "target": "canto_core_delegation_promotion_py_path"
-    },
-    {
-      "relation": "references",
-      "context": "parameter_type",
-      "confidence": "EXTRACTED",
-      "source_file": "canto/core/delegation_promotion.py",
-      "source_location": "L219",
-      "weight": 1.0,
-      "source": "core_delegation_promotion_delegationpromotionservice_index_entries",
-      "target": "canto_core_delegation_promotion_py_path",
-      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -77776,16 +77639,6 @@
       "confidence_score": 1.0,
       "source": "core_delegation_promotion_delegationpromotionservice",
       "target": "core_delegation_promotion_delegationpromotionservice_apply"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "canto/core/delegation_promotion.py",
-      "source_location": "L219",
-      "weight": 1.0,
-      "source": "core_delegation_promotion_delegationpromotionservice",
-      "target": "core_delegation_promotion_delegationpromotionservice_index_entries",
-      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -77983,17 +77836,6 @@
       "confidence_score": 1.0,
       "source": "tests_test_delegation_promotion_test_post_apply_failure_rolls_back_and_records_failure",
       "target": "core_delegation_promotion_delegationpromotionservice"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L80",
-      "weight": 1.0,
-      "source": "tests_test_delegation_promotion_test_promote_accepts_equivalent_patch_with_different_diff_format",
-      "target": "core_delegation_promotion_delegationpromotionservice",
-      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -78199,17 +78041,6 @@
       "confidence_score": 0.5,
       "source": "promotionresult",
       "target": "core_delegation_workspace_delegationworkspaceservice"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "canto/core/delegation_promotion.py",
-      "source_location": "L211",
-      "weight": 1.0,
-      "source": "core_delegation_promotion_delegationpromotionservice_verify_applied",
-      "target": "core_delegation_promotion_delegationpromotionservice_index_entries",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -80894,17 +80725,6 @@
       "confidence_score": 1.0,
       "source": "tests_test_delegation_cli_test_delegate_wait_times_out_with_current_status",
       "target": "core_delegation_workspace_delegationworkspaceservice"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L95",
-      "weight": 1.0,
-      "source": "tests_test_delegation_cli_test_launch_ai_missing_task_reports_clean_cli_error",
-      "target": "core_delegation_workspace_delegationworkspaceservice",
-      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -87658,9 +87478,9 @@
       "source_file": "canto/core/memory.py",
       "source_location": "L493",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "core_memory_memoryservice_orchestrator_decision_count",
-      "target": "core_memory_now"
+      "target": "core_memory_now",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -87827,9 +87647,9 @@
       "source_file": "canto/core/memory.py",
       "source_location": "L498",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "core_memory_memoryservice_orchestrator_decision_count",
-      "target": "core_memory_parse_time"
+      "target": "core_memory_parse_time",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -99480,17 +99300,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L94",
-      "weight": 1.0,
-      "source": "tests_test_delegation_cli_test_launch_ai_missing_task_reports_clean_cli_error",
-      "target": "core_state_sqlitestatestore",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_delegation_cli.py",
       "source_location": "L41",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -104450,17 +104259,6 @@
       "confidence_score": 1.0,
       "source": "tests_test_ai_assignment_test_local_failure_uses_explicitly_authorized_cloud_fallback",
       "target": "models_ai_workers_workerselectionpolicy"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L201",
-      "weight": 1.0,
-      "source": "tests_test_ai_assignment_test_local_policy_failure_does_not_poison_endpoint_health",
-      "target": "models_ai_workers_workerselectionpolicy",
-      "confidence_score": 1.0
     },
     {
       "relation": "uses",
@@ -110136,16 +109934,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L183",
-      "weight": 1.0,
-      "source": "tests_test_ai_assignment",
-      "target": "tests_test_ai_assignment_test_local_policy_failure_does_not_poison_endpoint_health",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_ai_assignment.py",
       "source_location": "L22",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -110257,17 +110045,6 @@
       "confidence_score": 1.0,
       "source": "tests_test_ai_assignment_test_local_failure_uses_explicitly_authorized_cloud_fallback",
       "target": "tests_test_ai_assignment_setup"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_ai_assignment.py",
-      "source_location": "L184",
-      "weight": 1.0,
-      "source": "tests_test_ai_assignment_test_local_policy_failure_does_not_poison_endpoint_health",
-      "target": "tests_test_ai_assignment_setup",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -112977,16 +112754,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_delegation_cli.py",
-      "source_location": "L93",
-      "weight": 1.0,
-      "source": "tests_test_delegation_cli",
-      "target": "tests_test_delegation_cli_test_launch_ai_missing_task_reports_clean_cli_error",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_delegation_cli.py",
       "source_location": "L27",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -113839,16 +113606,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L60",
-      "weight": 1.0,
-      "source": "tests_test_delegation_promotion",
-      "target": "tests_test_delegation_promotion_test_promote_accepts_equivalent_patch_with_different_diff_format",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_delegation_promotion.py",
       "source_location": "L19",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -113928,17 +113685,6 @@
       "confidence_score": 1.0,
       "source": "tests_test_delegation_promotion_test_post_apply_failure_rolls_back_and_records_failure",
       "target": "tests_test_delegation_promotion_accepted"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/test_delegation_promotion.py",
-      "source_location": "L61",
-      "weight": 1.0,
-      "source": "tests_test_delegation_promotion_test_promote_accepts_equivalent_patch_with_different_diff_format",
-      "target": "tests_test_delegation_promotion_accepted",
-      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -123911,5 +123657,5 @@
       "weight": 1.0
     }
   ],
-  "built_at_commit": "c76177ad1e431ff01dee29936b8f2025a1f77f20"
+  "built_at_commit": "3d41fc3175381262e8a6993aa8f6e1718d424086"
 }
