@@ -57,7 +57,7 @@ from canto.core.delegation_workspace import (
     WorkspaceError,
     inspect_repository,
 )
-from canto.core.delegation_executor import CodexCliExecutor, ExecutorError
+from canto.core.delegation_executor import DelegationCliExecutor, ExecutorError
 from canto.core.delegation_artifacts import (
     ArtifactCaptureError,
     DelegationArtifactService,
@@ -598,7 +598,7 @@ def delegate_show(task_id: str) -> None:
         task = service.get_task(task_id)
         value = task.model_dump(mode="json")
         value["messages"] = service.get_records(task_id, "messages")
-        value["sessions"] = CodexCliExecutor(
+        value["sessions"] = DelegationCliExecutor(
             service, workspaces
         ).projected_sessions(task_id)
     except DelegationError as exc:
@@ -634,7 +634,7 @@ def delegate_add_codex(
             launch_mode="canto",
             permissions={"command_enforcement": "canto_observed"},
         )
-        CodexCliExecutor(service, workspaces).available(profile)
+        DelegationCliExecutor(service, workspaces).available(profile)
         service.set_executor_profile(profile)
     except (DelegationError, ExecutorError) as exc:
         _delegation_error(exc)
@@ -718,10 +718,10 @@ def delegate_launch(
     variant: str | None = typer.Option(None, "--variant"),
     instruction: str | None = typer.Option(None, "--instruction"),
 ) -> None:
-    """Launch the assigned Codex CLI profile in its prepared worktree."""
+    """Launch the assigned Canto CLI profile in its prepared worktree."""
     try:
         service, workspaces = _delegation_runtime()
-        launch = CodexCliExecutor(service, workspaces).launch(
+        launch = DelegationCliExecutor(service, workspaces).launch(
             task_id, variant_name=variant, supplement=instruction
         )
     except (DelegationError, ExecutorError) as exc:
@@ -1449,7 +1449,7 @@ def delegate_launch_ai(
     allow_cloud: bool = typer.Option(False, "--allow-cloud"),
     allow_cloud_fallback: bool = typer.Option(False, "--allow-cloud-fallback"),
 ) -> None:
-    """Automatically select and launch a validated API-backed Worker."""
+    """Automatically select and launch a validated Worker."""
     from canto.models.ai_workers import WorkerSelectionPolicy
 
     if priority is not None and priority not in {"economy", "balanced", "quality", "urgent"}:

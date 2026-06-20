@@ -5,6 +5,18 @@
   cloud_allowed = true
   cloud_fallback_allowed = false
   local_first = true
+  allowed_transports = [
+    "cli",
+    "http",
+  ]
+  allowed_cli_profiles = [
+    "website-codex-cloud",
+  ]
+  preferred_cli_profiles = [
+    "website-codex-cloud",
+  ]
+  prefer_subscription_cli = true
+  api_fallback_requires_approval = true
   allowed_endpoints = [
     "local-ollama",
     "openai-primary",

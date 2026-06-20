@@ -8,7 +8,11 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from canto.core.cli_executor import CodexCliAdapter, WorkerAuthError
+from canto.core.cli_executor import (
+    WorkerAuthError,
+    adapter_for_profile,
+    available_for_profile,
+)
 from canto.core.delegation import DelegationError, DelegationService
 from canto.models.delegation import ExecutorProfile
 
@@ -39,6 +43,22 @@ BUILTIN_PRESETS: dict[str, dict[str, Any]] = {
         "launch_mode": "canto",
         "model_provider": "ollama",
         "configuration": {"extra_args": ["--oss", "--local-provider", "ollama"]},
+        "permissions": {"command_enforcement": "canto_observed"},
+    },
+    "claude-subscription": {
+        "name": "Claude subscription executor",
+        "harness": "claude_cli",
+        "executable": "claude",
+        "launch_mode": "canto",
+        "model_provider": "anthropic",
+        "permissions": {"command_enforcement": "canto_observed"},
+    },
+    "gemini-subscription": {
+        "name": "Gemini subscription executor",
+        "harness": "gemini_cli",
+        "executable": "gemini",
+        "launch_mode": "canto",
+        "model_provider": "google",
         "permissions": {"command_enforcement": "canto_observed"},
     },
 }
@@ -128,13 +148,15 @@ class ExecutorProfileManager:
     ) -> dict[str, Any]:
         if profile.harness == "manual":
             return {"available": True, "detail": "Manual executor requires no executable."}
-        executable = profile.executable or "codex"
-        resolved = shutil.which(executable)
-        if not resolved:
-            return {"available": False, "detail": f"Executable unavailable: {executable}"}
+        try:
+            resolved = available_for_profile(profile)
+        except WorkerAuthError as exc:
+            return {"available": False, "detail": str(exc)}
+        except DelegationError as exc:
+            return {"available": False, "detail": str(exc)}
         if subscription_auth:
             try:
-                CodexCliAdapter().assert_auth(profile)
+                adapter_for_profile(profile).assert_auth(profile)
             except WorkerAuthError as exc:
                 return {"available": False, "detail": str(exc)}
         if profile.model_provider != "ollama":

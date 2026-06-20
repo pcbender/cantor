@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from canto.core.cli_executor import CLI_HARNESSES
 from canto.core.delegation import DelegationService, TERMINAL_STATUSES
-from canto.core.delegation_executor import CodexCliExecutor, ExecutorError
+from canto.core.delegation_executor import DelegationCliExecutor, ExecutorError
 from canto.core.delegation_workspace import DelegationWorkspaceService
 from canto.models.delegation import (
     DelegationDashboardDetail,
@@ -106,10 +107,10 @@ class DelegationDashboardService:
             try:
                 profile = self.delegation.get_executor_profile(task.executor_id)
                 executor = profile.model_dump(mode="json")
-                if profile.harness == "codex_cli":
+                if profile.harness in CLI_HARNESSES:
                     try:
                         executor["available"] = True
-                        executor["availability_detail"] = CodexCliExecutor.available(profile)
+                        executor["availability_detail"] = DelegationCliExecutor.available(profile)
                     except ExecutorError as exc:
                         executor["available"] = False
                         executor["availability_detail"] = str(exc)
@@ -135,7 +136,7 @@ class DelegationDashboardService:
             scope=task.scope,
             workspace=workspace,
             executor=executor,
-            sessions=CodexCliExecutor(
+            sessions=DelegationCliExecutor(
                 self.delegation, self.workspaces
             ).projected_sessions(task_id),
             launches=launches,
