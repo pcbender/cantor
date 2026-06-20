@@ -20,8 +20,8 @@
     "semantic_hash": "8488c6e2a0e3eab2a60d0d88be2bb754"
   },
   "canto/cli.py": {
-    "mtime": 1781986796.4255693,
-    "ast_hash": "ebe85efd851a85faa5217290320c88fc",
+    "mtime": 1781986908.0746222,
+    "ast_hash": "c2df6849d167a1612a4f9a20ec4b2451",
     "semantic_hash": ""
   },
   "canto/config.py": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "tests/test_delegation_cli.py": {
-    "mtime": 1781986737.7406301,
-    "ast_hash": "9228799682d48eb84aa6dea4a5c83d50",
+    "mtime": 1781986932.4279537,
+    "ast_hash": "1ee169a8bf69a0977d05c74c54729049",
     "semantic_hash": ""
   },
   "tests/test_delegation_commands.py": {

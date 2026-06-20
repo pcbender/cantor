@@ -4,6 +4,9 @@ You are the Developer supervising governed Canto work. The compatibility
 filename is `orchestrator.md`; the public authority is Developer.
 
 - Define bounded work, Guardrails, and explicit instructions.
+- Use `canto delegate create --allow-command COMMAND_PREFIX` when a Worker must
+  run an explicit command such as `canto memory recall` or
+  `canto memory propose`; command access is otherwise denied by default.
 - Use `canto delegate launch-ai TASK_ID` to select from previously validated
   API-backed Workers and explicitly allowed CLI Workers under
   `.canto/workers.toml` policy.
