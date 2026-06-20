@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from typing import Literal
+
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_executor import CodexCliExecutor, ExecutorError
 from canto.core.delegation_workspace import DelegationWorkspaceService
@@ -11,6 +14,24 @@ from canto.models.schemas import utc_now
 
 class CliWorkerSelectionError(DelegationError):
     pass
+
+
+CliFallbackState = Literal[
+    "not_allowed",
+    "no_candidate",
+    "launched",
+    "api_allowed",
+    "api_requires_approval",
+    "api_blocked",
+]
+
+
+@dataclass
+class CliWorkerSelectionResult:
+    state: CliFallbackState
+    launch: ExecutorLaunch | None = None
+    failures: list[str] = field(default_factory=list)
+    detail: str = ""
 
 
 def cli_transport_allowed(policy: WorkerSelectionPolicy) -> bool:
@@ -34,9 +55,9 @@ class CliWorkerSelectionService:
 
     def launch_first_allowed(
         self, task_id: str, policy: WorkerSelectionPolicy
-    ) -> ExecutorLaunch | None:
+    ) -> CliWorkerSelectionResult:
         if not cli_transport_allowed(policy):
-            return None
+            return CliWorkerSelectionResult("not_allowed")
         candidates = self._ordered_candidates(policy)
         failures: list[str] = []
         for profile in candidates:
@@ -48,13 +69,51 @@ class CliWorkerSelectionService:
                 continue
             self._assign_profile(task_id, profile)
             try:
-                return CodexCliExecutor(self.delegation, self.workspaces).launch(task_id)
+                return CliWorkerSelectionResult(
+                    "launched",
+                    launch=CodexCliExecutor(self.delegation, self.workspaces).launch(
+                        task_id
+                    ),
+                )
             except ExecutorError as exc:
                 raise CliWorkerSelectionError(str(exc)) from exc
-        if http_transport_allowed(policy):
-            return None
-        detail = "; ".join(failures) if failures else "no allowed CLI profiles"
-        raise CliWorkerSelectionError(f"No eligible CLI Worker: {detail}")
+        if not candidates:
+            return self._fallback_result(policy, [], "no allowed CLI profiles")
+        return self._fallback_result(policy, failures, "all CLI candidates failed")
+
+    @staticmethod
+    def _fallback_result(
+        policy: WorkerSelectionPolicy, failures: list[str], detail: str
+    ) -> CliWorkerSelectionResult:
+        if not http_transport_allowed(policy):
+            return CliWorkerSelectionResult("api_blocked", failures=failures, detail=detail)
+        if policy.priority in {"balanced", "quality"} and policy.api_fallback_requires_approval:
+            return CliWorkerSelectionResult(
+                "api_requires_approval", failures=failures, detail=detail
+            )
+        if policy.priority == "economy":
+            return CliWorkerSelectionResult("api_blocked", failures=failures, detail=detail)
+        return CliWorkerSelectionResult("api_allowed", failures=failures, detail=detail)
+
+    def explain_candidates(self, policy: WorkerSelectionPolicy) -> dict:
+        return {
+            "allowed": cli_transport_allowed(policy),
+            "http_allowed": http_transport_allowed(policy),
+            "priority": policy.priority,
+            "api_fallback_requires_approval": policy.api_fallback_requires_approval,
+            "candidates": [
+                {
+                    "executor_id": profile.executor_id,
+                    "model_provider": profile.model_provider,
+                    "preferred": profile.executor_id in policy.preferred_cli_profiles,
+                    "same_as_orchestrator": bool(
+                        policy.orchestrator_provider
+                        and profile.model_provider == policy.orchestrator_provider
+                    ),
+                }
+                for profile in self._ordered_candidates(policy)
+            ],
+        }
 
     def _ordered_candidates(
         self, policy: WorkerSelectionPolicy

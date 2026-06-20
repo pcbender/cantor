@@ -74,6 +74,8 @@ def test_repo_init_creates_non_secret_repo_configuration(repository):
     assert worker_policy.cloud_allowed is False
     assert worker_policy.allowed_transports == []
     assert worker_policy.allowed_cli_profiles == []
+    assert worker_policy.api_fallback_requires_approval is True
+    assert worker_policy.orchestrator_provider == ""
 
 
 def test_repository_worker_policy_can_explicitly_allow_cli_transport(repository):

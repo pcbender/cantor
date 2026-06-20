@@ -84,6 +84,26 @@ Default `allowed_transports = []` preserves current HTTP/API-backed
 `launch-ai` behavior. CLI transport is never inferred from the presence of a
 saved profile.
 
+## Phase 3 Fallback
+
+Phase 3 adds structured CLI fallback states:
+
+- `not_allowed`
+- `no_candidate`
+- `launched`
+- `api_allowed`
+- `api_requires_approval`
+- `api_blocked`
+
+Priority controls what happens when CLI candidates are unavailable or exhausted:
+
+- `economy`: block API fallback.
+- `balanced` and `quality`: require approval before API fallback.
+- `urgent`: allow API fallback only when policy also permits HTTP/API use.
+
+Optional `orchestrator_provider` policy context is surfaced in CLI candidate
+explanations so future scoring can penalize using the same subscription pool.
+
 ## Acceptance
 
 - Existing `CodexCliExecutor` call sites continue working.

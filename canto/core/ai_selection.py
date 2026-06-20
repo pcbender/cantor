@@ -70,6 +70,17 @@ def compose_worker_policy(
         allowed_cli_profiles=_narrow(layer.allowed_cli_profiles for layer in active),
         preferred_cli_profiles=_cli_preference(active),
         prefer_subscription_cli=any(layer.prefer_subscription_cli for layer in active),
+        api_fallback_requires_approval=any(
+            layer.api_fallback_requires_approval for layer in active
+        ),
+        orchestrator_provider=next(
+            (
+                layer.orchestrator_provider
+                for layer in reversed(active)
+                if layer.orchestrator_provider
+            ),
+            None,
+        ),
         cloud_allowed=all(layer.cloud_allowed for layer in active),
         cloud_fallback_allowed=all(layer.cloud_fallback_allowed for layer in active),
         local_first=any(layer.local_first for layer in active),

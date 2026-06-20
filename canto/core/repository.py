@@ -85,6 +85,8 @@ allowed_transports = []
 allowed_cli_profiles = []
 preferred_cli_profiles = []
 prefer_subscription_cli = false
+api_fallback_requires_approval = true
+orchestrator_provider = ""
 required_classification = "implementation"
 
 [selection.budget]
