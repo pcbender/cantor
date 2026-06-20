@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 
 import canto.cli as cli_module
 from canto.core.delegation import DelegationService
+from canto.core.executor_profiles import ExecutorProfileManager
 from canto.core.delegation_workspace import (
     DelegationWorkspaceService,
     inspect_repository,
@@ -184,6 +185,131 @@ preferred_cli_profiles = ["local-codex"]
     assert service.get_task("task_cli").selected_model_key == "cli:local-codex"
 
 
+def test_launch_ai_profile_option_forces_one_cli_profile(tmp_path, monkeypatch):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "src").mkdir()
+    (repository / "src" / "app.py").write_text("value = 1\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+    initialize_repository(repository)
+    (repository / ".canto" / "workers.toml").write_text(
+        """\
+version = 1
+
+[selection]
+allowed_transports = ["cli", "http"]
+""",
+        encoding="utf-8",
+    )
+    executable = tmp_path / "codex"
+    executable.write_text(
+        "#!/bin/sh\n"
+        "cat >/dev/null\n"
+        "printf 'value = 5\\n' > src/app.py\n"
+        "printf 'forced profile complete\\n'\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.set_executor_profile(
+        ExecutorProfile(
+            executor_id="forced-codex",
+            name="Forced Codex",
+            harness="codex_cli",
+            executable=str(executable),
+            model_provider="ollama",
+            launch_mode="canto",
+        )
+    )
+    service.create_task(
+        DelegationTask(
+            task_id="task_forced_cli",
+            title="Use forced CLI",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"]),
+            instructions="Change src/app.py",
+        )
+    )
+    service.transition("task_forced_cli", "assigned")
+    workspaces.prepare("task_forced_cli")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        ["delegate", "launch-ai", "task_forced_cli", "--profile", "forced-codex"],
+    )
+
+    assert result.exit_code == 0, result.output
+    launch = json.loads(result.output)
+    assert launch["executor_id"] == "forced-codex"
+    assert service.get_task("task_forced_cli").selected_model_key == "cli:forced-codex"
+
+
+def test_launch_ai_profile_option_respects_repository_profile_allowlist(
+    tmp_path, monkeypatch
+):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "src").mkdir()
+    (repository / "src" / "app.py").write_text("value = 1\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+    initialize_repository(repository)
+    (repository / ".canto" / "workers.toml").write_text(
+        """\
+version = 1
+
+[selection]
+allowed_transports = ["cli"]
+allowed_cli_profiles = ["allowed-codex"]
+""",
+        encoding="utf-8",
+    )
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.set_executor_profile(
+        ExecutorProfile(
+            executor_id="blocked-codex",
+            name="Blocked Codex",
+            harness="codex_cli",
+            executable=str(tmp_path / "codex"),
+            model_provider="ollama",
+            launch_mode="canto",
+        )
+    )
+    service.create_task(
+        DelegationTask(
+            task_id="task_blocked_cli",
+            title="Use blocked CLI",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"]),
+        )
+    )
+    service.transition("task_blocked_cli", "assigned")
+    workspaces.prepare("task_blocked_cli")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        ["delegate", "launch-ai", "task_blocked_cli", "--profile", "blocked-codex"],
+    )
+
+    assert result.exit_code == 1
+    assert "not allowed by repository Worker policy" in result.output
+
+
 def test_launch_ai_balanced_cli_exhaustion_requires_approval_before_api(tmp_path, monkeypatch):
     repository = tmp_path / "repository"
     repository.mkdir()
@@ -269,6 +395,44 @@ def test_assign_accepts_registered_codex_profile(tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     assert service.get_task("task_codex").executor_id == "cloud-codex"
     assert service.get_task("task_codex").status == "assigned"
+
+
+def test_delegate_profile_pool_cli_save_show_and_list(tmp_path, monkeypatch):
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    manager = ExecutorProfileManager(service, tmp_path / "config" / "executors.yaml")
+    service.set_executor_profile(
+        ExecutorProfile(
+            executor_id="cloud-codex",
+            name="Cloud Codex",
+            harness="codex_cli",
+            executable="codex",
+            launch_mode="canto",
+        )
+    )
+    monkeypatch.setattr(cli_module, "_profile_manager", lambda: manager)
+    runner = CliRunner()
+
+    saved = runner.invoke(
+        cli_module.app,
+        [
+            "delegate",
+            "profile",
+            "pool",
+            "save",
+            "subscription",
+            "--profile",
+            "cloud-codex",
+        ],
+    )
+    shown = runner.invoke(
+        cli_module.app, ["delegate", "profile", "pool", "show", "subscription"]
+    )
+    listed = runner.invoke(cli_module.app, ["delegate", "profile", "pool", "list"])
+
+    assert saved.exit_code == 0, saved.output
+    assert json.loads(saved.output)["profiles"] == ["cloud-codex"]
+    assert json.loads(shown.output)["profiles"] == ["cloud-codex"]
+    assert json.loads(listed.output) == {"subscription": ["cloud-codex"]}
 
 
 def test_delegate_pool_reports_read_only_state_error_without_traceback(monkeypatch):

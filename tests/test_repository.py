@@ -73,6 +73,8 @@ def test_repo_init_creates_non_secret_repo_configuration(repository):
     worker_policy = load_repository_worker_policy(repository)
     assert worker_policy.cloud_allowed is False
     assert worker_policy.allowed_transports == []
+    assert worker_policy.allowed_cli_profile_pools == []
+    assert worker_policy.preferred_cli_profile_pools == []
     assert worker_policy.allowed_cli_profiles == []
     assert worker_policy.api_fallback_requires_approval is True
     assert worker_policy.orchestrator_provider == ""
@@ -86,6 +88,8 @@ version = 1
 
 [selection]
 allowed_transports = ["cli"]
+allowed_cli_profile_pools = ["subscription-cli"]
+preferred_cli_profile_pools = ["subscription-cli"]
 allowed_cli_profiles = ["codex-subscription"]
 preferred_cli_profiles = ["codex-subscription"]
 prefer_subscription_cli = true
@@ -96,6 +100,8 @@ prefer_subscription_cli = true
     policy = load_repository_worker_policy(repository)
 
     assert policy.allowed_transports == ["cli"]
+    assert policy.allowed_cli_profile_pools == ["subscription-cli"]
+    assert policy.preferred_cli_profile_pools == ["subscription-cli"]
     assert policy.allowed_cli_profiles == ["codex-subscription"]
     assert policy.preferred_cli_profiles == ["codex-subscription"]
     assert policy.prefer_subscription_cli is True
@@ -250,6 +256,33 @@ def test_repo_doctor_reports_unavailable_ai_state_without_traceback(
     assert result.exit_code == 0
     assert "WARN ai_worker_state: global AI state is unavailable" in result.output
     assert "Traceback" not in result.output
+
+
+def test_repo_doctor_reports_missing_cli_profile_pool(repository, monkeypatch):
+    initialize_repository(repository)
+    (repository / ".canto" / "workers.toml").write_text(
+        """\
+version = 1
+
+[selection]
+allowed_transports = ["cli"]
+allowed_cli_profile_pools = ["missing-pool"]
+""",
+        encoding="utf-8",
+    )
+    git(repository, "add", "AGENTS.md", ".canto")
+    git(repository, "commit", "-m", "Bootstrap Canto agent instructions")
+    monkeypatch.setattr(
+        cli_module, "_ai_readiness_store", lambda: MemoryStateStore()
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app, ["repo", "doctor", "--repository", str(repository)]
+    )
+
+    assert result.exit_code == 1
+    assert "FAIL ai_worker_cli_profiles" in result.output
+    assert "missing_pools=missing-pool" in result.output
 
 
 def test_delegated_sparse_workspace_includes_committed_role_instructions(repository, tmp_path):

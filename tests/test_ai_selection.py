@@ -38,6 +38,7 @@ def test_policy_composition_never_widens_cloud_or_allowlists():
         cloud_allowed=True,
         allowed_transports=["cli", "http"],
         allowed_providers=["openai", "anthropic"],
+        allowed_cli_profile_pools=["subscription"],
         allowed_cli_profiles=["codex", "claude"],
         budget=WorkerBudgetPolicy(enabled=True, max_estimated_usd=2),
     )
@@ -47,6 +48,8 @@ def test_policy_composition_never_widens_cloud_or_allowlists():
         allowed_transports=["cli"],
         allowed_providers=["openai"],
         preferred_models=["openai:small", "openai:large"],
+        allowed_cli_profile_pools=["subscription"],
+        preferred_cli_profile_pools=["subscription"],
         allowed_cli_profiles=["codex"],
         preferred_cli_profiles=["codex"],
         prefer_subscription_cli=True,
@@ -58,6 +61,8 @@ def test_policy_composition_never_widens_cloud_or_allowlists():
     assert result.cloud_allowed is False
     assert result.allowed_transports == ["cli"]
     assert result.allowed_providers == ["openai"]
+    assert result.allowed_cli_profile_pools == ["subscription"]
+    assert result.preferred_cli_profile_pools == ["subscription"]
     assert result.preferred_models == ["openai:small", "openai:large"]
     assert result.allowed_cli_profiles == ["codex"]
     assert result.preferred_cli_profiles == ["codex"]

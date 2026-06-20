@@ -102,6 +102,8 @@ class CliWorkerSelectionService:
             "http_allowed": http_transport_allowed(policy),
             "priority": policy.priority,
             "api_fallback_requires_approval": policy.api_fallback_requires_approval,
+            "allowed_cli_profile_pools": policy.allowed_cli_profile_pools,
+            "preferred_cli_profile_pools": policy.preferred_cli_profile_pools,
             "candidates": [
                 {
                     "executor_id": profile.executor_id,
@@ -119,18 +121,31 @@ class CliWorkerSelectionService:
     def _ordered_candidates(
         self, policy: WorkerSelectionPolicy
     ) -> list[ExecutorProfile]:
+        allowed_pool_profiles = self._expand_profile_pools(
+            policy.allowed_cli_profile_pools
+        )
+        preferred_pool_profiles = self._expand_profile_pools(
+            policy.preferred_cli_profile_pools
+        )
         profiles = [
             profile
             for profile in self.delegation.list_executor_profiles()
             if profile.harness in CLI_HARNESSES and profile.launch_mode == "canto"
         ]
-        if policy.allowed_cli_profiles:
-            allowed = set(policy.allowed_cli_profiles)
+        allowed_profiles = list(policy.allowed_cli_profiles)
+        if allowed_pool_profiles:
+            allowed_profiles.extend(allowed_pool_profiles)
+        if allowed_profiles:
+            allowed = set(allowed_profiles)
             profiles = [profile for profile in profiles if profile.executor_id in allowed]
         by_id = {profile.executor_id: profile for profile in profiles}
+        preferred_profiles = [
+            *policy.preferred_cli_profiles,
+            *preferred_pool_profiles,
+        ]
         ordered = [
             by_id[executor_id]
-            for executor_id in policy.preferred_cli_profiles
+            for executor_id in dict.fromkeys(preferred_profiles)
             if executor_id in by_id
         ]
         ordered_ids = {profile.executor_id for profile in ordered}
@@ -141,6 +156,15 @@ class CliWorkerSelectionService:
         if policy.prefer_subscription_cli:
             remaining.sort(key=lambda profile: profile.model_provider == "ollama")
         return ordered + remaining
+
+    def _expand_profile_pools(self, pool_ids: list[str]) -> list[str]:
+        profiles: list[str] = []
+        for pool_id in pool_ids:
+            try:
+                profiles.extend(self.profiles.resolve_profile_pool(pool_id))
+            except Exception as exc:
+                raise CliWorkerSelectionError(str(exc)) from exc
+        return list(dict.fromkeys(profiles))
 
     def _assign_profile(self, task_id: str, profile: ExecutorProfile) -> None:
         task = self.delegation.get_task(task_id)

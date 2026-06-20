@@ -52,6 +52,13 @@ def _cli_preference(layers: list[WorkerSelectionPolicy]) -> list[str]:
     return []
 
 
+def _cli_pool_preference(layers: list[WorkerSelectionPolicy]) -> list[str]:
+    for layer in reversed(layers):
+        if layer.preferred_cli_profile_pools:
+            return list(layer.preferred_cli_profile_pools)
+    return []
+
+
 def compose_worker_policy(
     *layers: WorkerSelectionPolicy | None,
 ) -> WorkerSelectionPolicy:
@@ -67,6 +74,10 @@ def compose_worker_policy(
         allowed_providers=_narrow(layer.allowed_providers for layer in active),
         allowed_models=_narrow(layer.allowed_models for layer in active),
         preferred_models=_preference(active),
+        allowed_cli_profile_pools=_narrow(
+            layer.allowed_cli_profile_pools for layer in active
+        ),
+        preferred_cli_profile_pools=_cli_pool_preference(active),
         allowed_cli_profiles=_narrow(layer.allowed_cli_profiles for layer in active),
         preferred_cli_profiles=_cli_preference(active),
         prefer_subscription_cli=any(layer.prefer_subscription_cli for layer in active),

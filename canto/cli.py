@@ -133,6 +133,7 @@ ai_pool_app = typer.Typer(help="Select and explain governed AI Workers")
 ai_usage_app = typer.Typer(help="Inspect AI Worker usage and endpoint health")
 delegate_compare_app = typer.Typer(help="Create and inspect prompt comparisons")
 delegate_profile_app = typer.Typer(help="Manage local executor profiles")
+delegate_profile_pool_app = typer.Typer(help="Manage named executor profile pools")
 memory_app = typer.Typer(help="Manage governed Canto memory")
 memory_project_app = typer.Typer(help="Manage memory project identity")
 app.add_typer(skill_app, name="skill")
@@ -150,6 +151,7 @@ ai_app.add_typer(ai_pool_app, name="pool")
 ai_app.add_typer(ai_usage_app, name="usage")
 delegate_app.add_typer(delegate_compare_app, name="compare")
 delegate_app.add_typer(delegate_profile_app, name="profile")
+delegate_profile_app.add_typer(delegate_profile_pool_app, name="pool")
 app.add_typer(memory_app, name="memory")
 memory_app.add_typer(memory_project_app, name="project")
 
@@ -308,6 +310,59 @@ def _profile_manager() -> ExecutorProfileManager:
     )
 
 
+def _ai_worker_profile_check(policy) -> RepositoryDoctorCheck:
+    manager = _profile_manager()
+    pool_ids = list(
+        dict.fromkeys(
+            [
+                *policy.allowed_cli_profile_pools,
+                *policy.preferred_cli_profile_pools,
+            ]
+        )
+    )
+    profile_ids = list(
+        dict.fromkeys(
+            [
+                *policy.allowed_cli_profiles,
+                *policy.preferred_cli_profiles,
+            ]
+        )
+    )
+    missing_pools = []
+    for pool_id in pool_ids:
+        try:
+            profile_ids.extend(manager.resolve_profile_pool(pool_id))
+        except ExecutorProfileError:
+            missing_pools.append(pool_id)
+    missing_profiles = []
+    for profile_id in dict.fromkeys(profile_ids):
+        try:
+            manager.delegation.get_executor_profile(profile_id)
+        except DelegationError:
+            missing_profiles.append(profile_id)
+    problems = []
+    if missing_pools:
+        problems.append("missing_pools=" + ",".join(sorted(missing_pools)))
+    if missing_profiles:
+        problems.append("missing_profiles=" + ",".join(sorted(missing_profiles)))
+    return RepositoryDoctorCheck(
+        name="ai_worker_cli_profiles",
+        valid=not problems,
+        detail=(
+            "configured CLI profiles and pools are available"
+            if not problems
+            else "; ".join(problems)
+        ),
+    )
+
+
+def _repository_allows_cli_profile(profile_id: str, policy) -> bool:
+    allowed = list(policy.allowed_cli_profiles)
+    for pool_id in policy.allowed_cli_profile_pools:
+        allowed.extend(_profile_manager().resolve_profile_pool(pool_id))
+    return not allowed or profile_id in set(allowed)
+
+
 @repo_app.command("init")
 def repo_init(
     repository: Path = typer.Option(Path("."), "--repository", "--repo"),
@@ -347,6 +402,7 @@ def repo_doctor(
             ai_checks = ai_worker_readiness_checks(
                 _ai_readiness_store(), worker_policy
             )
+            ai_checks.append(_ai_worker_profile_check(worker_policy))
         except (OSError, sqlite3.Error) as exc:
             required = bool(
                 worker_policy.allowed_endpoints
@@ -710,6 +766,39 @@ def delegate_profile_check(
     except (DelegationError, ExecutorProfileError) as exc:
         _delegation_error(exc)
     _print(value)
+
+
+@delegate_profile_pool_app.command("list")
+def delegate_profile_pool_list() -> None:
+    """List named shared executor profile pools."""
+    try:
+        value = _profile_manager().profile_pools()
+    except ExecutorProfileError as exc:
+        _delegation_error(exc)
+    _print(value)
+
+
+@delegate_profile_pool_app.command("show")
+def delegate_profile_pool_show(pool_id: str) -> None:
+    """Show one named shared executor profile pool."""
+    try:
+        value = _profile_manager().resolve_profile_pool(pool_id)
+    except ExecutorProfileError as exc:
+        _delegation_error(exc)
+    _print({"pool_id": pool_id, "profiles": value})
+
+
+@delegate_profile_pool_app.command("save")
+def delegate_profile_pool_save(
+    pool_id: str,
+    profile: list[str] = typer.Option(..., "--profile"),
+) -> None:
+    """Save a named shared executor profile pool."""
+    try:
+        value = _profile_manager().save_profile_pool(pool_id, profile)
+    except (DelegationError, ExecutorProfileError) as exc:
+        _delegation_error(exc)
+    _print({"pool_id": pool_id, "profiles": value[pool_id]})
 
 
 @delegate_app.command("launch")
@@ -1446,6 +1535,7 @@ def ai_usage_health(endpoint_id: str | None = typer.Option(None, "--endpoint")) 
 def delegate_launch_ai(
     task_id: str,
     priority: str | None = typer.Option(None, "--priority"),
+    profile: str | None = typer.Option(None, "--profile"),
     allow_cloud: bool = typer.Option(False, "--allow-cloud"),
     allow_cloud_fallback: bool = typer.Option(False, "--allow-cloud-fallback"),
 ) -> None:
@@ -1461,12 +1551,35 @@ def delegate_launch_ai(
         repository_policy = load_repository_worker_policy(
             task.repository.canonical_path
         )
-        command_policy = WorkerSelectionPolicy(
-            priority=priority or repository_policy.priority,  # type: ignore[arg-type]
-            cloud_allowed=allow_cloud,
-            cloud_fallback_allowed=allow_cloud_fallback,
-        )
+        command_policy_values: dict[str, Any] = {
+            "priority": priority or repository_policy.priority,
+            "cloud_allowed": allow_cloud,
+            "cloud_fallback_allowed": allow_cloud_fallback,
+        }
+        if profile:
+            if not _repository_allows_cli_profile(profile, repository_policy):
+                raise WorkerAssignmentError(
+                    f"CLI profile is not allowed by repository Worker policy: {profile}"
+                )
+            command_policy_values.update(
+                {
+                    "allowed_transports": ["cli"],
+                    "allowed_cli_profiles": [profile],
+                    "preferred_cli_profiles": [profile],
+                    "prefer_subscription_cli": True,
+                }
+            )
+        command_policy = WorkerSelectionPolicy(**command_policy_values)  # type: ignore[arg-type]
         effective_policy = compose_worker_policy(repository_policy, command_policy)
+        if profile:
+            effective_policy = effective_policy.model_copy(
+                update={
+                    "allowed_cli_profile_pools": [],
+                    "preferred_cli_profile_pools": [],
+                    "allowed_cli_profiles": [profile],
+                    "preferred_cli_profiles": [profile],
+                }
+            )
         cli_selection = CliWorkerSelectionService(
             *_delegation_runtime(), _profile_manager()
         ).launch_first_allowed(task_id, effective_policy)
@@ -1490,6 +1603,7 @@ def delegate_launch_ai(
     except (
         CliWorkerSelectionError,
         DelegationError,
+        ExecutorProfileError,
         WorkerAssignmentError,
         RepositoryConfigError,
     ) as exc:

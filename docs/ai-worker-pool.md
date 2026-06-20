@@ -88,7 +88,8 @@ overwrites observed probe evidence or grants implementation eligibility.
 durable task state. Its default is local-only, with budgets disabled. Priority
 may be `economy`, `balanced`, `quality`, or `urgent`. Policy can narrow
 endpoints, providers, models, token limits, estimated cost, turns, tool calls,
-and wall time. More specific policy cannot widen a parent policy.
+wall time, CLI profile pools, and CLI profiles. More specific policy cannot
+widen a parent policy.
 `preferred_models` is an ordered ranking hint within `allowed_models`; it does
 not authorize a model and preserves fallback to later eligible models.
 
@@ -98,6 +99,8 @@ explicitly permits CLI transport:
 ```toml
 [selection]
 allowed_transports = ["cli"]
+allowed_cli_profile_pools = ["subscription-cli"]
+preferred_cli_profile_pools = ["subscription-cli"]
 allowed_cli_profiles = ["local-codex"]
 preferred_cli_profiles = ["local-codex"]
 prefer_subscription_cli = true
@@ -106,6 +109,25 @@ prefer_subscription_cli = true
 The default `allowed_transports = []` preserves HTTP/API-backed `launch-ai`
 behavior. `allowed_transports = ["cli"]` prevents API fallback; use
 `["cli", "http"]` only when API fallback is intentionally allowed.
+
+Named CLI profile pools are global/shared executor-profile config. They reduce
+repo-local duplication while preserving repo-local authority:
+
+```yaml
+profile_pools:
+  subscription-cli:
+    profiles:
+      - website-codex-cloud
+      - claude-subscription
+      - gemini-subscription
+```
+
+Use:
+
+```bash
+canto delegate profile pool save subscription-cli --profile website-codex-cloud
+canto delegate launch-ai TASK_ID --profile website-codex-cloud
+```
 
 When CLI candidates are exhausted before changing the Workspace, priority
 controls API fallback:

@@ -129,3 +129,48 @@ def test_cli_selection_includes_claude_and_gemini_profiles(tmp_path):
         "gemini-sub",
         "claude-sub",
     ]
+
+
+def test_cli_selection_expands_named_profile_pools(tmp_path):
+    selector = service(tmp_path)
+    selector.delegation.set_executor_profile(
+        ExecutorProfile(
+            executor_id="codex-sub",
+            name="Codex",
+            harness="codex_cli",
+            model_provider="openai",
+            launch_mode="canto",
+        )
+    )
+    selector.delegation.set_executor_profile(
+        ExecutorProfile(
+            executor_id="claude-sub",
+            name="Claude",
+            harness="claude_cli",
+            model_provider="anthropic",
+            launch_mode="canto",
+        )
+    )
+    selector.profiles.config_file.parent.mkdir(parents=True)
+    selector.profiles.config_file.write_text(
+        "profile_pools:\n"
+        "  subscription:\n"
+        "    profiles:\n"
+        "      - claude-sub\n"
+        "      - codex-sub\n",
+        encoding="utf-8",
+    )
+
+    explanation = selector.explain_candidates(
+        WorkerSelectionPolicy(
+            allowed_transports=["cli"],
+            allowed_cli_profile_pools=["subscription"],
+            preferred_cli_profile_pools=["subscription"],
+        )
+    )
+
+    assert explanation["allowed_cli_profile_pools"] == ["subscription"]
+    assert [candidate["executor_id"] for candidate in explanation["candidates"]] == [
+        "claude-sub",
+        "codex-sub",
+    ]
