@@ -12,6 +12,7 @@ WorkerClassification = Literal[
     "implementation", "advisory", "unavailable", "unvalidated"
 ]
 PriorityLevel = Literal["economy", "balanced", "quality", "urgent"]
+WorkerTransport = Literal["http", "cli"]
 ModelAvailability = Literal["available", "missing", "endpoint_unreachable", "unknown"]
 ProbeState = Literal["current", "stale", "absent"]
 MetadataSourceKind = Literal["runtime", "declared", "curated", "observed"]
@@ -155,10 +156,14 @@ class WorkerBudgetPolicy(BaseModel):
 
 class WorkerSelectionPolicy(BaseModel):
     priority: PriorityLevel = "balanced"
+    allowed_transports: list[WorkerTransport] = Field(default_factory=list)
     allowed_endpoints: list[str] = Field(default_factory=list)
     allowed_providers: list[AIProvider] = Field(default_factory=list)
     allowed_models: list[str] = Field(default_factory=list)
     preferred_models: list[str] = Field(default_factory=list)
+    allowed_cli_profiles: list[str] = Field(default_factory=list)
+    preferred_cli_profiles: list[str] = Field(default_factory=list)
+    prefer_subscription_cli: bool = False
     cloud_allowed: bool = False
     cloud_fallback_allowed: bool = False
     local_first: bool = True

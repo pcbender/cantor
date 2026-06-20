@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
+from canto.core.cli_executor import CodexCliAdapter, WorkerAuthError
 from canto.core.delegation import DelegationError, DelegationService
 from canto.models.delegation import ExecutorProfile
 
@@ -122,13 +123,20 @@ class ExecutorProfileManager:
         _reject_secrets(profile.model_dump(mode="json"))
         return self.delegation.set_executor_profile(profile)
 
-    def check(self, profile: ExecutorProfile) -> dict[str, Any]:
+    def check(
+        self, profile: ExecutorProfile, *, subscription_auth: bool = False
+    ) -> dict[str, Any]:
         if profile.harness == "manual":
             return {"available": True, "detail": "Manual executor requires no executable."}
         executable = profile.executable or "codex"
         resolved = shutil.which(executable)
         if not resolved:
             return {"available": False, "detail": f"Executable unavailable: {executable}"}
+        if subscription_auth:
+            try:
+                CodexCliAdapter().assert_auth(profile)
+            except WorkerAuthError as exc:
+                return {"available": False, "detail": str(exc)}
         if profile.model_provider != "ollama":
             return {"available": True, "detail": str(Path(resolved).resolve())}
         ollama = shutil.which("ollama")

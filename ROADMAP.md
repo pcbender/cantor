@@ -1292,6 +1292,51 @@ Recommended work packets:
 
 ---
 
+## Subscription CLI Worker Transport
+
+Design source: `docs/subscription-cli-workers.md`.
+
+Goal: reduce API-key spend for delegated Worker tasks by using installed,
+subscription-authenticated CLI Workers when the Developer explicitly permits
+that transport. The long-term target is one Worker pool spanning local,
+subscription CLI, and API-backed Workers. The first phase is deliberately
+behavior-preserving.
+
+Phase 1 packets:
+
+- CP-1701 — Subscription CLI Worker Design Freeze
+- CP-1702 — CLI Executor Call-Site Audit
+- CP-1703 — Provider-Neutral CLI Executor Seam
+- CP-1704 — CLI Subprocess Environment Allowlist
+- CP-1705 — Explicit Codex Subscription Auth Preflight
+- CP-1706 — Phase 1 Compatibility And Documentation Pass
+
+Phase 2 packets:
+
+- CP-1707 — CLI Candidate Model Design
+- CP-1708 — Explicit CLI Transport Policy
+- CP-1709 — Codex CLI Candidate Routing
+- CP-1710 — Subscription Auth And Env Enforcement
+- CP-1711 — Codex OSS Candidate Routing
+- CP-1712 — Phase 2 Dogfood
+
+Phase 1 status: complete. `CodexCliExecutor` remains the compatibility
+wrapper for existing `canto delegate launch` behavior. `launch-ai` remains
+API-backed by default.
+
+Phase 2 status: in progress. Saved Codex CLI `ExecutorProfile` records become
+selectable only when repository policy explicitly permits CLI transport.
+
+Deferred to later phases:
+
+- Claude and Gemini CLI adapters.
+- CLI Worker candidates in automatic selection.
+- Priority-driven quota exhaustion and API fallback.
+- Provider-diversity scoring.
+- Capability floors and performance feedback.
+
+---
+
 ## Deferred Until Explicitly Approved
 
 Now scheduled (moved out of deferral):

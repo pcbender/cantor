@@ -70,7 +70,33 @@ def test_repo_init_creates_non_secret_repo_configuration(repository):
     assert "credential" not in content
     assert "task" not in content
     assert load_repository(repository).repo_id == config.repo_id
-    assert load_repository_worker_policy(repository).cloud_allowed is False
+    worker_policy = load_repository_worker_policy(repository)
+    assert worker_policy.cloud_allowed is False
+    assert worker_policy.allowed_transports == []
+    assert worker_policy.allowed_cli_profiles == []
+
+
+def test_repository_worker_policy_can_explicitly_allow_cli_transport(repository):
+    initialize_repository(repository)
+    (repository / ".canto" / "workers.toml").write_text(
+        """\
+version = 1
+
+[selection]
+allowed_transports = ["cli"]
+allowed_cli_profiles = ["codex-subscription"]
+preferred_cli_profiles = ["codex-subscription"]
+prefer_subscription_cli = true
+""",
+        encoding="utf-8",
+    )
+
+    policy = load_repository_worker_policy(repository)
+
+    assert policy.allowed_transports == ["cli"]
+    assert policy.allowed_cli_profiles == ["codex-subscription"]
+    assert policy.preferred_cli_profiles == ["codex-subscription"]
+    assert policy.prefer_subscription_cli is True
 
 
 def test_repo_init_preserves_existing_agents_content_and_is_idempotent(repository):
@@ -133,7 +159,7 @@ def test_repo_init_refreshes_canto_owned_role_manuals(repository):
     assert "# Canto Developer Instructions" in developer_manual.read_text()
     assert "Authorize Canto to Apply" in developer_manual.read_text()
     assert "`canto delegate launch-ai TASK_ID`" in developer_manual.read_text()
-    assert "excluded from automatic discovery" in developer_manual.read_text()
+    assert "explicitly allows CLI transport" in developer_manual.read_text()
     assert "`canto delegate wait TASK_ID`" in developer_manual.read_text()
     assert "# Canto Delegated Worker Instructions" in worker_manual.read_text()
     assert "Do not self-assign" in worker_manual.read_text()

@@ -68,6 +68,26 @@ def test_profile_check_is_non_mutating(tmp_path):
     assert profiles.delegation.list_executor_profiles() == []
 
 
+def test_profile_check_can_require_codex_subscription_auth(tmp_path, monkeypatch):
+    profiles = manager(tmp_path)
+    profile = profiles.resolve("cloud", preset="codex-cloud")
+    monkeypatch.setattr(profile_module.shutil, "which", lambda value: "/usr/bin/codex")
+    monkeypatch.setenv("HOME", str(tmp_path))
+
+    failed = profiles.check(profile, subscription_auth=True)
+    assert failed["available"] is False
+    assert "subscription auth" in failed["detail"]
+
+    auth = tmp_path / ".codex" / "auth.json"
+    auth.parent.mkdir()
+    auth.write_text(
+        '{"auth_mode": "chatgpt", "OPENAI_API_KEY": null}', encoding="utf-8"
+    )
+
+    passed = profiles.check(profile, subscription_auth=True)
+    assert passed["available"] is True
+
+
 def test_ollama_preset_is_local_only_and_checks_installed_model(tmp_path, monkeypatch):
     profiles = manager(tmp_path)
     profile = profiles.resolve(

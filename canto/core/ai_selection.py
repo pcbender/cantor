@@ -45,6 +45,13 @@ def _preference(layers: list[WorkerSelectionPolicy]) -> list[str]:
     return []
 
 
+def _cli_preference(layers: list[WorkerSelectionPolicy]) -> list[str]:
+    for layer in reversed(layers):
+        if layer.preferred_cli_profiles:
+            return list(layer.preferred_cli_profiles)
+    return []
+
+
 def compose_worker_policy(
     *layers: WorkerSelectionPolicy | None,
 ) -> WorkerSelectionPolicy:
@@ -55,10 +62,14 @@ def compose_worker_policy(
     budgets = [layer.budget for layer in active]
     return WorkerSelectionPolicy(
         priority=active[-1].priority,
+        allowed_transports=_narrow(layer.allowed_transports for layer in active),
         allowed_endpoints=_narrow(layer.allowed_endpoints for layer in active),
         allowed_providers=_narrow(layer.allowed_providers for layer in active),
         allowed_models=_narrow(layer.allowed_models for layer in active),
         preferred_models=_preference(active),
+        allowed_cli_profiles=_narrow(layer.allowed_cli_profiles for layer in active),
+        preferred_cli_profiles=_cli_preference(active),
+        prefer_subscription_cli=any(layer.prefer_subscription_cli for layer in active),
         cloud_allowed=all(layer.cloud_allowed for layer in active),
         cloud_fallback_allowed=all(layer.cloud_fallback_allowed for layer in active),
         local_first=any(layer.local_first for layer in active),

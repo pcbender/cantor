@@ -92,6 +92,21 @@ and wall time. More specific policy cannot widen a parent policy.
 `preferred_models` is an ordered ranking hint within `allowed_models`; it does
 not authorize a model and preserves fallback to later eligible models.
 
+Saved CLI Worker profiles may enter `launch-ai` only when repository policy
+explicitly permits CLI transport:
+
+```toml
+[selection]
+allowed_transports = ["cli"]
+allowed_cli_profiles = ["local-codex"]
+preferred_cli_profiles = ["local-codex"]
+prefer_subscription_cli = true
+```
+
+The default `allowed_transports = []` preserves HTTP/API-backed `launch-ai`
+behavior. `allowed_transports = ["cli"]` prevents API fallback; use
+`["cli", "http"]` only when API fallback is intentionally allowed.
+
 `canto repo doctor` includes AI Worker readiness. It reports policy-required
 endpoints and exact models, current cloud readiness, and local model status.
 Missing explicitly allowed endpoints or models are blocking failures. Optional
@@ -107,9 +122,9 @@ canto delegate launch-ai TASK_ID
 
 Cloud use requires `--allow-cloud`. Local-to-cloud fallback additionally
 requires `--allow-cloud-fallback`; it is never silent. Fallback stops if a
-failed Worker changed the Workspace. CLI-authenticated profiles remain an
-explicit Developer-assigned compatibility escape hatch and never enter
-automatic discovery, ranking, or fallback.
+failed Worker changed the Workspace. CLI-authenticated profiles remain
+credential-free `ExecutorProfile` records and are eligible only when repository
+policy explicitly allows CLI transport.
 
 ## Evidence And Security
 

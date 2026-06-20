@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
 from pathlib import Path
 from uuid import uuid4
 
+from canto.core.cli_executor import CliExecutor, CliExecutorError, CodexCliAdapter
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import DelegationWorkspaceService
-from canto.core.delegation_artifacts import classify_worker_outcome
 from canto.models.delegation import ExecutorLaunch, ExecutorProfile, ExecutorSession
 from canto.models.schemas import utc_now
 
 
-class ExecutorError(DelegationError):
+class ExecutorError(CliExecutorError):
     pass
 
 
@@ -24,36 +21,26 @@ class CodexCliExecutor:
         workspaces: DelegationWorkspaceService,
         *,
         timeout_seconds: int = 1800,
+        adapter: CodexCliAdapter | None = None,
     ):
         self.delegation = delegation
         self.workspaces = workspaces
         self.timeout_seconds = timeout_seconds
+        self.adapter = adapter or CodexCliAdapter()
+        self.executor = CliExecutor(self.adapter, timeout_seconds=timeout_seconds)
 
     @staticmethod
     def available(profile: ExecutorProfile) -> str:
-        if profile.harness != "codex_cli":
-            raise ExecutorError("Executor profile is not a Codex CLI profile")
-        executable = profile.executable or "codex"
-        resolved = shutil.which(executable)
-        if not resolved:
-            raise ExecutorError(f"Codex CLI executable is unavailable: {executable}")
-        return str(Path(resolved).resolve())
+        try:
+            return CodexCliAdapter.available(profile)
+        except CliExecutorError as exc:
+            raise ExecutorError(str(exc)) from exc
 
     def command(self, profile: ExecutorProfile, workspace: Path) -> list[str]:
-        executable = self.available(profile)
-        command = [
-            executable,
-            "exec",
-            "--sandbox",
-            "workspace-write",
-            "--cd",
-            str(workspace.resolve()),
-        ]
-        if profile.model:
-            command.extend(("--model", profile.model))
-        command.extend(profile.configuration.get("extra_args", []))
-        command.append("-")
-        return command
+        try:
+            return self.executor.command(profile, workspace)
+        except CliExecutorError as exc:
+            raise ExecutorError(str(exc)) from exc
 
     def prompt(
         self,
@@ -202,72 +189,17 @@ class CodexCliExecutor:
             prompt_variant=effective_variant,
             prompt_supplement=effective_supplement,
         )
-        environment = {
-            key: os.environ[key]
-            for key in ("HOME", "LANG", "LC_ALL", "PATH", "TERM")
-            if key in os.environ
-        }
-        try:
-            completed = subprocess.run(
-                argv,
-                cwd=workspace_path,
-                input=prompt,
-                text=True,
-                capture_output=True,
-                timeout=self.timeout_seconds,
-                check=False,
-                env=environment,
-            )
-            stdout_path.write_text(completed.stdout, encoding="utf-8")
-            stderr_path.write_text(completed.stderr, encoding="utf-8")
-            launch = launch.model_copy(
-                update={"exit_code": completed.returncode, "ended_at": utc_now()}
-            )
-            if completed.returncode:
-                launch = launch.model_copy(
-                    update={
-                        "outcome": "failed",
-                        "outcome_detail": (
-                            f"Worker process exited with code {completed.returncode}"
-                        ),
-                    }
-                )
-                self.delegation.append_record(task_id, "launches", launch)
-                self.delegation.transition(
-                    task_id,
-                    "failed",
-                    details={"launch_id": launch.launch_id, "exit_code": completed.returncode},
-                )
-            else:
-                workspace_changed, outcome, outcome_detail = classify_worker_outcome(
-                    workspace_path,
-                    workspace.base_commit,
-                    completed.stdout,
-                    allowed_paths=workspace.allowed_paths,
-                    denied_paths=workspace.denied_paths,
-                )
-                launch = launch.model_copy(
-                    update={
-                        "workspace_changed": workspace_changed,
-                        "outcome": outcome,
-                        "outcome_detail": outcome_detail,
-                    }
-                )
-                self.delegation.append_record(task_id, "launches", launch)
-                self.delegation.transition(
-                    task_id,
-                    "executor_done",
-                    details={
-                        "launch_id": launch.launch_id,
-                        "exit_code": 0,
-                        "worker_outcome": outcome,
-                        "workspace_changed": workspace_changed,
-                    },
-                )
-            return launch
-        except subprocess.TimeoutExpired as exc:
-            stdout_path.write_text(exc.stdout or "", encoding="utf-8")
-            stderr_path.write_text(exc.stderr or "", encoding="utf-8")
+        result = self.executor.run(
+            profile,
+            workspace_path,
+            prompt,
+            base_commit=workspace.base_commit,
+            allowed_paths=workspace.allowed_paths,
+            denied_paths=workspace.denied_paths,
+        )
+        stdout_path.write_text(result.stdout, encoding="utf-8")
+        stderr_path.write_text(result.stderr, encoding="utf-8")
+        if result.timed_out:
             launch = launch.model_copy(
                 update={"timed_out": True, "ended_at": utc_now()}
             )
@@ -278,3 +210,39 @@ class CodexCliExecutor:
                 details={"launch_id": launch.launch_id, "timed_out": True},
             )
             return launch
+        launch = launch.model_copy(
+            update={"exit_code": result.exit_code, "ended_at": utc_now()}
+        )
+        if result.exit_code:
+            launch = launch.model_copy(
+                update={
+                    "outcome": "failed",
+                    "outcome_detail": result.outcome_detail,
+                }
+            )
+            self.delegation.append_record(task_id, "launches", launch)
+            self.delegation.transition(
+                task_id,
+                "failed",
+                details={"launch_id": launch.launch_id, "exit_code": result.exit_code},
+            )
+            return launch
+        launch = launch.model_copy(
+            update={
+                "workspace_changed": result.workspace_changed,
+                "outcome": result.outcome,
+                "outcome_detail": result.outcome_detail,
+            }
+        )
+        self.delegation.append_record(task_id, "launches", launch)
+        self.delegation.transition(
+            task_id,
+            "executor_done",
+            details={
+                "launch_id": launch.launch_id,
+                "exit_code": 0,
+                "worker_outcome": result.outcome,
+                "workspace_changed": result.workspace_changed,
+            },
+        )
+        return launch
