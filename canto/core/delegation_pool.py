@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from canto.core.delegation import DelegationService, TERMINAL_STATUSES
-from canto.core.delegation_executor import CodexCliExecutor, ExecutorError
+from canto.core.cli_executor import CLI_HARNESSES
+from canto.core.delegation_executor import DelegationCliExecutor, ExecutorError
 from canto.models.delegation import DelegationTaskStatus, ExecutorPoolEntry
 
 
@@ -22,14 +23,17 @@ class DelegationPoolService:
             if profile.harness == "manual":
                 available = True
                 detail = "manual_unverified"
-            else:
+            elif profile.harness in CLI_HARNESSES:
                 try:
-                    executable = CodexCliExecutor.available(profile)
+                    executable = DelegationCliExecutor.available(profile)
                     available = True
                     detail = executable
                 except ExecutorError as exc:
                     available = False
                     detail = str(exc)
+            else:
+                available = False
+                detail = f"Unsupported executor harness: {profile.harness}"
             entries.append(
                 ExecutorPoolEntry(
                     executor_id=profile.executor_id,

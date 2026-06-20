@@ -92,7 +92,7 @@ class ExecutorPermissions(BaseModel):
 class ExecutorProfile(BaseModel):
     executor_id: str
     name: str
-    harness: Literal["manual", "codex_cli", "api_worker"]
+    harness: Literal["manual", "codex_cli", "claude_cli", "gemini_cli", "api_worker"]
     executable: str | None = None
     configuration: dict[str, Any] = Field(default_factory=dict)
     model_provider: str | None = None
@@ -224,7 +224,7 @@ class DelegationEvent(BaseModel):
 
 class ExecutorPoolEntry(BaseModel):
     executor_id: str
-    harness: Literal["manual", "codex_cli"]
+    harness: Literal["manual", "codex_cli", "claude_cli", "gemini_cli"]
     available: bool
     availability_detail: str
     active_tasks: int = 0

@@ -58,6 +58,34 @@ def prepared_task(tmp_path, executable: Path):
     return service, workspaces
 
 
+def prepared_task_with_profile(tmp_path, profile: ExecutorProfile):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "src").mkdir()
+    (repository / "src" / "app.py").write_text("value = 1\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+
+    service = DelegationService(MemoryStateStore())
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.set_executor_profile(profile)
+    service.create_task(
+        DelegationTask(
+            task_id="task_1",
+            title="Update app",
+            instructions="Change the fixture value.",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"]),
+        )
+    )
+    service.transition("task_1", "assigned", updates={"executor_id": profile.executor_id})
+    workspaces.prepare("task_1")
+    return service, workspaces
+
+
 def test_codex_cli_launch_is_supervised_and_records_provenance(tmp_path):
     executable = tmp_path / "codex"
     executable.write_text(
@@ -89,6 +117,35 @@ def test_codex_cli_launch_is_supervised_and_records_provenance(tmp_path):
     projected = CodexCliExecutor(service, workspaces).projected_sessions("task_1")
     assert projected[0]["status"] == "completed"
     assert projected[0]["ended_at"] == launch.ended_at
+
+
+def test_generic_cli_launch_supports_gemini_profile(tmp_path):
+    executable = tmp_path / "gemini"
+    executable.write_text(
+        "#!/bin/sh\n"
+        "cat >/dev/null\n"
+        "printf 'value = 4\\n' > src/app.py\n"
+        "printf 'gemini complete\\n'\n"
+    )
+    executable.chmod(0o755)
+    profile = ExecutorProfile(
+        executor_id="gemini_test",
+        name="Gemini test",
+        harness="gemini_cli",
+        executable=str(executable),
+        launch_mode="canto",
+        permissions={"command_enforcement": "canto_observed"},
+    )
+    service, workspaces = prepared_task_with_profile(tmp_path, profile)
+
+    launch = CodexCliExecutor(service, workspaces, timeout_seconds=10).launch("task_1")
+
+    assert launch.exit_code == 0
+    assert launch.workspace_changed is True
+    assert launch.outcome == "completed_work"
+    assert "--approval-mode" in launch.argv
+    assert Path(launch.stdout_path).read_text() == "gemini complete\n"
+    assert service.get_records("task_1", "sessions")[0]["executor_id"] == "gemini_test"
 
 
 def test_codex_cli_launch_preserves_named_prompt_variant(tmp_path):

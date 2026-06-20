@@ -26,6 +26,26 @@ def test_builtin_presets_are_credential_free_and_reusable(tmp_path):
     assert profiles.delegation.get_executor_profile("cloud-mini").model == "gpt-5.4-mini"
 
 
+def test_builtin_presets_include_claude_and_gemini_subscription_profiles(tmp_path):
+    profiles = manager(tmp_path)
+
+    claude = profiles.resolve(
+        "claude-worker",
+        preset="claude-subscription",
+        cli_override={"model": "sonnet"},
+    )
+    gemini = profiles.resolve(
+        "gemini-worker",
+        preset="gemini-subscription",
+        cli_override={"model": "gemini-2.5-flash"},
+    )
+
+    assert claude.harness == "claude_cli"
+    assert claude.model_provider == "anthropic"
+    assert gemini.harness == "gemini_cli"
+    assert gemini.model_provider == "google"
+
+
 def test_profile_precedence_is_cli_task_saved_preset_default(tmp_path):
     profiles = manager(tmp_path)
     profiles.save(
@@ -86,6 +106,20 @@ def test_profile_check_can_require_codex_subscription_auth(tmp_path, monkeypatch
 
     passed = profiles.check(profile, subscription_auth=True)
     assert passed["available"] is True
+
+
+def test_profile_check_uses_provider_adapter_for_subscription_auth(tmp_path, monkeypatch):
+    profiles = manager(tmp_path)
+    profile = profiles.resolve("claude", preset="claude-subscription")
+    monkeypatch.setattr(profile_module, "available_for_profile", lambda value: "/usr/bin/claude")
+
+    class Adapter:
+        def assert_auth(self, value):
+            assert value.executor_id == "claude"
+
+    monkeypatch.setattr(profile_module, "adapter_for_profile", lambda value: Adapter())
+
+    assert profiles.check(profile, subscription_auth=True)["available"] is True
 
 
 def test_ollama_preset_is_local_only_and_checks_installed_model(tmp_path, monkeypatch):

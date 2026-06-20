@@ -3,7 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
-from canto.core.cli_executor import CliExecutor, CliExecutorError, CodexCliAdapter
+from canto.core.cli_executor import (
+    CLI_HARNESSES,
+    CliAdapter,
+    CliExecutor,
+    CliExecutorError,
+    adapter_for_profile,
+    available_for_profile,
+)
 from canto.core.delegation import DelegationError, DelegationService
 from canto.core.delegation_workspace import DelegationWorkspaceService
 from canto.models.delegation import ExecutorLaunch, ExecutorProfile, ExecutorSession
@@ -14,31 +21,34 @@ class ExecutorError(CliExecutorError):
     pass
 
 
-class CodexCliExecutor:
+class DelegationCliExecutor:
     def __init__(
         self,
         delegation: DelegationService,
         workspaces: DelegationWorkspaceService,
         *,
         timeout_seconds: int = 1800,
-        adapter: CodexCliAdapter | None = None,
+        adapter: CliAdapter | None = None,
     ):
         self.delegation = delegation
         self.workspaces = workspaces
         self.timeout_seconds = timeout_seconds
-        self.adapter = adapter or CodexCliAdapter()
-        self.executor = CliExecutor(self.adapter, timeout_seconds=timeout_seconds)
+        self.adapter = adapter
 
     @staticmethod
     def available(profile: ExecutorProfile) -> str:
         try:
-            return CodexCliAdapter.available(profile)
+            return available_for_profile(profile)
         except CliExecutorError as exc:
             raise ExecutorError(str(exc)) from exc
 
+    def _executor_for_profile(self, profile: ExecutorProfile) -> CliExecutor:
+        adapter = self.adapter or adapter_for_profile(profile)
+        return CliExecutor(adapter, timeout_seconds=self.timeout_seconds)
+
     def command(self, profile: ExecutorProfile, workspace: Path) -> list[str]:
         try:
-            return self.executor.command(profile, workspace)
+            return self._executor_for_profile(profile).command(profile, workspace)
         except CliExecutorError as exc:
             raise ExecutorError(str(exc)) from exc
 
@@ -136,13 +146,13 @@ class CodexCliExecutor:
         task = self.delegation.get_task(task_id)
         if task.status not in {"workspace_ready", "revision_requested"}:
             raise ExecutorError(
-                "Codex CLI launch requires a workspace_ready or revision_requested task"
+                "CLI Worker launch requires a workspace_ready or revision_requested task"
             )
         if not task.executor_id:
             raise ExecutorError("Delegation task has no assigned executor")
         profile = self.delegation.get_executor_profile(task.executor_id)
-        if profile.harness != "codex_cli" or profile.launch_mode != "canto":
-            raise ExecutorError("Assigned executor is not a Canto-launched Codex CLI profile")
+        if profile.harness not in CLI_HARNESSES or profile.launch_mode != "canto":
+            raise ExecutorError("Assigned executor is not a Canto-launched CLI profile")
         workspace = self.workspaces.get(task_id)
         workspace_path = Path(workspace.path)
         artifact_dir = workspace_path.parent / "artifacts"
@@ -173,7 +183,7 @@ class CodexCliExecutor:
         self.delegation.transition(
             task_id,
             "executor_working",
-            details={"session_id": session_id, "harness": "codex_cli"},
+            details={"session_id": session_id, "harness": profile.harness},
         )
         argv = self.command(profile, workspace_path)
         launch = ExecutorLaunch(
@@ -189,7 +199,7 @@ class CodexCliExecutor:
             prompt_variant=effective_variant,
             prompt_supplement=effective_supplement,
         )
-        result = self.executor.run(
+        result = self._executor_for_profile(profile).run(
             profile,
             workspace_path,
             prompt,
@@ -246,3 +256,7 @@ class CodexCliExecutor:
             },
         )
         return launch
+
+
+class CodexCliExecutor(DelegationCliExecutor):
+    pass

@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from canto.core.delegation import DelegationError, DelegationService
-from canto.core.delegation_executor import CodexCliExecutor, ExecutorError
+from canto.core.cli_executor import CLI_HARNESSES
+from canto.core.delegation_executor import DelegationCliExecutor, ExecutorError
 from canto.core.delegation_workspace import DelegationWorkspaceService
 from canto.core.executor_profiles import ExecutorProfileManager
 from canto.models.ai_workers import WorkerSelectionPolicy
@@ -71,7 +72,7 @@ class CliWorkerSelectionService:
             try:
                 return CliWorkerSelectionResult(
                     "launched",
-                    launch=CodexCliExecutor(self.delegation, self.workspaces).launch(
+                    launch=DelegationCliExecutor(self.delegation, self.workspaces).launch(
                         task_id
                     ),
                 )
@@ -121,7 +122,7 @@ class CliWorkerSelectionService:
         profiles = [
             profile
             for profile in self.delegation.list_executor_profiles()
-            if profile.harness == "codex_cli" and profile.launch_mode == "canto"
+            if profile.harness in CLI_HARNESSES and profile.launch_mode == "canto"
         ]
         if policy.allowed_cli_profiles:
             allowed = set(policy.allowed_cli_profiles)

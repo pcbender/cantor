@@ -94,3 +94,38 @@ def test_cli_candidate_explanation_marks_same_provider(tmp_path):
             "same_as_orchestrator": True,
         }
     ]
+
+
+def test_cli_selection_includes_claude_and_gemini_profiles(tmp_path):
+    selector = service(tmp_path)
+    selector.delegation.set_executor_profile(
+        ExecutorProfile(
+            executor_id="claude-sub",
+            name="Claude",
+            harness="claude_cli",
+            model_provider="anthropic",
+            launch_mode="canto",
+        )
+    )
+    selector.delegation.set_executor_profile(
+        ExecutorProfile(
+            executor_id="gemini-sub",
+            name="Gemini",
+            harness="gemini_cli",
+            model_provider="google",
+            launch_mode="canto",
+        )
+    )
+
+    explanation = selector.explain_candidates(
+        WorkerSelectionPolicy(
+            allowed_transports=["cli"],
+            preferred_cli_profiles=["gemini-sub"],
+            prefer_subscription_cli=True,
+        )
+    )
+
+    assert [candidate["executor_id"] for candidate in explanation["candidates"]] == [
+        "gemini-sub",
+        "claude-sub",
+    ]

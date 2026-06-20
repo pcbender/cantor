@@ -7,10 +7,13 @@ from pathlib import Path
 import pytest
 
 from canto.core.cli_executor import (
+    ClaudeCliAdapter,
     CliExecutionResult,
     CliExecutor,
     CodexCliAdapter,
+    GeminiCliAdapter,
     WorkerAuthError,
+    adapter_for_profile,
 )
 from canto.models.delegation import ExecutorProfile
 
@@ -135,3 +138,70 @@ def test_codex_auth_preflight_skips_local_ollama_profile():
             model_provider="ollama",
         )
     )
+
+
+def test_adapter_for_profile_supports_claude_and_gemini_profiles():
+    assert isinstance(
+        adapter_for_profile(
+            ExecutorProfile(
+                executor_id="claude",
+                name="Claude",
+                harness="claude_cli",
+            )
+        ),
+        ClaudeCliAdapter,
+    )
+    assert isinstance(
+        adapter_for_profile(
+            ExecutorProfile(
+                executor_id="gemini",
+                name="Gemini",
+                harness="gemini_cli",
+            )
+        ),
+        GeminiCliAdapter,
+    )
+
+
+def test_claude_command_uses_print_mode_and_workspace_scope(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "canto.core.cli_executor.shutil.which",
+        lambda value: f"/usr/bin/{value}",
+    )
+    profile = ExecutorProfile(
+        executor_id="claude",
+        name="Claude",
+        harness="claude_cli",
+        model="sonnet",
+        launch_mode="canto",
+    )
+
+    command = ClaudeCliAdapter().build_argv(profile, tmp_path)
+
+    assert command[:2] == ["/usr/bin/claude", "--print"]
+    assert "--input-format" in command
+    assert command[command.index("--add-dir") + 1] == str(tmp_path.resolve())
+    assert command[command.index("--model") + 1] == "sonnet"
+
+
+def test_gemini_command_uses_headless_sandboxed_auto_edit(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "canto.core.cli_executor.shutil.which",
+        lambda value: f"/usr/bin/{value}",
+    )
+    profile = ExecutorProfile(
+        executor_id="gemini",
+        name="Gemini",
+        harness="gemini_cli",
+        model="gemini-2.5-flash",
+        launch_mode="canto",
+    )
+
+    command = GeminiCliAdapter().build_argv(profile, tmp_path)
+
+    assert Path(command[0]).name in {"gemini", "gemini.js"}
+    assert command[1:3] == ["--prompt", ""]
+    assert "--skip-trust" in command
+    assert "--sandbox" in command
+    assert command[command.index("--approval-mode") + 1] == "auto_edit"
+    assert command[command.index("--model") + 1] == "gemini-2.5-flash"
