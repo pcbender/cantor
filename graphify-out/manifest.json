@@ -20,8 +20,8 @@
     "semantic_hash": "8488c6e2a0e3eab2a60d0d88be2bb754"
   },
   "canto/cli.py": {
-    "mtime": 1781986908.0746222,
-    "ast_hash": "c2df6849d167a1612a4f9a20ec4b2451",
+    "mtime": 1781993729.9165766,
+    "ast_hash": "4df0efaa2c39290878c75e5ebeb82f29",
     "semantic_hash": ""
   },
   "canto/config.py": {
@@ -135,7 +135,7 @@
     "semantic_hash": "d6125abbaa0af92ca2b6f77e770dcf02"
   },
   "canto/core/executor_profiles.py": {
-    "mtime": 1781986680.1251676,
+    "mtime": 1781987199.234843,
     "ast_hash": "8fff00afeb3c10aa58b31b75fc0cc373",
     "semantic_hash": ""
   },
@@ -165,7 +165,7 @@
     "semantic_hash": "477316e8158bb30fdb2df3166cd1e38c"
   },
   "canto/core/repository.py": {
-    "mtime": 1781986482.445044,
+    "mtime": 1781987199.234843,
     "ast_hash": "0da81b7275e1f9bf84ebf67f581e5dea",
     "semantic_hash": ""
   },
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "tests/test_delegation_cli.py": {
-    "mtime": 1781986932.4279537,
-    "ast_hash": "1ee169a8bf69a0977d05c74c54729049",
+    "mtime": 1781993740.3962808,
+    "ast_hash": "34d5cc60a335c5f035855954e2bfa1b5",
     "semantic_hash": ""
   },
   "tests/test_delegation_commands.py": {
@@ -600,7 +600,7 @@
     "semantic_hash": "5789ba5d9fbebf1fdaf043a583a2aed4"
   },
   "tests/test_executor_profiles.py": {
-    "mtime": 1781986562.3676238,
+    "mtime": 1781987199.267343,
     "ast_hash": "faf42a1f839611abc121a16a619b1a54",
     "semantic_hash": ""
   },
@@ -650,7 +650,7 @@
     "semantic_hash": "76e6ef76bdb43db45459fde7fd6e0f64"
   },
   "tests/test_repository.py": {
-    "mtime": 1781986820.239632,
+    "mtime": 1781987199.267343,
     "ast_hash": "d595203905fc9763bdc869757c2e306e",
     "semantic_hash": ""
   },
@@ -700,8 +700,8 @@
     "semantic_hash": ""
   },
   ".canto/agents/orchestrator.md": {
-    "mtime": 1781986620.0485137,
-    "ast_hash": "0f193503ac3a1cd0b6f0ef17de335ac4",
+    "mtime": 1781993807.1056569,
+    "ast_hash": "852dda3a77b83d0068e6e34f9aa58600",
     "semantic_hash": ""
   },
   ".canto/agents/shared.md": {
@@ -1115,7 +1115,7 @@
     "semantic_hash": ""
   },
   "canto/core/ai_selection.py": {
-    "mtime": 1781986475.013378,
+    "mtime": 1781987199.234843,
     "ast_hash": "7a2e02b0d004c719de20cc2a8d6a3ad3",
     "semantic_hash": ""
   },
@@ -1130,7 +1130,7 @@
     "semantic_hash": ""
   },
   "canto/models/ai_workers.py": {
-    "mtime": 1781986459.68494,
+    "mtime": 1781987199.234843,
     "ast_hash": "727972af38f56497cce3643e896667c8",
     "semantic_hash": ""
   },
@@ -1155,7 +1155,7 @@
     "semantic_hash": ""
   },
   "tests/test_ai_selection.py": {
-    "mtime": 1781986554.3335161,
+    "mtime": 1781987199.267343,
     "ast_hash": "34ad9d4ddc7d19d0b391d45af697046a",
     "semantic_hash": ""
   },
@@ -1170,7 +1170,7 @@
     "semantic_hash": ""
   },
   "docs/ai-worker-pool.md": {
-    "mtime": 1781986671.8160017,
+    "mtime": 1781987199.234843,
     "ast_hash": "e498c4c872c1e22a7a42b6b6888277e1",
     "semantic_hash": ""
   },
@@ -1290,12 +1290,12 @@
     "semantic_hash": ""
   },
   "canto/core/cli_worker_selection.py": {
-    "mtime": 1781986525.907632,
+    "mtime": 1781987199.234843,
     "ast_hash": "ab6f885860047fa22d86fe0e9512e83b",
     "semantic_hash": ""
   },
   "tests/test_cli_worker_selection.py": {
-    "mtime": 1781986573.5042899,
+    "mtime": 1781987199.267343,
     "ast_hash": "453b539fcb599a1afa884a3cc8f11641",
     "semantic_hash": ""
   },
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "docs/subscription-cli-workers-phase5.md": {
-    "mtime": 1781986635.724346,
-    "ast_hash": "a68a1366cd0d78f7079386b5b2244795",
+    "mtime": 1781993792.7258084,
+    "ast_hash": "dbfbda32930b56645a70f8a96df8a7bd",
     "semantic_hash": ""
   }
 }

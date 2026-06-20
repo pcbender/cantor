@@ -111,6 +111,48 @@ def test_launch_ai_missing_task_reports_clean_cli_error(tmp_path, monkeypatch):
     assert "Traceback" not in result.output
 
 
+def test_delegate_create_accepts_task_allowed_commands(tmp_path, monkeypatch):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "docs").mkdir()
+    (repository / "docs" / "index.md").write_text("fixture\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+    initialize_repository(repository)
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        [
+            "delegate",
+            "create",
+            "Memory command smoke",
+            "--repository",
+            str(repository),
+            "--allow",
+            "docs",
+            "--allow-command",
+            "/home/mrose/canto/.venv/bin/canto memory recall",
+            "--allow-command",
+            "/home/mrose/canto/.venv/bin/canto memory propose",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    scope = json.loads(result.output)["scope"]
+    assert scope["allowed_commands"] == [
+        "/home/mrose/canto/.venv/bin/canto memory propose",
+        "/home/mrose/canto/.venv/bin/canto memory recall",
+    ]
+
+
 def test_launch_ai_uses_explicitly_allowed_cli_profile(tmp_path, monkeypatch):
     repository = tmp_path / "repository"
     repository.mkdir()

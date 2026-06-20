@@ -66,6 +66,23 @@ canto delegate profile pool save subscription-cli \
 Pool save requires every referenced profile to already exist. Canto rejects
 credentials in profile-pool config.
 
+## Task Command Allowlist
+
+Delegated tasks can grant specific command prefixes at creation time:
+
+```bash
+canto delegate create "Memory smoke" \
+  --repository . \
+  --allow docs \
+  --allow-command "/home/mrose/canto/.venv/bin/canto memory recall" \
+  --allow-command "/home/mrose/canto/.venv/bin/canto memory propose"
+```
+
+API Workers use the task's `allowed_commands` list when deciding whether a
+`run_command` tool call is permitted. This keeps memory proposals and other
+command-driven evidence explicit in the task Guardrails instead of granting
+general shell access.
+
 ## Non-Goals
 
 - No automatic performance learning.

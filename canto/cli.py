@@ -468,6 +468,7 @@ def delegate_create(
     repository: Path = typer.Option(Path("."), "--repository", "--repo"),
     allow: list[str] = typer.Option(..., "--allow"),
     deny: list[str] = typer.Option([], "--deny"),
+    allow_command: list[str] = typer.Option([], "--allow-command"),
     instruction: str = typer.Option("", "--instruction"),
 ) -> None:
     """Create a draft delegation task for a bounded Git repository scope."""
@@ -496,7 +497,9 @@ def delegate_create(
             scope=DelegationScope(
                 allowed_paths=allow,
                 denied_paths=sorted(set(policy.denied_paths) | set(deny)),
-                allowed_commands=policy.allowed_commands,
+                allowed_commands=sorted(
+                    set(policy.allowed_commands) | set(allow_command)
+                ),
                 required_commands=policy.required_commands,
                 allow_network=False,
                 allow_secrets=False,
