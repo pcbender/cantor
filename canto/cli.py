@@ -690,12 +690,18 @@ def delegate_profile_save(
 
 
 @delegate_profile_app.command("check")
-def delegate_profile_check(executor_id: str) -> None:
+def delegate_profile_check(
+    executor_id: str,
+    subscription_auth: bool = typer.Option(False, "--subscription-auth"),
+) -> None:
     """Check a saved profile without mutating task state."""
     try:
         manager = _profile_manager()
         profile = manager.delegation.get_executor_profile(executor_id)
-        value = {"profile": profile.model_dump(mode="json"), **manager.check(profile)}
+        value = {
+            "profile": profile.model_dump(mode="json"),
+            **manager.check(profile, subscription_auth=subscription_auth),
+        }
     except (DelegationError, ExecutorProfileError) as exc:
         _delegation_error(exc)
     _print(value)

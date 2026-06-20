@@ -1,8 +1,8 @@
 {
   ".claude/settings.local.json": {
-    "mtime": 1781968238.4221041,
-    "ast_hash": "15ed448478898d2ea7cceb5e0c67041d",
-    "semantic_hash": ""
+    "mtime": 1781113698.1863651,
+    "ast_hash": "898a31fabb9e8867f6d2804204e84779",
+    "semantic_hash": "898a31fabb9e8867f6d2804204e84779"
   },
   "canto/__init__.py": {
     "mtime": 1780860399.0943804,
@@ -20,8 +20,8 @@
     "semantic_hash": "8488c6e2a0e3eab2a60d0d88be2bb754"
   },
   "canto/cli.py": {
-    "mtime": 1781975472.343433,
-    "ast_hash": "9290045b1843989345ac9861bc29ce54",
+    "mtime": 1781713887.616987,
+    "ast_hash": "2ac1d16357d2f513a481ef903695b649",
     "semantic_hash": ""
   },
   "canto/config.py": {
@@ -90,8 +90,8 @@
     "semantic_hash": "ed4bf4a6dfa5cdba70d8b14a1ac8a38c"
   },
   "canto/core/delegation_executor.py": {
-    "mtime": 1781975377.9379914,
-    "ast_hash": "d3bb769711ca3322b383c862e2fb5d24",
+    "mtime": 1781471000.6004117,
+    "ast_hash": "fb3ac090e668096fd1bbd7385352827d",
     "semantic_hash": ""
   },
   "canto/core/delegation_pool.py": {
@@ -100,7 +100,7 @@
     "semantic_hash": "80290528da725c51ce2eacb533300778"
   },
   "canto/core/delegation_promotion.py": {
-    "mtime": 1781973418.783163,
+    "mtime": 1781713917.3515844,
     "ast_hash": "ebd496ae5deb4e50a23eae8e28df8aec",
     "semantic_hash": ""
   },
@@ -135,9 +135,9 @@
     "semantic_hash": "d6125abbaa0af92ca2b6f77e770dcf02"
   },
   "canto/core/executor_profiles.py": {
-    "mtime": 1781975465.3017664,
-    "ast_hash": "bcbf51526ed5fd3e19e2accd8d1e72f6",
-    "semantic_hash": ""
+    "mtime": 1781204973.9895468,
+    "ast_hash": "8b00bf8f065aebb3fc623cea375d6eec",
+    "semantic_hash": "8b00bf8f065aebb3fc623cea375d6eec"
   },
   "canto/core/jobs.py": {
     "mtime": 1781621761.144654,
@@ -510,7 +510,7 @@
     "semantic_hash": ""
   },
   "tests/test_delegation_cli.py": {
-    "mtime": 1781973418.8048298,
+    "mtime": 1781713944.3880486,
     "ast_hash": "79146b2d75c923bbc5e96bec11ce9954",
     "semantic_hash": ""
   },
@@ -555,7 +555,7 @@
     "semantic_hash": "aaa6f1d40a3736330e5540b63ccd7580"
   },
   "tests/test_delegation_promotion.py": {
-    "mtime": 1781973418.8048298,
+    "mtime": 1781714012.682768,
     "ast_hash": "917936b974638aa82ec37daf05c75944",
     "semantic_hash": ""
   },
@@ -600,9 +600,9 @@
     "semantic_hash": "5789ba5d9fbebf1fdaf043a583a2aed4"
   },
   "tests/test_executor_profiles.py": {
-    "mtime": 1781975487.7484329,
-    "ast_hash": "68c2bc8e5ab6450a0c5e1329fa923a7c",
-    "semantic_hash": ""
+    "mtime": 1781204994.468362,
+    "ast_hash": "492192c9a52ed70f453224a35f898ec2",
+    "semantic_hash": "492192c9a52ed70f453224a35f898ec2"
   },
   "tests/test_jobs.py": {
     "mtime": 1781105814.5334785,
@@ -725,8 +725,8 @@
     "semantic_hash": ""
   },
   "ROADMAP.md": {
-    "mtime": 1781975549.4210627,
-    "ast_hash": "cca0b160fff2ec72ba25ea22abe393fa",
+    "mtime": 1781621761.144654,
+    "ast_hash": "6ecdfa89d4f7a90925e2e7ac9f5f426f",
     "semantic_hash": ""
   },
   "SPEC-v1.MD": {
@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "STATUS.md": {
-    "mtime": 1781975526.6972225,
-    "ast_hash": "260b64013f47c9aa4015be8d257deec9",
+    "mtime": 1781621761.144654,
+    "ast_hash": "ca6c5e8c497231399aed0918b4134b09",
     "semantic_hash": ""
   },
   "Vision.md": {
@@ -1095,7 +1095,7 @@
     "semantic_hash": ""
   },
   "canto/core/ai_assignment.py": {
-    "mtime": 1781973418.783163,
+    "mtime": 1781713904.2262564,
     "ast_hash": "b49dcfdf7ce920730b6ac2d46422a14e",
     "semantic_hash": ""
   },
@@ -1120,7 +1120,7 @@
     "semantic_hash": ""
   },
   "canto/core/ai_worker.py": {
-    "mtime": 1781973418.783163,
+    "mtime": 1781713897.3797472,
     "ast_hash": "ac6982f806e9961b12fd81549c67f28d",
     "semantic_hash": ""
   },
@@ -1135,7 +1135,7 @@
     "semantic_hash": ""
   },
   "tests/test_ai_assignment.py": {
-    "mtime": 1781973418.8048298,
+    "mtime": 1781714003.042143,
     "ast_hash": "843ef21158046a3c280cc64a161ac505",
     "semantic_hash": ""
   },
@@ -1257,51 +1257,6 @@
   "docs/memory-service.md": {
     "mtime": 1781621761.1546545,
     "ast_hash": "fbc6533752745043d0ae85d90563e351",
-    "semantic_hash": ""
-  },
-  "canto/core/cli_env.py": {
-    "mtime": 1781975314.0362911,
-    "ast_hash": "d780e7ad71224f3dd7e211e878af57e3",
-    "semantic_hash": ""
-  },
-  "canto/core/cli_executor.py": {
-    "mtime": 1781975343.8555834,
-    "ast_hash": "766c5f1c5fc250210e4402705dcbf385",
-    "semantic_hash": ""
-  },
-  "tests/test_cli_env.py": {
-    "mtime": 1781975436.396649,
-    "ast_hash": "b45a1d9071bdeec4d90a68ea42e7d736",
-    "semantic_hash": ""
-  },
-  "tests/test_cli_executor.py": {
-    "mtime": 1781975442.582482,
-    "ast_hash": "b37c4fd30d0c05b25598b21619eeff30",
-    "semantic_hash": ""
-  },
-  "ClaudeFiles/cantor_phase1-2_task_list.md": {
-    "mtime": 1781973149.4982264,
-    "ast_hash": "b151405344742bc442514a3a72250df3",
-    "semantic_hash": ""
-  },
-  "ClaudeFiles/cantor_phase3_worker_selection_design.md": {
-    "mtime": 1781973226.0915658,
-    "ast_hash": "ad454228750892c5d7da05b688dc1319",
-    "semantic_hash": ""
-  },
-  "ClaudeFiles/cantor_subscription_worker_migration_spec_v4.md": {
-    "mtime": 1781973231.0118048,
-    "ast_hash": "73b555fa4ab2d46f361443864a5a2ae6",
-    "semantic_hash": ""
-  },
-  "docs/cli-executor-callsites.md": {
-    "mtime": 1781975287.009733,
-    "ast_hash": "940bdc735e00fb5934dfec965afa5e36",
-    "semantic_hash": ""
-  },
-  "docs/subscription-cli-workers.md": {
-    "mtime": 1781975501.6150994,
-    "ast_hash": "ef59b84a0eb967129c3781ab30449240",
     "semantic_hash": ""
   }
 }

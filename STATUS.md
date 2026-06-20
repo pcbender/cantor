@@ -1,6 +1,24 @@
 # Canto Implementation Status
 
-Updated: 2026-06-15
+Updated: 2026-06-20
+
+## Subscription CLI Workers
+
+CP-1701 through CP-1705 are in progress on
+`feature/subscription-cli-workers`. The design freeze is documented in
+`docs/subscription-cli-workers.md`; current call sites are audited in
+`docs/cli-executor-callsites.md`. Phase 1 keeps Codex CLI delegation
+behavior-preserving while extracting a provider-neutral CLI execution seam,
+adding a scrubbed subprocess environment, and exposing an explicit Codex
+subscription-auth preflight through:
+
+```bash
+canto delegate profile check PROFILE --subscription-auth
+```
+
+Automatic `launch-ai` selection remains API-backed in Phase 1. CLI Workers
+remain explicit `ExecutorProfile` launches until the next approved phase adds
+selectable CLI candidates.
 
 ## Governed Memory Service
 
