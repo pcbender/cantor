@@ -107,6 +107,17 @@ The default `allowed_transports = []` preserves HTTP/API-backed `launch-ai`
 behavior. `allowed_transports = ["cli"]` prevents API fallback; use
 `["cli", "http"]` only when API fallback is intentionally allowed.
 
+When CLI candidates are exhausted before changing the Workspace, priority
+controls API fallback:
+
+- `economy`: stop without API spend.
+- `balanced` and `quality`: report that API fallback requires approval.
+- `urgent`: allow API fallback only when `http` transport, cloud/API authority,
+  and budget policy also permit it.
+
+Any Worker that changes the Workspace stops fallback and requires review or
+revision.
+
 `canto repo doctor` includes AI Worker readiness. It reports policy-required
 endpoints and exact models, current cloud readiness, and local model status.
 Missing explicitly allowed endpoints or models are blocking failures. Optional

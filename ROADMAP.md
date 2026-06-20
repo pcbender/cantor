@@ -1320,6 +1320,17 @@ Phase 2 packets:
 - CP-1711 — Codex OSS Candidate Routing
 - CP-1712 — Phase 2 Dogfood
 
+Phase 3 packets:
+
+- CP-1713 — Phase 3 Selection And Fallback Design
+- CP-1714 — Worker Exhaustion/Error Taxonomy
+- CP-1715 — Priority Fallback Policy
+- CP-1716 — Approval-Gated API Spill Placeholder
+- CP-1717 — Orchestrator Provider Context
+- CP-1718 — Provider Diversity Scoring Hook
+- CP-1719 — Selection Explanation Updates
+- CP-1720 — Phase 3 Dogfood
+
 Phase 1 status: complete. `CodexCliExecutor` remains the compatibility
 wrapper for existing `canto delegate launch` behavior. `launch-ai` remains
 API-backed by default.
@@ -1327,12 +1338,13 @@ API-backed by default.
 Phase 2 status: in progress. Saved Codex CLI `ExecutorProfile` records become
 selectable only when repository policy explicitly permits CLI transport.
 
+Phase 3 status: in progress. CLI selection now returns structured fallback
+states, applies priority-driven API-spend rules, and surfaces optional
+orchestrator-provider context for future provider-diversity scoring.
+
 Deferred to later phases:
 
 - Claude and Gemini CLI adapters.
-- CLI Worker candidates in automatic selection.
-- Priority-driven quota exhaustion and API fallback.
-- Provider-diversity scoring.
 - Capability floors and performance feedback.
 
 ---

@@ -184,6 +184,59 @@ preferred_cli_profiles = ["local-codex"]
     assert service.get_task("task_cli").selected_model_key == "cli:local-codex"
 
 
+def test_launch_ai_balanced_cli_exhaustion_requires_approval_before_api(tmp_path, monkeypatch):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "src").mkdir()
+    (repository / "src" / "app.py").write_text("value = 1\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+    initialize_repository(repository)
+    (repository / ".canto" / "workers.toml").write_text(
+        """\
+version = 1
+
+[selection]
+priority = "balanced"
+allowed_transports = ["cli", "http"]
+allowed_cli_profiles = ["missing-profile"]
+""",
+        encoding="utf-8",
+    )
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.create_task(
+        DelegationTask(
+            task_id="task_cli_spill",
+            title="Use CLI",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"]),
+        )
+    )
+    service.transition("task_cli_spill", "assigned")
+    workspaces.prepare("task_cli_spill")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    def api_assignment_should_not_run():
+        raise AssertionError("API Worker assignment should not run without approval")
+
+    monkeypatch.setattr(
+        cli_module, "_ai_assignment_service", api_assignment_should_not_run
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app, ["delegate", "launch-ai", "task_cli_spill"]
+    )
+
+    assert result.exit_code == 1
+    assert "API Worker fallback requires approval" in result.output
+
+
 def test_assign_accepts_registered_codex_profile(tmp_path, monkeypatch):
     service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
     workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")

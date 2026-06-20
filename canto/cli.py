@@ -1467,12 +1467,25 @@ def delegate_launch_ai(
             cloud_fallback_allowed=allow_cloud_fallback,
         )
         effective_policy = compose_worker_policy(repository_policy, command_policy)
-        launch = CliWorkerSelectionService(
+        cli_selection = CliWorkerSelectionService(
             *_delegation_runtime(), _profile_manager()
         ).launch_first_allowed(task_id, effective_policy)
+        launch = cli_selection.launch
         if launch is None:
-            if not http_transport_allowed(effective_policy):
-                raise WorkerAssignmentError("HTTP Worker transport is not allowed")
+            if cli_selection.state == "api_requires_approval":
+                detail = "; ".join(cli_selection.failures) or cli_selection.detail
+                raise WorkerAssignmentError(
+                    "API Worker fallback requires approval before spending API credits"
+                    + (f": {detail}" if detail else "")
+                )
+            if cli_selection.state == "api_blocked" or not http_transport_allowed(
+                effective_policy
+            ):
+                detail = "; ".join(cli_selection.failures) or cli_selection.detail
+                raise WorkerAssignmentError(
+                    "HTTP Worker transport is not allowed"
+                    + (f": {detail}" if detail else "")
+                )
             launch = _ai_assignment_service().launch(task_id, effective_policy)
     except (
         CliWorkerSelectionError,

@@ -164,6 +164,8 @@ class WorkerSelectionPolicy(BaseModel):
     allowed_cli_profiles: list[str] = Field(default_factory=list)
     preferred_cli_profiles: list[str] = Field(default_factory=list)
     prefer_subscription_cli: bool = False
+    api_fallback_requires_approval: bool = True
+    orchestrator_provider: str | None = None
     cloud_allowed: bool = False
     cloud_fallback_allowed: bool = False
     local_first: bool = True

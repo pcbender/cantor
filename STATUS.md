@@ -4,8 +4,8 @@ Updated: 2026-06-20
 
 ## Subscription CLI Workers
 
-CP-1701 through CP-1709 are in progress on
-`feature/subscription-cli-workers`. The design freeze is documented in
+CP-1701 through CP-1720 are in progress on
+`feature/subscription-cli-workers-phase3`. The design freeze is documented in
 `docs/subscription-cli-workers.md`; current call sites are audited in
 `docs/cli-executor-callsites.md`. Phase 1 keeps Codex CLI delegation
 behavior-preserving while extracting a provider-neutral CLI execution seam,
@@ -21,6 +21,12 @@ records may be selected by `canto delegate launch-ai TASK_ID` only when
 `.canto/workers.toml` includes `allowed_transports = ["cli"]` or
 `["cli", "http"]`. API fallback remains disabled when policy allows only CLI
 transport.
+
+Phase 3 adds structured CLI fallback states, priority-driven API fallback
+rules, and optional orchestrator-provider context. Economy never spends API
+credits after CLI exhaustion; balanced and quality report that API fallback
+requires approval; urgent may use API fallback only when HTTP/API authority and
+budget policy also permit it.
 
 ## Governed Memory Service
 
