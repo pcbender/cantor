@@ -95,14 +95,28 @@ class ExecutorProfileManager:
         self.delegation = delegation
         self.config_file = Path(config_file)
 
-    def presets(self) -> dict[str, dict[str, Any]]:
-        values = {key: dict(value) for key, value in BUILTIN_PRESETS.items()}
+    def _load_config(self) -> dict[str, Any]:
         if not self.config_file.exists():
-            return values
+            return {}
         try:
             loaded = yaml.safe_load(self.config_file.read_text(encoding="utf-8")) or {}
         except (OSError, yaml.YAMLError) as exc:
             raise ExecutorProfileError(f"Cannot load executor presets {self.config_file}: {exc}") from exc
+        if not isinstance(loaded, dict):
+            raise ExecutorProfileError("Executor preset file must contain a mapping")
+        return loaded
+
+    def _write_config(self, value: dict[str, Any]) -> None:
+        _reject_secrets(value)
+        self.config_file.parent.mkdir(parents=True, exist_ok=True)
+        self.config_file.write_text(
+            yaml.safe_dump(value, sort_keys=True),
+            encoding="utf-8",
+        )
+
+    def presets(self) -> dict[str, dict[str, Any]]:
+        values = {key: dict(value) for key, value in BUILTIN_PRESETS.items()}
+        loaded = self._load_config()
         if not isinstance(loaded, dict) or not isinstance(loaded.get("presets", {}), dict):
             raise ExecutorProfileError("Executor preset file must contain a presets mapping")
         for key, value in loaded.get("presets", {}).items():
@@ -111,6 +125,56 @@ class ExecutorProfileManager:
             _reject_secrets(value, f"presets.{key}")
             values[key] = _merge(values.get(key), value)
         return values
+
+    def profile_pools(self) -> dict[str, list[str]]:
+        loaded = self._load_config()
+        raw_pools = loaded.get("profile_pools", {})
+        if not isinstance(raw_pools, dict):
+            raise ExecutorProfileError("Executor preset file profile_pools must be a mapping")
+        pools: dict[str, list[str]] = {}
+        for key, value in raw_pools.items():
+            if isinstance(value, list):
+                profiles = value
+            elif isinstance(value, dict):
+                _reject_secrets(value, f"profile_pools.{key}")
+                profiles = value.get("profiles", [])
+            else:
+                raise ExecutorProfileError(f"Profile pool must be a mapping or list: {key}")
+            if not isinstance(profiles, list) or not all(
+                isinstance(item, str) and item for item in profiles
+            ):
+                raise ExecutorProfileError(
+                    f"Profile pool must contain a profiles list of strings: {key}"
+                )
+            pools[key] = list(dict.fromkeys(profiles))
+        return pools
+
+    def resolve_profile_pool(self, pool_id: str) -> list[str]:
+        try:
+            return self.profile_pools()[pool_id]
+        except KeyError as exc:
+            raise ExecutorProfileError(f"Executor profile pool not found: {pool_id}") from exc
+
+    def save_profile_pool(self, pool_id: str, profiles: list[str]) -> dict[str, list[str]]:
+        if not pool_id:
+            raise ExecutorProfileError("Executor profile pool name is required")
+        if not profiles:
+            raise ExecutorProfileError("Executor profile pool requires at least one profile")
+        for profile in profiles:
+            try:
+                self.delegation.get_executor_profile(profile)
+            except DelegationError as exc:
+                raise ExecutorProfileError(
+                    f"Executor profile not found for pool {pool_id}: {profile}"
+                ) from exc
+        loaded = self._load_config()
+        pools = loaded.get("profile_pools", {})
+        if not isinstance(pools, dict):
+            raise ExecutorProfileError("Executor preset file profile_pools must be a mapping")
+        pools[pool_id] = {"profiles": list(dict.fromkeys(profiles))}
+        loaded["profile_pools"] = pools
+        self._write_config(loaded)
+        return self.profile_pools()
 
     def resolve(
         self,

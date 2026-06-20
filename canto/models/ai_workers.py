@@ -161,6 +161,8 @@ class WorkerSelectionPolicy(BaseModel):
     allowed_providers: list[AIProvider] = Field(default_factory=list)
     allowed_models: list[str] = Field(default_factory=list)
     preferred_models: list[str] = Field(default_factory=list)
+    allowed_cli_profile_pools: list[str] = Field(default_factory=list)
+    preferred_cli_profile_pools: list[str] = Field(default_factory=list)
     allowed_cli_profiles: list[str] = Field(default_factory=list)
     preferred_cli_profiles: list[str] = Field(default_factory=list)
     prefer_subscription_cli: bool = False

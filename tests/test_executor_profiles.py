@@ -81,6 +81,46 @@ def test_user_presets_load_from_global_config_and_reject_secrets(tmp_path):
         profiles.presets()
 
 
+def test_profile_pools_load_from_global_config_and_reject_invalid_values(tmp_path):
+    profiles = manager(tmp_path)
+    profiles.config_file.parent.mkdir(parents=True)
+    profiles.config_file.write_text(
+        "profile_pools:\n"
+        "  subscription:\n"
+        "    profiles:\n"
+        "      - codex-cloud\n"
+        "      - claude-sub\n",
+        encoding="utf-8",
+    )
+
+    assert profiles.profile_pools() == {
+        "subscription": ["codex-cloud", "claude-sub"]
+    }
+
+    profiles.config_file.write_text("profile_pools:\n  unsafe:\n    token: secret\n")
+    with pytest.raises(ExecutorProfileError, match="Credentials are not allowed"):
+        profiles.profile_pools()
+
+
+def test_profile_pool_save_requires_existing_profiles(tmp_path):
+    profiles = manager(tmp_path)
+    profiles.save(
+        ExecutorProfile(
+            executor_id="codex-cloud",
+            name="Codex",
+            harness="codex_cli",
+            launch_mode="canto",
+        )
+    )
+
+    saved = profiles.save_profile_pool("subscription", ["codex-cloud"])
+
+    assert saved == {"subscription": ["codex-cloud"]}
+    assert profiles.resolve_profile_pool("subscription") == ["codex-cloud"]
+    with pytest.raises(ExecutorProfileError, match="not found"):
+        profiles.save_profile_pool("broken", ["missing"])
+
+
 def test_profile_check_is_non_mutating(tmp_path):
     profiles = manager(tmp_path)
     profile = profiles.resolve("manual-reviewer", preset="manual")
