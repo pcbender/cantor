@@ -4,7 +4,7 @@ Updated: 2026-06-20
 
 ## Subscription CLI Workers
 
-CP-1701 through CP-1705 are in progress on
+CP-1701 through CP-1709 are in progress on
 `feature/subscription-cli-workers`. The design freeze is documented in
 `docs/subscription-cli-workers.md`; current call sites are audited in
 `docs/cli-executor-callsites.md`. Phase 1 keeps Codex CLI delegation
@@ -16,9 +16,11 @@ subscription-auth preflight through:
 canto delegate profile check PROFILE --subscription-auth
 ```
 
-Automatic `launch-ai` selection remains API-backed in Phase 1. CLI Workers
-remain explicit `ExecutorProfile` launches until the next approved phase adds
-selectable CLI candidates.
+Phase 2 adds explicit CLI transport policy. Saved Codex CLI `ExecutorProfile`
+records may be selected by `canto delegate launch-ai TASK_ID` only when
+`.canto/workers.toml` includes `allowed_transports = ["cli"]` or
+`["cli", "http"]`. API fallback remains disabled when policy allows only CLI
+transport.
 
 ## Governed Memory Service
 

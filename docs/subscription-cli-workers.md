@@ -1,6 +1,6 @@
 # Subscription CLI Workers
 
-Status: design freeze for Phase 1 implementation.
+Status: Phase 1 complete; Phase 2 Codex CLI candidate routing in progress.
 
 ## Purpose
 
@@ -20,7 +20,9 @@ Canto currently has two Worker paths:
 - `canto delegate launch TASK_ID` runs an explicitly assigned `ExecutorProfile`
   through the Codex CLI compatibility path.
 
-Phase 1 preserves that behavior while extracting the CLI execution seam.
+Phase 1 preserves that behavior while extracting the CLI execution seam. Phase
+2 begins the unification path by allowing explicitly permitted saved Codex CLI
+profiles to be selected by `launch-ai` before API-backed Workers.
 
 ## Decisions
 
@@ -30,13 +32,15 @@ Phase 1 preserves that behavior while extracting the CLI execution seam.
   Workers.
 - CLI Worker subprocesses must not receive API keys, vault credentials, base-URL
   overrides, or arbitrary inherited environment variables.
-- `ExecutorProfile` remains the source of CLI Worker configuration in Phase 1.
+- `ExecutorProfile` remains the source of CLI Worker configuration in the
+  first selectable-candidate phase.
 - `DelegationResult` remains produced by `canto delegate capture`; CLI execution
   produces launch/session evidence only.
-- `canto delegate launch TASK_ID` remains the explicit profile command in Phase
-  1. Unified `launch-ai` selection is a later phase.
-- API fallback is disabled by default and must be explicitly authorized when
-  later phases add CLI candidates to selection.
+- `canto delegate launch TASK_ID` remains the explicit profile command.
+- `canto delegate launch-ai TASK_ID` may select a saved CLI profile only when
+  repository Worker policy explicitly includes `cli` transport.
+- API fallback is disabled when policy allows only `cli`; HTTP/API fallback is
+  possible only when policy also allows `http`.
 - Memory writes by CLI Workers are deferred. CLI Workers may receive bounded
   prompt context, but durable memory updates continue through existing Canto
   review/approval paths.
@@ -59,13 +63,26 @@ Phase 1 is behavior-preserving for Codex CLI execution:
 ## Deferred
 
 - Claude and Gemini CLI adapters.
-- Codex OSS routing through the unified AI Worker pool.
-- `AIEndpointRecord.transport` or equivalent selectable CLI-candidate model.
-- Automatic `launch-ai` CLI Worker selection.
 - Priority-driven quota exhaustion and API fallback.
 - Provider-diversity scoring against the current orchestrator provider.
 - Performance feedback registry and capability floors beyond current
   `classification` and probe evidence.
+
+## Phase 2 Policy
+
+Repo-local `.canto/workers.toml` may explicitly permit CLI selection:
+
+```toml
+[selection]
+allowed_transports = ["cli"]
+allowed_cli_profiles = ["local-codex"]
+preferred_cli_profiles = ["local-codex"]
+prefer_subscription_cli = true
+```
+
+Default `allowed_transports = []` preserves current HTTP/API-backed
+`launch-ai` behavior. CLI transport is never inferred from the presence of a
+saved profile.
 
 ## Acceptance
 

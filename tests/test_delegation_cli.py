@@ -9,10 +9,14 @@ from typer.testing import CliRunner
 
 import canto.cli as cli_module
 from canto.core.delegation import DelegationService
-from canto.core.delegation_workspace import DelegationWorkspaceService
+from canto.core.delegation_workspace import (
+    DelegationWorkspaceService,
+    inspect_repository,
+)
 from canto.core.state import SqliteStateStore
 from canto.core.repository import initialize_repository
 from canto.models.delegation import (
+    DelegationScope,
     DelegationTask,
     ExecutorProfile,
     RepositoryIdentity,
@@ -104,6 +108,80 @@ def test_launch_ai_missing_task_reports_clean_cli_error(tmp_path, monkeypatch):
     assert result.exit_code == 1
     assert "Error: Delegation task not found: missing-task" in result.output
     assert "Traceback" not in result.output
+
+
+def test_launch_ai_uses_explicitly_allowed_cli_profile(tmp_path, monkeypatch):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "src").mkdir()
+    (repository / "src" / "app.py").write_text("value = 1\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+    initialize_repository(repository)
+    (repository / ".canto" / "workers.toml").write_text(
+        """\
+version = 1
+
+[selection]
+allowed_transports = ["cli"]
+allowed_cli_profiles = ["local-codex"]
+preferred_cli_profiles = ["local-codex"]
+""",
+        encoding="utf-8",
+    )
+    executable = tmp_path / "codex"
+    executable.write_text(
+        "#!/bin/sh\n"
+        "cat >/dev/null\n"
+        "printf 'value = 2\\n' > src/app.py\n"
+        "printf 'cli worker complete\\n'\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.set_executor_profile(
+        ExecutorProfile(
+            executor_id="local-codex",
+            name="Local Codex",
+            harness="codex_cli",
+            executable=str(executable),
+            model_provider="ollama",
+            launch_mode="canto",
+        )
+    )
+    service.create_task(
+        DelegationTask(
+            task_id="task_cli",
+            title="Use CLI",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"]),
+            instructions="Change src/app.py",
+        )
+    )
+    service.transition("task_cli", "assigned")
+    workspaces.prepare("task_cli")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    def api_assignment_should_not_run():
+        raise AssertionError("API Worker assignment should not run")
+
+    monkeypatch.setattr(
+        cli_module, "_ai_assignment_service", api_assignment_should_not_run
+    )
+
+    result = CliRunner().invoke(cli_module.app, ["delegate", "launch-ai", "task_cli"])
+
+    assert result.exit_code == 0, result.output
+    launch = json.loads(result.output)
+    assert launch["executor_id"] == "local-codex"
+    assert launch["outcome"] == "completed_work"
+    assert service.get_task("task_cli").selected_model_key == "cli:local-codex"
 
 
 def test_assign_accepts_registered_codex_profile(tmp_path, monkeypatch):

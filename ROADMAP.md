@@ -1311,10 +1311,21 @@ Phase 1 packets:
 - CP-1705 — Explicit Codex Subscription Auth Preflight
 - CP-1706 — Phase 1 Compatibility And Documentation Pass
 
-Phase 1 status: in progress. `CodexCliExecutor` remains the compatibility
+Phase 2 packets:
+
+- CP-1707 — CLI Candidate Model Design
+- CP-1708 — Explicit CLI Transport Policy
+- CP-1709 — Codex CLI Candidate Routing
+- CP-1710 — Subscription Auth And Env Enforcement
+- CP-1711 — Codex OSS Candidate Routing
+- CP-1712 — Phase 2 Dogfood
+
+Phase 1 status: complete. `CodexCliExecutor` remains the compatibility
 wrapper for existing `canto delegate launch` behavior. `launch-ai` remains
-API-backed until a later approved phase adds selectable CLI candidates and
-explicit CLI transport policy.
+API-backed by default.
+
+Phase 2 status: in progress. Saved Codex CLI `ExecutorProfile` records become
+selectable only when repository policy explicitly permits CLI transport.
 
 Deferred to later phases:
 

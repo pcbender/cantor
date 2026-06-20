@@ -36,22 +36,32 @@ def model(key, endpoint, provider, *, cost=1.0, context=32000):
 def test_policy_composition_never_widens_cloud_or_allowlists():
     global_policy = WorkerSelectionPolicy(
         cloud_allowed=True,
+        allowed_transports=["cli", "http"],
         allowed_providers=["openai", "anthropic"],
+        allowed_cli_profiles=["codex", "claude"],
         budget=WorkerBudgetPolicy(enabled=True, max_estimated_usd=2),
     )
     repo_policy = WorkerSelectionPolicy(
         priority="economy",
         cloud_allowed=False,
+        allowed_transports=["cli"],
         allowed_providers=["openai"],
         preferred_models=["openai:small", "openai:large"],
+        allowed_cli_profiles=["codex"],
+        preferred_cli_profiles=["codex"],
+        prefer_subscription_cli=True,
         budget=WorkerBudgetPolicy(enabled=True, max_estimated_usd=1),
     )
 
     result = compose_worker_policy(global_policy, repo_policy)
 
     assert result.cloud_allowed is False
+    assert result.allowed_transports == ["cli"]
     assert result.allowed_providers == ["openai"]
     assert result.preferred_models == ["openai:small", "openai:large"]
+    assert result.allowed_cli_profiles == ["codex"]
+    assert result.preferred_cli_profiles == ["codex"]
+    assert result.prefer_subscription_cli is True
     assert result.budget.max_estimated_usd == 1
 
 

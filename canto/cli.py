@@ -36,6 +36,11 @@ from canto.core.ai_selection import (
     WorkerSelectionService,
     compose_worker_policy,
 )
+from canto.core.cli_worker_selection import (
+    CliWorkerSelectionError,
+    CliWorkerSelectionService,
+    http_transport_allowed,
+)
 from canto.core.ai_assignment import AIWorkerAssignmentService, WorkerAssignmentError
 from canto.core.ai_worker import APIWorkerHarness
 from canto.core.ai_probe import (
@@ -1461,11 +1466,20 @@ def delegate_launch_ai(
             cloud_allowed=allow_cloud,
             cloud_fallback_allowed=allow_cloud_fallback,
         )
-        launch = _ai_assignment_service().launch(
-            task_id,
-            compose_worker_policy(repository_policy, command_policy),
-        )
-    except (DelegationError, WorkerAssignmentError, RepositoryConfigError) as exc:
+        effective_policy = compose_worker_policy(repository_policy, command_policy)
+        launch = CliWorkerSelectionService(
+            *_delegation_runtime(), _profile_manager()
+        ).launch_first_allowed(task_id, effective_policy)
+        if launch is None:
+            if not http_transport_allowed(effective_policy):
+                raise WorkerAssignmentError("HTTP Worker transport is not allowed")
+            launch = _ai_assignment_service().launch(task_id, effective_policy)
+    except (
+        CliWorkerSelectionError,
+        DelegationError,
+        WorkerAssignmentError,
+        RepositoryConfigError,
+    ) as exc:
         _delegation_error(exc)
     _print(launch.model_dump(mode="json"))
 
