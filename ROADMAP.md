@@ -1331,6 +1331,12 @@ Phase 3 packets:
 - CP-1719 — Selection Explanation Updates
 - CP-1720 — Phase 3 Dogfood
 
+Phase 5 / maintenance packets:
+
+- CP-1727 — Phase 5 CLI Worker UX Hardening
+- CP-1728 — Nested Codex Worker Sandbox Hotfix
+- CP-1729 — Local Ollama Worker Reliability Hotfix
+
 Phase 1 status: complete. `CodexCliExecutor` remains the compatibility
 wrapper for existing `canto delegate launch` behavior. `launch-ai` remains
 API-backed by default.
@@ -1341,6 +1347,16 @@ selectable only when repository policy explicitly permits CLI transport.
 Phase 3 status: in progress. CLI selection now returns structured fallback
 states, applies priority-driven API-spend rules, and surfaces optional
 orchestrator-provider context for future provider-diversity scoring.
+
+CP-1728 status: implemented on the hotfix branch. Canto-launched Codex Workers
+include the global Canto state root in the nested Codex sandbox and enable
+nested network access only for cloud-backed or explicitly network-authorized
+Codex profiles.
+
+CP-1729 status: implemented on the hotfix branch. `launch-ai --local-only`
+forces direct local Ollama API Worker selection with no CLI or cloud fallback,
+while Codex-Ollama CLI profiles receive the loopback network access they need
+for explicit experimental use.
 
 Deferred to later phases:
 

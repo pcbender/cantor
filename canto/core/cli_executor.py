@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -125,9 +126,17 @@ class CodexCliAdapter(AgentCliAdapter):
             "exec",
             "--sandbox",
             "workspace-write",
-            "--cd",
-            str(workspace.resolve()),
+            "--add-dir",
+            str(canto_state_root().resolve()),
         ]
+        if codex_needs_network(profile):
+            command.extend(("-c", "sandbox_workspace_write.network_access=true"))
+        command.extend(
+            [
+                "--cd",
+                str(workspace.resolve()),
+            ]
+        )
         if profile.model:
             command.extend(("--model", profile.model))
         command.extend(profile.configuration.get("extra_args", []))
@@ -148,6 +157,22 @@ class CodexCliAdapter(AgentCliAdapter):
             raise WorkerAuthError("Codex CLI is not using ChatGPT subscription auth")
         if payload.get("OPENAI_API_KEY") is not None:
             raise WorkerAuthError("Codex auth state contains an API key")
+
+
+def canto_state_root() -> Path:
+    configured = os.getenv("CANTO_HOME")
+    return Path(configured).expanduser() if configured else Path.home() / ".canto"
+
+
+def codex_needs_network(profile: ExecutorProfile) -> bool:
+    if profile.permissions.allow_network:
+        return True
+    if profile.model_provider == "ollama":
+        return True
+    extra_args = profile.configuration.get("extra_args", [])
+    if "--local-provider" in extra_args and "ollama" in extra_args:
+        return True
+    return bool(profile.model_provider and profile.model_provider != "ollama")
 
 
 class ClaudeCliAdapter(AgentCliAdapter):

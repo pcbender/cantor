@@ -140,6 +140,87 @@ def test_codex_auth_preflight_skips_local_ollama_profile():
     )
 
 
+def test_codex_ollama_command_adds_canto_state_dir_and_loopback_network(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("CANTO_HOME", str(tmp_path / "canto-home"))
+    monkeypatch.setattr(
+        "canto.core.cli_executor.shutil.which",
+        lambda value: f"/usr/bin/{value}",
+    )
+    profile = ExecutorProfile(
+        executor_id="codex-ollama",
+        name="Codex Ollama",
+        harness="codex_cli",
+        model_provider="ollama",
+        model="qwen3.6:35b-a3b",
+        launch_mode="canto",
+    )
+
+    command = CodexCliAdapter().build_argv(profile, tmp_path / "workspace")
+
+    assert command[1:4] == ["exec", "--sandbox", "workspace-write"]
+    assert command[command.index("--add-dir") + 1] == str(
+        (tmp_path / "canto-home").resolve()
+    )
+    assert command[command.index("-c") + 1] == (
+        "sandbox_workspace_write.network_access=true"
+    )
+    assert command[command.index("--cd") + 1] == str((tmp_path / "workspace").resolve())
+    assert command[-1] == "-"
+
+
+def test_codex_cloud_command_enables_network_for_nested_worker(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("CANTO_HOME", str(tmp_path / "canto-home"))
+    monkeypatch.setattr(
+        "canto.core.cli_executor.shutil.which",
+        lambda value: f"/usr/bin/{value}",
+    )
+    profile = ExecutorProfile(
+        executor_id="codex-cloud",
+        name="Codex Cloud",
+        harness="codex_cli",
+        model_provider="openai",
+        model="gpt-5.4-mini",
+        launch_mode="canto",
+    )
+
+    command = CodexCliAdapter().build_argv(profile, tmp_path / "workspace")
+
+    assert command[command.index("--add-dir") + 1] == str(
+        (tmp_path / "canto-home").resolve()
+    )
+    assert command[command.index("-c") + 1] == (
+        "sandbox_workspace_write.network_access=true"
+    )
+
+
+def test_codex_explicit_network_permission_enables_network_for_local_profile(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("CANTO_HOME", str(tmp_path / "canto-home"))
+    monkeypatch.setattr(
+        "canto.core.cli_executor.shutil.which",
+        lambda value: f"/usr/bin/{value}",
+    )
+    profile = ExecutorProfile(
+        executor_id="codex-local-network",
+        name="Codex Local Network",
+        harness="codex_cli",
+        model_provider="ollama",
+        launch_mode="canto",
+        permissions={"allow_network": True},
+    )
+
+    command = CodexCliAdapter().build_argv(profile, tmp_path / "workspace")
+
+    assert command[command.index("-c") + 1] == (
+        "sandbox_workspace_write.network_access=true"
+    )
+
+
 def test_adapter_for_profile_supports_claude_and_gemini_profiles():
     assert isinstance(
         adapter_for_profile(

@@ -1541,6 +1541,11 @@ def delegate_launch_ai(
     profile: str | None = typer.Option(None, "--profile"),
     allow_cloud: bool = typer.Option(False, "--allow-cloud"),
     allow_cloud_fallback: bool = typer.Option(False, "--allow-cloud-fallback"),
+    local_only: bool = typer.Option(
+        False,
+        "--local-only",
+        help="Use only local Ollama HTTP/API Workers; do not launch CLI or cloud Workers.",
+    ),
 ) -> None:
     """Automatically select and launch a validated Worker."""
     from canto.models.ai_workers import WorkerSelectionPolicy
@@ -1549,6 +1554,14 @@ def delegate_launch_ai(
         raise typer.BadParameter(f"Unsupported priority: {priority}")
     if allow_cloud_fallback and not allow_cloud:
         raise typer.BadParameter("Cloud fallback requires --allow-cloud")
+    if local_only and profile:
+        raise typer.BadParameter("--local-only cannot be combined with --profile")
+    if local_only and allow_cloud:
+        raise typer.BadParameter("--local-only cannot be combined with --allow-cloud")
+    if local_only and allow_cloud_fallback:
+        raise typer.BadParameter(
+            "--local-only cannot be combined with --allow-cloud-fallback"
+        )
     try:
         task = _delegation_runtime()[0].get_task(task_id)
         repository_policy = load_repository_worker_policy(
@@ -1559,6 +1572,16 @@ def delegate_launch_ai(
             "cloud_allowed": allow_cloud,
             "cloud_fallback_allowed": allow_cloud_fallback,
         }
+        if local_only:
+            command_policy_values.update(
+                {
+                    "allowed_transports": ["http"],
+                    "allowed_providers": ["ollama"],
+                    "cloud_allowed": False,
+                    "cloud_fallback_allowed": False,
+                    "local_first": True,
+                }
+            )
         if profile:
             if not _repository_allows_cli_profile(profile, repository_policy):
                 raise WorkerAssignmentError(
