@@ -19,6 +19,7 @@ from canto.core.repository import initialize_repository
 from canto.models.delegation import (
     DelegationScope,
     DelegationTask,
+    ExecutorLaunch,
     ExecutorProfile,
     RepositoryIdentity,
 )
@@ -350,6 +351,116 @@ allowed_cli_profiles = ["allowed-codex"]
 
     assert result.exit_code == 1
     assert "not allowed by repository Worker policy" in result.output
+
+
+def test_launch_ai_local_only_uses_direct_local_http_worker(tmp_path, monkeypatch):
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    git(repository, "init")
+    git(repository, "config", "user.email", "test@example.com")
+    git(repository, "config", "user.name", "Test User")
+    (repository / "src").mkdir()
+    (repository / "src" / "app.py").write_text("value = 1\n")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "initial")
+    initialize_repository(repository)
+    (repository / ".canto" / "workers.toml").write_text(
+        """\
+version = 1
+
+[selection]
+allowed_transports = ["cli", "http"]
+allowed_providers = ["ollama", "openai"]
+allowed_models = ["local:coder", "cloud:coder"]
+preferred_models = ["local:coder"]
+allowed_cli_profiles = ["local-codex"]
+preferred_cli_profiles = ["local-codex"]
+""",
+        encoding="utf-8",
+    )
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    service.set_executor_profile(
+        ExecutorProfile(
+            executor_id="local-codex",
+            name="Local Codex",
+            harness="codex_cli",
+            executable=str(tmp_path / "codex"),
+            model_provider="ollama",
+            launch_mode="canto",
+        )
+    )
+    service.create_task(
+        DelegationTask(
+            task_id="task_local_only",
+            title="Use local HTTP",
+            repository=inspect_repository(repository),
+            scope=DelegationScope(allowed_paths=["src"]),
+        )
+    )
+    service.transition("task_local_only", "assigned")
+    workspaces.prepare("task_local_only")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    class LocalAssignment:
+        policy = None
+
+        def launch(self, task_id, policy):
+            self.policy = policy
+            return ExecutorLaunch(
+                launch_id="launch_local",
+                task_id=task_id,
+                session_id="session_local",
+                executor_id="ai:local:coder",
+                argv=["canto-api-worker", "local:coder"],
+                cwd=str(repository),
+                prompt_path="prompt.md",
+                stdout_path="stdout.log",
+                stderr_path="stderr.log",
+                outcome="completed_work",
+                exit_code=0,
+            )
+
+    assignment = LocalAssignment()
+    monkeypatch.setattr(cli_module, "_ai_assignment_service", lambda: assignment)
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        ["delegate", "launch-ai", "task_local_only", "--local-only"],
+    )
+
+    assert result.exit_code == 0, result.output
+    launch = json.loads(result.output)
+    assert launch["executor_id"] == "ai:local:coder"
+    assert assignment.policy.allowed_transports == ["http"]
+    assert assignment.policy.allowed_providers == ["ollama"]
+    assert assignment.policy.cloud_allowed is False
+    assert assignment.policy.cloud_fallback_allowed is False
+
+
+def test_launch_ai_local_only_rejects_cli_profile(tmp_path, monkeypatch):
+    service = DelegationService(SqliteStateStore(tmp_path / "state" / "canto.db"))
+    workspaces = DelegationWorkspaceService(service, tmp_path / "delegations")
+    monkeypatch.setattr(
+        cli_module, "_delegation_runtime", lambda: (service, workspaces)
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        [
+            "delegate",
+            "launch-ai",
+            "task_local_only",
+            "--local-only",
+            "--profile",
+            "local-codex",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "--local-only cannot be combined with --profile" in result.output
 
 
 def test_launch_ai_balanced_cli_exhaustion_requires_approval_before_api(tmp_path, monkeypatch):

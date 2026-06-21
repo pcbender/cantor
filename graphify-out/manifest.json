@@ -1,7 +1,7 @@
 {
   ".claude/settings.local.json": {
-    "mtime": 1781968238.4221041,
-    "ast_hash": "15ed448478898d2ea7cceb5e0c67041d",
+    "mtime": 1781999985.7034814,
+    "ast_hash": "0e42bc174cd5f9e7db647422c13fff76",
     "semantic_hash": ""
   },
   "canto/__init__.py": {
@@ -20,8 +20,8 @@
     "semantic_hash": "8488c6e2a0e3eab2a60d0d88be2bb754"
   },
   "canto/cli.py": {
-    "mtime": 1781993729.9165766,
-    "ast_hash": "4df0efaa2c39290878c75e5ebeb82f29",
+    "mtime": 1782001559.3830795,
+    "ast_hash": "9e51400418d5ac6cfe87d09394a7e025",
     "semantic_hash": ""
   },
   "canto/config.py": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "tests/test_delegation_cli.py": {
-    "mtime": 1781993740.3962808,
-    "ast_hash": "34d5cc60a335c5f035855954e2bfa1b5",
+    "mtime": 1782001587.443076,
+    "ast_hash": "a1cff207d2b2260295e467e6a6309c0d",
     "semantic_hash": ""
   },
   "tests/test_delegation_commands.py": {
@@ -700,7 +700,7 @@
     "semantic_hash": ""
   },
   ".canto/agents/orchestrator.md": {
-    "mtime": 1781993807.1056569,
+    "mtime": 1781994527.6037831,
     "ast_hash": "852dda3a77b83d0068e6e34f9aa58600",
     "semantic_hash": ""
   },
@@ -725,8 +725,8 @@
     "semantic_hash": ""
   },
   "ROADMAP.md": {
-    "mtime": 1781984677.0098152,
-    "ast_hash": "b4091d5f67af2651b0848765dcce76a9",
+    "mtime": 1782001606.523068,
+    "ast_hash": "6ce5a3c7d1ed2d9e1ff09eb38411150a",
     "semantic_hash": ""
   },
   "SPEC-v1.MD": {
@@ -735,8 +735,8 @@
     "semantic_hash": ""
   },
   "STATUS.md": {
-    "mtime": 1781984677.0098152,
-    "ast_hash": "98ad8ca8d234aac650873e0f34be2ae5",
+    "mtime": 1782001606.413068,
+    "ast_hash": "c1cad9afab02016744706df8673821ac",
     "semantic_hash": ""
   },
   "Vision.md": {
@@ -1265,8 +1265,8 @@
     "semantic_hash": ""
   },
   "canto/core/cli_executor.py": {
-    "mtime": 1781985849.045555,
-    "ast_hash": "e56c1dccc898bcaf03b3741a9e5c9390",
+    "mtime": 1782001538.3730857,
+    "ast_hash": "f1b5d2e70666bb7a59827dc97e35d917",
     "semantic_hash": ""
   },
   "tests/test_cli_env.py": {
@@ -1275,8 +1275,8 @@
     "semantic_hash": ""
   },
   "tests/test_cli_executor.py": {
-    "mtime": 1781985849.0563886,
-    "ast_hash": "2be61699653e6a0d799d4a60b2f1921c",
+    "mtime": 1782001544.0230844,
+    "ast_hash": "f98eaa06462c570ec815ff2c63bb3dde",
     "semantic_hash": ""
   },
   "docs/cli-executor-callsites.md": {
@@ -1310,8 +1310,28 @@
     "semantic_hash": ""
   },
   "docs/subscription-cli-workers-phase5.md": {
-    "mtime": 1781993792.7258084,
+    "mtime": 1781994527.6037831,
     "ast_hash": "dbfbda32930b56645a70f8a96df8a7bd",
+    "semantic_hash": ""
+  },
+  ".claude/settings.json": {
+    "mtime": 1781994527.6037831,
+    "ast_hash": "e1073342e958ac9f00716938c8f165e3",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1781994527.6037831,
+    "ast_hash": "82efb97a359f5c7290bf2513d14686be",
+    "semantic_hash": ""
+  },
+  "docs/codex-nested-agent-sandbox-hotfix.md": {
+    "mtime": 1782001096.5431964,
+    "ast_hash": "97bd6a9665f0298f57d9f36facd7fb00",
+    "semantic_hash": ""
+  },
+  "docs/local-ollama-worker-hotfix.md": {
+    "mtime": 1782001606.303068,
+    "ast_hash": "941687c49cce3e78b34258d07063cf91",
     "semantic_hash": ""
   }
 }

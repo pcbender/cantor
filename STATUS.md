@@ -268,6 +268,19 @@ The repository now prefers `local-ollama:qwen3.6:35b-a3b` and retains
 `local-ollama:gemma4:12b` as an eligible local fallback through explicit
 ordered `preferred_models` policy.
 
+CP-1728 hotfix is implemented on the working branch: Nested Codex Worker
+sandbox composition. Dogfooding showed that Codex Workers launched from inside
+another agent sandbox need explicit Canto state access and, for cloud-backed
+CLI Workers, explicit nested Codex network access. The hotfix is documented in
+`docs/codex-nested-agent-sandbox-hotfix.md`.
+
+CP-1729 hotfix is implemented on the working branch: Local Ollama Worker
+reliability. `canto delegate launch-ai TASK_ID --local-only` forces the direct
+local Ollama API Worker path, bypassing CLI and cloud Workers. Codex-Ollama CLI
+profiles now receive nested sandbox network access because Ollama is reached
+over loopback HTTP. The hotfix is documented in
+`docs/local-ollama-worker-hotfix.md`.
+
 - Working tree validation: `git diff --check` passes.
 
 ## Deferred By Specification
