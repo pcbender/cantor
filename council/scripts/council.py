@@ -529,6 +529,13 @@ def cmd_check(args, config):
             rows.append((name, "NOT READY", str(exc)))
     for name, status, detail in rows:
         print(f"{name:8} {status:10} {detail}")
+    if os.name == "nt":
+        try:
+            from winpty import PtyProcess  # type: ignore
+        except ImportError:
+            print("pywinpty  MISSING  (pip install pywinpty; agy may print nothing without it)")
+        else:
+            print("pywinpty  installed")
     return 0 if all(s != "NOT READY" for _, s, _ in rows) else 1
 
 
