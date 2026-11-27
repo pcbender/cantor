@@ -1,0 +1,26 @@
+{
+  "timeout_seconds": 900,
+  "members": {
+    "codex": {
+      "enabled": true,
+      "executable": "codex",
+      "model": null,
+      "extra_args": [],
+      "role": "Adversarial code reviewer: correctness, edge cases, bugs, security."
+    },
+    "gemini": {
+      "enabled": true,
+      "executable": "agy",
+      "model": null,
+      "extra_args": [],
+      "role": "Whole-repo critic: architecture, consistency with the rest of the codebase, what was missed."
+    },
+    "claude": {
+      "enabled": false,
+      "executable": "claude",
+      "model": null,
+      "extra_args": [],
+      "role": "Fresh-context second opinion (useful when the chairman is not Claude)."
+    }
+  }
+}
