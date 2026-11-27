@@ -64,6 +64,32 @@ the repo's `.gitignore` (task mode refuses to run without it).
 4. Check: `python C:\Users\mrose\.claude\skills\council\scripts\council.py check`
 5. Tests: `python -m unittest discover -s council/tests`
 
+## Shared project context (AGENTS.md)
+
+Keep rules every agent should follow in one `AGENTS.md` at the repo root. Each CLI loads
+it differently (checked against each tool's docs and with real runs on Serenity,
+2026-11-27):
+
+| Agent | How it gets `AGENTS.md` |
+|---|---|
+| Codex (0.167.2) | Natively. Reads `~/.codex/AGENTS.md`, then every `AGENTS.md` from the git root down to `--cd`. 32 KiB cap (`project_doc_max_bytes`). |
+| Gemini via agy (1.5.18) | Natively. Reads `AGENTS.md` or `GEMINI.md` (and `.agents/rules/*.md`) in the workspace and each parent up to the repo root, plus `~/.gemini/AGENTS.md` and `~/.gemini/config/...` globals. Works in `--print` mode. |
+| Claude Code (2.1.325) | Reads `AGENTS.md` only when no `CLAUDE.md` exists. If the repo has a `CLAUDE.md`, that file must start with `@AGENTS.md`. |
+
+Council runs inherit this for free: `council.py` starts Codex with `--cd <workspace>` and
+agy with the workspace as its folder, and a task worktree is a full checkout, so both
+members see the repo's `AGENTS.md` without it being pasted into the brief. A consult
+probe confirmed both members quoted the repo's `AGENTS.md` headings without reading any
+file.
+
+Notes:
+- Put shared rules in `AGENTS.md`, Claude-only notes under the import in `CLAUDE.md`.
+  Don't keep a `GEMINI.md` beside it: agy loads both, so rules would be duplicated.
+- Everything in `AGENTS.md` reaches every member on every run, so keep it short and
+  current. A stale section misleads all three agents at once.
+- `AGENTS.md` and `CLAUDE.md` are on the protected list for write mode (see above), so
+  members can't change the shared rules.
+
 ## Delegation-of-authority hook
 
 `scripts/policy_gate.py` enforces the policy in `SKILL.md`. Tier 0 and Tier 1 actions pass
