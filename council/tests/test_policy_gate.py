@@ -123,6 +123,63 @@ class PolicyGateTest(unittest.TestCase):
             with self.subTest(cmd=cmd):
                 self.assertEqual(self.bash(cmd), "allow")
 
+    def test_round2_findings(self):
+        for cmd in ("git checkout -B main", "git switch -C main", "rm --recursive src",
+                    "rm -rf .council/worktrees/x /etc", "npm --prefix web install left-pad",
+                    "uv lock --upgrade", "git checkout -- ./", "echo x > .env",
+                    "git -C . stash drop"):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.bash(cmd), "ask")
+        for cmd in ("git branch -m council/a council/b", "git restore --staged .",
+                    "npm test -- update", "git commit -m \"a; git push origin main\"",
+                    "git commit -m 'x' 2>&1", "uv sync"):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.bash(cmd), "allow")
+
+    def test_round2_codex_findings(self):
+        self.assertEqual(self.bash("git rm -r src"), "ask")
+        self.assertEqual(self.bash("uv sync --upgrade"), "ask")
+        # bare push goes to @{push}: a claude/ branch tracking origin/main pushes to main
+        remote = Path(self.tmp.name) / "remote.git"
+        sh(self.tmp.name, "git", "init", "-q", "--bare", str(remote))
+        sh(self.repo, "git", "remote", "add", "origin", str(remote))
+        sh(self.repo, "git", "push", "-q", "origin", "main")
+        sh(self.repo, "git", "config", "push.default", "upstream")
+        sh(self.repo, "git", "branch", "-q", "--set-upstream-to=origin/main")
+        self.assertEqual(self.bash("git push"), "ask")
+        # a failing checkout earlier in the chain doesn't hide that we're on main
+        sh(self.repo, "git", "checkout", "-q", "main")
+        self.assertEqual(self.bash("git checkout -b claude/work; git reset --hard HEAD~1"), "ask")
+
+    def test_commit_gate_pathspec_from_file(self):
+        (self.repo / ".council").mkdir()
+        (self.repo / ".council" / "enforce-commit-gate").write_text("")
+        self.assertEqual(self.bash("git commit --pathspec-from-file=p.txt -m x"), "deny")
+
+    def test_cd_is_tracked(self):
+        other = Path(self.tmp.name) / "other"
+        other.mkdir()
+        sh(other, "git", "init", "-q", "-b", "main")
+        sh(other, "git", "config", "user.email", "t@t")
+        sh(other, "git", "config", "user.name", "t")
+        (other / "x").write_text("x")
+        sh(other, "git", "add", ".")
+        sh(other, "git", "commit", "-qm", "i")
+        self.assertEqual(self.bash(f'cd "{other}" && git commit -m x'), "ask")
+        self.assertEqual(self.bash("git commit -m x"), "allow")
+
+    def test_council_skip_in_message_is_not_a_bypass(self):
+        (self.repo / ".council").mkdir()
+        (self.repo / ".council" / "enforce-commit-gate").write_text("")
+        self.assertEqual(self.bash('git commit -am "fix COUNCIL_SKIP=1"'), "deny")
+
+    def test_worktree_paths_count_as_council(self):
+        wt = self.repo / ".council" / "worktrees" / "t-codex"
+        wt.parent.mkdir(parents=True)
+        sh(self.repo, "git", "worktree", "add", "-q", "-b", "council/t-codex", str(wt))
+        self.assertEqual(self.bash(f'git -C "{wt}" clean -fd'), "allow")
+        self.assertEqual(self.bash(f'git -C "{wt}" checkout -- .'), "allow")
+
     def test_windows_paths(self):
         sh(self.repo, "git", "checkout", "-q", "main")
         win = str(self.repo).replace("/", "\\")

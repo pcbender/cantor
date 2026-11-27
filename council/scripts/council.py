@@ -252,6 +252,9 @@ class GeminiAgyAdapter(Adapter):
             # the run. The prompt goes inline so agy needs no access to the run folder
             # (where verdict files live).
             prompt = prompt_file.read_text(encoding="utf-8")
+            if self.executable().lower().endswith((".cmd", ".bat")):
+                raise MemberUnavailable("agy resolves to a .cmd/.bat wrapper, which would mangle the "
+                                        "inline prompt; point `executable` at agy.exe.")
             if len(prompt) > MAX_INLINE_PROMPT:
                 raise MemberUnavailable(
                     f"Task prompt is {len(prompt)} chars; agy write mode passes it inline "
@@ -351,6 +354,16 @@ def run_member(name: str, prompt_file: Path, workspace: Path, out_dir: Path, cfg
     out_file = out_dir / f"{name}.raw.md"
     result = RunResult(member=name, ok=False)
     start = time.time()
+    gitfile = workspace / ".git"
+    pointer = gitfile.read_bytes() if write and gitfile.is_file() else b""
+
+    def tree_state() -> str:
+        if (gitfile.read_bytes() if gitfile.is_file() else b"missing") != pointer:
+            return "\0pointer changed"  # don't run git against a repo the member may control
+        return "".join(subprocess.run(["git", "-C", str(workspace), *cmd], capture_output=True,
+                                      text=True, encoding="utf-8", errors="replace").stdout
+                       for cmd in (["status", "--porcelain"], ["diff", "HEAD"]))
+    before_state = tree_state() if write else ""
     try:
         argv, stdin_text = adapter.build(prompt_file, workspace, out_file, write=write)
         try:
@@ -358,9 +371,7 @@ def run_member(name: str, prompt_file: Path, workspace: Path, out_dir: Path, cfg
             result.exit_code, result.stderr = done.returncode, done.stderr
             text = adapter.read_answer(done.stdout, out_file)
             if name == "gemini" and done.returncode == 0 and not text.strip():
-                changed = write and subprocess.run(
-                    ["git", "-C", str(workspace), "status", "--porcelain"], capture_output=True,
-                    text=True).stdout.strip()
+                changed = write and tree_state() != before_state
                 if changed:
                     # Re-running a write task would apply its edits twice.
                     result.notes.append("Empty report on pipe; edits were made, so not re-run.")
@@ -574,7 +585,7 @@ def cmd_run(args, config, kind: str):
     if review:
         # Save the staged diff where every member can read it: headless agy can't run
         # `git diff` (shell commands are denied and end its run).
-        diff_file = out_dir / "staged.diff"
+        diff_file = out_dir / f"{args.member}.staged.diff"  # per member: parallel runs
         diff_file.write_text(git(workspace, "diff", "--cached", "--binary"), encoding="utf-8")
         prompt += (f"\n\nThe staged diff under review is saved at {diff_file}. Read it there; "
                    "you can also read any file in the repository for context.\n")
@@ -619,6 +630,8 @@ def cmd_gate(args, config):
     # Required reviewers: --require, else every enabled member. A missing one can't pass.
     required = ([m.strip() for m in args.require.split(",") if m.strip()] if args.require else
                 [n for n, c in config["members"].items() if c.get("enabled")])
+    if args.require:
+        verdicts = [v for v in verdicts if v["member"] in required]
     have = {v["member"] for v in verdicts}
     missing = [m for m in required if m not in have]
     current = diff_fingerprint(repo)
@@ -694,16 +707,35 @@ def snapshot(repo: Path) -> dict:
             hashes.append(f"{rel}:{_sha((repo / rel).read_bytes())}")
         except OSError:
             hashes.append(f"{rel}:unreadable")
-    refs = [r for r in git(repo, "for-each-ref", "--format=%(refname) %(objectname)",
-                           "refs/heads", "refs/tags").splitlines()
-            if not r.startswith("refs/heads/council/")]  # other council tasks may run in parallel
+    # Ignored files outside .council/ (e.g. .env): size and mtime, cheap enough for node_modules.
+    ignored = []
+    for rel in filter(None, git(repo, "ls-files", "--others", "--ignored", "--exclude-standard",
+                                "--directory", "-z").split("\0")):
+        if rel.replace("\\", "/").startswith(".council"):
+            continue
+        try:
+            st = (repo / rel).stat()
+            ignored.append(f"{rel}:{st.st_size}:{st.st_mtime_ns}")
+        except OSError:
+            ignored.append(f"{rel}:gone")
+    gitdir = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir").strip())
+    meta = []
+    for f in [gitdir / "config", *sorted((gitdir / "hooks").glob("*"))]:
+        try:
+            meta.append(f"{f.name}:{_sha(f.read_bytes())}")
+        except OSError:
+            pass
+    refs = dict(r.split(" ", 1) for r in
+                git(repo, "for-each-ref", "--format=%(refname) %(objectname)").splitlines() if " " in r)
     return {
         "head": git(repo, "rev-parse", "HEAD").strip(),
         "branch": git(repo, "rev-parse", "--abbrev-ref", "HEAD").strip(),
         "index": _sha(git(repo, "diff", "--cached", "--binary").encode("utf-8", "replace")),
         "worktree": _sha(git(repo, "diff", "--binary").encode("utf-8", "replace")),
         "untracked": _sha("\n".join(sorted(hashes)).encode("utf-8")),
-        "refs": "\n".join(refs),
+        "ignored": _sha("\n".join(sorted(ignored)).encode("utf-8")),
+        "git_config_hooks": _sha("\n".join(meta).encode("utf-8")),
+        "refs": refs,
         "stash": git(repo, "stash", "list"),
     }
 
@@ -789,8 +821,11 @@ def cmd_task(args, config):
     exists = wt.exists() or bool(git(repo, "branch", "--list", branch).strip())
     if getattr(args, "resume", False):
         # Another round on the same worktree (e.g. sending review findings back).
-        if not wt.exists():
-            print(f"--continue needs an existing worktree at {wt}.", file=sys.stderr)
+        listing = git(repo, "worktree", "list", "--porcelain")
+        entry = next((block for block in listing.split("\n\n")
+                      if block.startswith("worktree ") and Path(block.splitlines()[0][9:]).resolve() == wt.resolve()), "")
+        if f"branch refs/heads/{branch}" not in entry:
+            print(f"--continue needs the registered worktree {wt} on {branch}.", file=sys.stderr)
             return 2
         base = git(wt, "rev-parse", "--abbrev-ref", "HEAD").strip()
     elif exists:
@@ -821,8 +856,14 @@ def cmd_task(args, config):
     after = snapshot(repo)
 
     violations = [f"main checkout {key} changed during the run"
-                  for key in ("head", "branch", "index", "worktree", "untracked", "refs", "stash")
+                  for key in ("head", "branch", "index", "worktree", "untracked", "ignored",
+                              "git_config_hooks", "stash")
                   if before[key] != after[key]]
+    # Refs: any change, except a council/* branch created meanwhile (a parallel task).
+    for ref in set(before["refs"]) | set(after["refs"]):
+        if before["refs"].get(ref) != after["refs"].get(ref) and not (
+                ref not in before["refs"] and ref.startswith("refs/heads/council/")):
+            violations.append(f"ref {ref} changed during the run")
     # Check the worktree's .git pointer first: if it was rewritten, git commands in the
     # worktree would operate on some other repository.
     now_gitfile = (wt / ".git").read_bytes() if (wt / ".git").is_file() else b"missing"
@@ -839,6 +880,10 @@ def cmd_task(args, config):
                 violations.append(f"protected path changed: {f}")
             elif allowed and not any(glob_match(f, g) for g in allowed):
                 violations.append(f"outside allowed paths: {f}")
+        for row in git(wt, "diff", "--cached", "--no-renames", "--raw", "-z").split("\0:"):
+            mode = row.lstrip(":").split(" ")[1:2]
+            if mode and mode[0] in ("120000", "160000"):
+                violations.append("a symlink or submodule was staged: " + row.split("\0")[-1])
         for f in new_ignored:
             if any(glob_match(f, g) for g in PROTECTED_GLOBS):
                 violations.append(f"protected ignored file created: {f}")

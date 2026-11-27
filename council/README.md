@@ -50,7 +50,11 @@ the repo's `.gitignore` (task mode refuses to run without it).
   worktree `.git` pointer is caught before any git command runs there. Any breach is
   `VIOLATION`. Branches under `council/` are left out of the comparison so two tasks can run
   in parallel.
-- **Another round** on the same worktree: `task ... --continue`.
+- **Another round** on the same worktree: `task ... --continue` (only for the registered
+  worktree on its `council/` branch).
+- Not checked: edits to files that were already gitignored inside the worktree, and new
+  ignored files outside the allowed paths (test runs create `__pycache__` and the like).
+  `cleanup` treats ignored files in a council worktree as disposable build output.
 
 ## Install (Serenity, native Windows)
 

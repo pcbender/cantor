@@ -52,6 +52,18 @@ ls-remote ls-tree merge merge-base mergetool mv name-rev notes pull push range-d
 remote repack replace request-pull reset restore rev-list rev-parse revert rm shortlog show
 show-branch show-ref sparse-checkout stash status submodule switch symbolic-ref tag update-index
 update-ref verify-commit version whatchanged worktree write-tree maintenance var""".split())
+GIT_VALUE_OPTS = {
+    "commit": {"-m", "-F", "-C", "-c", "--author", "--date", "-t", "--template", "--cleanup",
+               "--trailer", "--fixup", "--squash", "--message", "--file", "--reuse-message",
+               "--reedit-message"},
+    "merge": {"-m", "-F", "-X", "-s", "--strategy", "--strategy-option", "--message", "--file"},
+    "checkout": {"-b", "-B", "--orphan"},
+    "switch": {"-c", "-C", "--orphan"},
+    "rebase": {"--onto", "-X", "-s", "--strategy", "--strategy-option", "-x", "--exec"},
+    "tag": {"-m", "-F", "--message", "--file", "-u"},
+    "restore": {"-s", "--source"},
+    "worktree": {"-b", "-B", "--reason"},
+}
 GH_READ_ACTIONS = {"view", "list", "status", "diff", "checks", "download", "watch", "browse"}
 
 # Per-evaluation state: branch switches earlier in a chained command.
@@ -105,7 +117,11 @@ def is_secret(path: Path) -> bool:
 
 
 def is_config(path: Path) -> bool:
-    return path.name.lower() in CONFIG_NAMES or any(d in parts_lower(path) for d in CONFIG_DIRS)
+    lowered = parts_lower(path)
+    name = path.name.lower()
+    return (name in CONFIG_NAMES or name.startswith(".env") or any(d in lowered for d in CONFIG_DIRS)
+            or (".git" in lowered and "hooks" in lowered)
+            or (name == "config" and lowered[-2:-1] == [".git"]))
 
 
 def repo_top(cwd: Path) -> Path:
@@ -113,19 +129,56 @@ def repo_top(cwd: Path) -> Path:
     return Path(top) if code == 0 and top else cwd
 
 
+def main_repo(cwd: Path) -> Path:
+    """The main checkout, also when cwd is inside a linked worktree."""
+    code, common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    return Path(common).parent if code == 0 and common else repo_top(cwd)
+
+
 def under_council(path: Path, cwd: Path) -> bool:
-    council = Path(os.path.normpath(str(repo_top(cwd) / ".council")))
-    try:
-        return os.path.normcase(str(path)).startswith(os.path.normcase(str(council)) + os.sep) \
-            or os.path.normcase(str(path)) == os.path.normcase(str(council))
-    except ValueError:
-        return False
+    council = os.path.normcase(os.path.normpath(str(main_repo(cwd) / ".council")))
+    target = os.path.normcase(str(path))
+    return target == council or target.startswith(council + os.sep)
 
 
 # ---------------------------------------------------------------------------
 # command splitting
 # ---------------------------------------------------------------------------
-SEGMENT_SPLIT = re.compile(r"\s*(?:&&|\|\||;|\||&|\r?\n|\(|\)|\{|\}|\$\(|`)\s*")
+SEPARATORS = ("&&", "||", "$(", ";", "|", "&", "\n", "(", ")", "{", "}", "`")
+
+
+def split_segments(command: str) -> list[str]:
+    """Split on shell separators outside quotes (a commit message stays one segment)."""
+    out, buf, quote, i = [], [], None, 0
+    while i < len(command):
+        c = command[i]
+        if quote:
+            buf.append(c)
+            if c == quote:
+                quote = None
+            i += 1
+            continue
+        if c in "'\"":
+            quote = c
+            buf.append(c)
+            i += 1
+            continue
+        sep = next((s for s in SEPARATORS if command.startswith(s, i)), None)
+        if sep and not (sep == "&" and i > 0 and command[i - 1] in "<>"):  # keep 2>&1 whole
+            out.append("".join(buf))
+            buf = []
+            i += len(sep)
+            continue
+        buf.append(c)
+        i += 1
+    out.append("".join(buf))
+    return [s.strip() for s in out if s.strip()]
+
+
+def unbackslash(command: str) -> str:
+    """Windows paths use backslashes, which posix shlex would eat. Turn path separators
+    into slashes but keep shell escapes (\\" \\' \\$ \\` \\\\)."""
+    return re.sub(r"\\(?![\"'$`\\\n])", "/", command)
 
 
 def split_words(segment: str) -> list[str]:
@@ -187,8 +240,8 @@ def own_branch(name: str) -> bool:
 
 
 def is_pushed(cwd: Path, branch: str) -> bool:
-    code, out = git(cwd, "for-each-ref", "--format=%(refname)", "refs/remotes")
-    return code == 0 and any(r.endswith("/" + branch) for r in out.splitlines())
+    code, out = git(cwd, "for-each-ref", "--format=%(refname:lstrip=3)", "refs/remotes")
+    return code == 0 and branch in out.splitlines()
 
 
 def split_flags(args: list[str], value_opts: set[str]) -> tuple[list[str], list[str]]:
@@ -222,7 +275,13 @@ def check_push(cwd: Path, args: list[str]):
              "--tags", "--delete", "-d", "--prune", "--repo", "--receive-pack", "--exec"}
     if risky.intersection(flags):
         return "ask", "Force, delete, mirror, --all, --tags or --repo pushes need Rosie's approval (Tier 2)."
-    refspecs = pos[1:] or [current_branch(cwd)]
+    refspecs = pos[1:]
+    if not refspecs:
+        code, target = git(cwd, "rev-parse", "--abbrev-ref", "@{push}")
+        dst = target.split("/", 1)[1] if code == 0 and "/" in target else current_branch(cwd)
+        if git(cwd, "config", "--get-regexp", r"^remote\..*\.push$")[0] == 0:
+            return "ask", "This repo has remote.*.push refspecs; a bare push may go anywhere (Tier 2)."
+        refspecs = [f"{current_branch(cwd)}:{dst}"]
     for spec in refspecs:
         if spec.startswith(("+", ":")):
             return "ask", f"Push refspec {spec} forces or deletes a branch (Tier 2)."
@@ -260,11 +319,11 @@ def check_git(cwd: Path, sub: str, args: list[str], risky: list[str], command: s
             words = split_words(expansion)
             return check_git(cwd, words[0], words[1:] + args, [], command, depth + 1)
     branch = current_branch(cwd)
-    on_protected = branch in PROTECTED_BRANCHES
-    flags, pos = split_flags(args, {"-m", "-F", "-C", "-c", "--author", "--date", "-t",
-                                    "--template", "--cleanup", "--trailer", "--fixup", "--squash",
-                                    "-b", "-B", "--onto", "-X", "--strategy-option", "-s",
-                                    "--strategy", "--message", "--file"})
+    real = git(cwd, "rev-parse", "--abbrev-ref", "HEAD")[1]
+    on_protected = branch in PROTECTED_BRANCHES or real in PROTECTED_BRANCHES
+    if real in PROTECTED_BRANCHES:
+        branch = real
+    flags, pos = split_flags(args, GIT_VALUE_OPTS.get(sub, set()))
 
     if sub in ("checkout", "switch"):
         new = None
@@ -272,6 +331,8 @@ def check_git(cwd: Path, sub: str, args: list[str], risky: list[str], command: s
             for i, a in enumerate(args):
                 if a in ("-b", "-B", "-c", "-C") and i + 1 < len(args):
                     new = args[i + 1]
+                    if a in ("-B", "-C") and new in PROTECTED_BRANCHES:
+                        return "ask", f"`git {sub} {a} {new}` force-resets {new} (Tier 2)."
         elif pos and "--" not in args and git(cwd, "rev-parse", "--verify", "--quiet",
                                               f"refs/heads/{pos[0]}")[0] == 0:
             new = pos[0]
@@ -287,12 +348,11 @@ def check_git(cwd: Path, sub: str, args: list[str], risky: list[str], command: s
         return "ask", f"`git {sub}` rewrites refs or history directly (Tier 2)."
     if sub == "symbolic-ref" and len(pos) >= 2:
         return "ask", "`git symbolic-ref` with a target rewrites HEAD (Tier 2)."
-    if sub == "merge":
-        for ref in pos:
-            lines = merge_size(cwd, ref)
-            if lines > MERGE_ASK_LINES:
-                return "ask", (f"Merging {ref} brings in {lines} changed lines (over "
-                               f"{MERGE_ASK_LINES}); Rosie approves merges that large (Tier 2).")
+    if sub == "merge" and pos:
+        lines = sum(merge_size(cwd, ref) for ref in pos)
+        if lines > MERGE_ASK_LINES:
+            return "ask", (f"Merging {' '.join(pos)} brings in {lines} changed lines (over "
+                           f"{MERGE_ASK_LINES}); Rosie approves merges that large (Tier 2).")
     if sub == "rebase" and is_pushed(cwd, branch):
         return "ask", "Rebasing a branch that has been pushed rewrites shared history (Tier 2)."
     if sub == "reset" and "--hard" in flags and is_pushed(cwd, branch):
@@ -311,9 +371,13 @@ def check_git(cwd: Path, sub: str, args: list[str], risky: list[str], command: s
             return "ask", "Removing or moving a worktree the council did not create needs Rosie (Tier 2)."
     if sub == "clean" and ("-f" in flags or "--force" in flags) and not under_council(norm_path(".", cwd), cwd):
         return "ask", "`git clean -f` deletes untracked files in the main checkout (Tier 2)."
-    if sub in ("checkout", "restore") and any(p in (".", ":/", "*", ":/*") for p in pos) \
+    if sub in ("checkout", "restore") and any(p.rstrip("/") in (".", ":", "*", ":/*", "") for p in pos) \
+            and not (sub == "restore" and {"--staged", "-S"} & set(flags) and not {"--worktree", "-W"} & set(flags)) \
             and not under_council(norm_path(".", cwd), cwd):
         return "ask", "Discarding local changes across the main checkout needs Rosie (Tier 2)."
+    if sub == "rm" and ({"-r"} & set(flags)) and any(
+            not under_council(norm_path(p, cwd), cwd) for p in pos):
+        return "ask", "`git rm -r` outside .council/ deletes tracked files (Tier 2)."
     if sub == "stash" and pos[:1] in (["drop"], ["clear"]):
         return "ask", "Dropping stashes loses work (Tier 2)."
     if sub == "config" and ({"--global", "--system"} & set(flags)) and not (
@@ -327,18 +391,17 @@ def check_git(cwd: Path, sub: str, args: list[str], risky: list[str], command: s
 
 def commit_gate(cwd: Path, args, flags, pos, command: str):
     top = repo_top(cwd)
-    code, common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir")
-    main_repo = Path(common).parent if code == 0 and common else top
-    markers = (top / ".council" / "enforce-commit-gate", main_repo / ".council" / "enforce-commit-gate")
+    markers = (top / ".council" / "enforce-commit-gate",
+               main_repo(cwd) / ".council" / "enforce-commit-gate")
     if not any(m.is_file() for m in markers):
         return None  # gate not enabled for this repo (run folders alone don't enable it)
-    if "COUNCIL_SKIP=1" in command:
-        return "ask", "COUNCIL_SKIP=1 bypasses the council commit gate; Rosie decides (Tier 2)."
     unsafe = {"-a", "--all", "-i", "--include", "-o", "--only", "--amend", "-p", "--patch",
-              "--interactive"} & set(flags)
+              "--interactive", "--pathspec-from-file"} & set(flags)
     if unsafe or pos:
         return "deny", ("Council gate: commit exactly the reviewed staged change; no -a, --include, "
                         "--only, --amend, --patch or pathspecs.")
+    if command == "COUNCIL_SKIP=1":  # set by check_segment from an env prefix, not message text
+        return "ask", "COUNCIL_SKIP=1 bypasses the council commit gate; Rosie decides (Tier 2)."
     stamp = top / ".council" / "approved.json"
     staged = subprocess.run(["git", "-C", str(top), "diff", "--cached", "--binary"], text=True,
                             encoding="utf-8", errors="replace", capture_output=True,
@@ -396,20 +459,33 @@ def check_gh(words: list[str]):
 def is_install(words: list[str]) -> bool:
     head = base_name(words[0])
     toks = [w.lower() for w in words[1:]]
+    if "--" in toks:
+        toks = toks[:toks.index("--")]  # arguments passed through to a script
+    verbs = [t for t in toks if not t.startswith("-")]
+    verb = verbs[0] if verbs else ""
     if head in ("npm", "pnpm", "yarn", "bun"):
-        return bool({"i", "install", "add", "up", "update", "upgrade", "remove", "uninstall"} & set(toks))
+        # the verb may follow an option value: npm --prefix web install
+        return bool({"i", "install", "add", "up", "update", "upgrade", "remove", "uninstall",
+                     "rm"} & set(verbs[:2])) and not (verb in ("run", "test", "exec", "x", "dlx"))
     if head in ("pip", "pip3") or (head == "uv" and toks[:1] == ["pip"]):
         return bool({"install", "uninstall"} & set(toks))
     if re.match(r"^(py|python[\d.]*)$", head) and "-m" in toks:
         rest = toks[toks.index("-m") + 1:]
         return rest[:1] == ["pip"] and bool({"install", "uninstall"} & set(rest))
+    if head == "uv" and verb == "sync" and {"--upgrade", "-u", "--upgrade-package", "-P"} & set(toks):
+        return True
     if head in ("uv", "poetry", "pdm", "cargo", "go", "gem", "composer"):
-        return bool(toks) and toks[0] in ("add", "remove", "update", "upgrade", "install", "get", "require")
+        return verb in ("add", "remove", "update", "upgrade", "install", "get", "require", "lock")
     if head in ("winget", "choco", "scoop", "brew", "apt", "apt-get"):
-        return bool(toks) and toks[0] in ("install", "upgrade", "uninstall", "remove")
+        return verb in ("install", "upgrade", "uninstall", "remove")
     if head == "dotnet":
         return toks[:2] in (["add", "package"], ["remove", "package"])
     return head in ("install-module", "install-package", "update-module")
+
+
+def is_switch(word: str) -> bool:
+    """A flag (-x, --x) or a cmd.exe switch (/s, /q). Absolute paths are not switches."""
+    return word.startswith("-") or re.fullmatch(r"/[A-Za-z?]", word) is not None
 
 
 def write_targets(segment: str, words: list[str], cwd: Path) -> list[Path]:
@@ -417,12 +493,15 @@ def write_targets(segment: str, words: list[str], cwd: Path) -> list[Path]:
     head = base_name(words[0]) if words else ""
     if head in WRITE_VERBS or head in DELETE_VERBS or (head == "sed" and any(
             w.startswith("-i") or w == "--in-place" for w in words)):
-        targets += [norm_path(w, cwd) for w in words[1:] if not w.startswith(("-", "/"))]
+        targets += [norm_path(w, cwd) for w in words[1:] if not is_switch(w)]
     return targets
 
 
 def check_segment(segment: str, cwd: Path, command: str, depth: int = 0):
-    words = strip_prefixes(split_words(segment))
+    raw_words = split_words(segment)
+    skip = (any(w == "COUNCIL_SKIP=1" for w in raw_words[:3])
+            or re.search(r"\$env:COUNCIL_SKIP\s*=", command, re.I) is not None)
+    words = strip_prefixes(raw_words)
     if not words:
         return None
     head = base_name(words[0])
@@ -453,25 +532,33 @@ def check_segment(segment: str, cwd: Path, command: str, depth: int = 0):
 
     parts = git_parts(words, cwd)
     if parts:
-        return check_git(*parts, command)
+        return check_git(*parts, "COUNCIL_SKIP=1" if skip else "")
     if head == "gh":
         return check_gh(words)
     if is_install(words):
         return "ask", "Adding, removing or upgrading dependencies needs Rosie's approval (Tier 2)."
-    if head in DELETE_VERBS and any(w in ("-r", "-rf", "-fr", "-R", "/s") or w.lower().startswith("-rec")
+    if head in DELETE_VERBS and any(w.lower() in ("/s", "--recursive") or w.lower().startswith("-rec")
                                     or (re.match(r"^-[a-zA-Z]*[rR]", w) is not None) for w in words[1:]):
-        targets = [w for w in words[1:] if not w.startswith(("-", "/"))]
+        targets = [w for w in words[1:] if not is_switch(w)]
         if not targets or any(not under_council(norm_path(t, cwd), cwd) for t in targets):
             return "ask", "Recursive deletes outside .council/ need Rosie's approval (Tier 2)."
     return None
 
 
+CD_WORDS = {"cd", "chdir", "set-location", "sl", "pushd", "push-location"}
+
+
 def check_shell(command: str, cwd: Path, depth: int = 0):
-    # Backslashes are path separators on Windows; posix shlex would eat them.
-    text = command.replace("\\", "/")
+    text = unbackslash(command)
     strictest = None
-    for segment in SEGMENT_SPLIT.split(text):
-        hit = check_segment(segment.strip(), cwd, command, depth)
+    for segment in split_segments(text):
+        words = strip_prefixes(split_words(segment))
+        if words and base_name(words[0]) in CD_WORDS:
+            dest = [w for w in words[1:] if not w.startswith("-")]
+            if dest:
+                cwd = norm_path(dest[0], cwd)  # later segments run there
+            continue
+        hit = check_segment(segment, cwd, command, depth)
         if hit and (strictest is None or (hit[0] == "deny" and strictest[0] != "deny")):
             strictest = hit
     return strictest

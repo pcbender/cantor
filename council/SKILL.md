@@ -74,7 +74,8 @@ on the same brief (a bake-off) and pick or combine.
    member, `--workspace <worktree>`, then
    `gate --dir <dir> --workspace <worktree> --require <other member>`. The author never
    reviews its own work. You may skip this for small low-risk changes
-   (under ~50 lines, tests pass); say that you did.
+   (under ~50 lines, tests pass) and say that you did, except in a repo with
+   `.council/enforce-commit-gate`, where the commit needs the gate PASS.
 6. On PASS: commit in the worktree (`git -C <worktree> commit -m "<summary> (by codex)"`),
    then merge into your work branch (`git merge --no-ff council/<run>-<member>`). On REVISE:
    add the findings to `task.md` and run `task ... --continue` for one more round in the
