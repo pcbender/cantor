@@ -71,13 +71,15 @@ on the same brief (a bake-off) and pick or combine.
 4. Review the diff yourself (`git -C <worktree> diff --cached`) and run the tests in the
    worktree. If it is clearly wrong, discard and re-brief or do it yourself.
 5. Cross-review: write `review.md` in the run folder and run `review` with the **other**
-   member, `--workspace <worktree>`, then `gate --dir <dir> --workspace <worktree>`. The
-   author never reviews its own work. You may skip this for small low-risk changes
+   member, `--workspace <worktree>`, then
+   `gate --dir <dir> --workspace <worktree> --require <other member>`. The author never
+   reviews its own work. You may skip this for small low-risk changes
    (under ~50 lines, tests pass); say that you did.
 6. On PASS: commit in the worktree (`git -C <worktree> commit -m "<summary> (by codex)"`),
    then merge into your work branch (`git merge --no-ff council/<run>-<member>`). On REVISE:
-   send the findings back to the same member for one more round, or fix them yourself; at
-   most two rounds, then take over or ask the user. On REJECT: discard.
+   add the findings to `task.md` and run `task ... --continue` for one more round in the
+   same worktree, or fix them yourself; at most two rounds, then take over or ask the user.
+   On REJECT: discard.
 7. Clean up: `python "SKILL_DIR/scripts/council.py" cleanup --dir <dir>` (it keeps worktrees
    with uncommitted work and unmerged branches unless you pass `--discard`).
 8. Reply in under 120 words: what was done, by whom, the gate result, and the branch.
@@ -90,7 +92,8 @@ on the same brief (a bake-off) and pick or combine.
 3. Run in parallel:
    `python "SKILL_DIR/scripts/council.py" review --member codex --brief <dir>/brief.md`
    `python "SKILL_DIR/scripts/council.py" review --member gemini --brief <dir>/brief.md`
-4. Run `python "SKILL_DIR/scripts/council.py" gate --dir <dir>`.
+4. Run `python "SKILL_DIR/scripts/council.py" gate --dir <dir>` (it requires a verdict from
+   every enabled member; a missing one means REVISE).
 5. **PASS**: tell the user it's clear to commit. **REVISE**/**REJECT**: list the blocker/major
    findings (one line each, with member name), fix the ones you agree with, say which you
    disagree with and why, re-stage, and offer to re-run.

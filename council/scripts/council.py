@@ -135,6 +135,10 @@ def looks_like_auth(text: str) -> bool:
 # Adapters (from Cantor CliExecutor). Read-only by default; write=True is the
 # task mode, where a member may edit files inside one worktree and nothing else.
 # ---------------------------------------------------------------------------
+SANDBOX_BYPASS = ("danger-full-access", "--dangerously-bypass-approvals-and-sandbox",
+                  "--dangerously-skip-permissions", "--yolo")
+
+
 class Adapter:
     name = ""
     label = ""
@@ -143,6 +147,9 @@ class Adapter:
         self.cfg = cfg
 
     def executable(self) -> str:
+        for arg in self.cfg.get("extra_args", []):
+            if any(flag in str(arg).lower() for flag in SANDBOX_BYPASS):
+                raise MemberUnavailable(f"extra_args contains a sandbox bypass ({arg}); refused.")
         exe = self.cfg.get("executable") or self.name
         resolved = shutil.which(exe)
         if not resolved:
@@ -351,9 +358,17 @@ def run_member(name: str, prompt_file: Path, workspace: Path, out_dir: Path, cfg
             result.exit_code, result.stderr = done.returncode, done.stderr
             text = adapter.read_answer(done.stdout, out_file)
             if name == "gemini" and done.returncode == 0 and not text.strip():
-                result.notes.append("Empty stdout on pipe; retried under a pseudo-terminal.")
-                text, result.exit_code = _run_pty(argv, workspace, timeout)
-                result.used_pty = True
+                changed = write and subprocess.run(
+                    ["git", "-C", str(workspace), "status", "--porcelain"], capture_output=True,
+                    text=True).stdout.strip()
+                if changed:
+                    # Re-running a write task would apply its edits twice.
+                    result.notes.append("Empty report on pipe; edits were made, so not re-run.")
+                    text = "(agy made edits but its report was lost to the non-TTY bug)"
+                else:
+                    result.notes.append("Empty stdout on pipe; retried under a pseudo-terminal.")
+                    text, result.exit_code = _run_pty(argv, workspace, timeout)
+                    result.used_pty = True
         except subprocess.TimeoutExpired:
             result.timed_out = True
             text = ""
@@ -438,7 +453,8 @@ SHELL_NOTE = {
 }
 
 PROTECTED_GLOBS = (
-    ".git/**", ".github/**", ".claude/**", ".council/**", "**/council.config.json",
+    ".git", ".git/**", "**/.git", ".github/**", ".claude/**", ".council/**", ".canto/**",
+    "**/council.config.json", "**/.gitignore", "**/.gitattributes", "**/.gitmodules",
     "**/CLAUDE.md", "**/AGENTS.md", "**/GEMINI.md", ".gitignore", "**/settings.json",
     "**/settings.local.json", "**/package-lock.json", "**/yarn.lock", "**/pnpm-lock.yaml",
     "**/uv.lock", "**/poetry.lock", "**/Cargo.lock", "**/.env", "**/.env.*",
@@ -548,6 +564,11 @@ def cmd_run(args, config, kind: str):
     if cfg is None or args.member not in ADAPTERS:
         print(f"Unknown member: {args.member}", file=sys.stderr)
         return 2
+    if not cfg.get("enabled"):
+        print(f"Member {args.member} is disabled in council.config.json.", file=sys.stderr)
+        return 2
+    # Fingerprint the change the reviewer is given, not whatever is there when it finishes.
+    input_fingerprint = diff_fingerprint(workspace) if review else None
     role = cfg.get("role", "")
     prompt = f"You are a council member. Your role: {role}\n\n" + brief.read_text(encoding="utf-8")
     if review:
@@ -573,7 +594,9 @@ def cmd_run(args, config, kind: str):
         verdict = parse_verdict(args.member, result.text) if result.ok else {
             "member": args.member, "verdict": "unavailable", "confidence": 0.0,
             "summary": "; ".join(result.notes) or "Member failed.", "findings": []}
-        verdict["fingerprint"] = diff_fingerprint(workspace)
+        verdict["fingerprint"] = input_fingerprint
+        if diff_fingerprint(workspace) != input_fingerprint:
+            result.notes.append("The change moved during the review; this verdict will be stale.")
         (out_dir / f"{args.member}.verdict.json").write_text(json.dumps(verdict, indent=2), encoding="utf-8")
         meta["verdict"] = verdict["verdict"]
     (out_dir / f"{args.member}.meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
@@ -591,16 +614,23 @@ def cmd_run(args, config, kind: str):
 
 def cmd_gate(args, config):
     out_dir = Path(args.dir).resolve()
-    repo = Path(args.workspace).resolve() if args.workspace else Path.cwd()
+    repo = repo_root(Path(args.workspace).resolve() if args.workspace else Path.cwd())
     verdicts = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(out_dir.glob("*.verdict.json"))]
+    # Required reviewers: --require, else every enabled member. A missing one can't pass.
+    required = ([m.strip() for m in args.require.split(",") if m.strip()] if args.require else
+                [n for n, c in config["members"].items() if c.get("enabled")])
+    have = {v["member"] for v in verdicts}
+    missing = [m for m in required if m not in have]
     current = diff_fingerprint(repo)
     stale = [v["member"] for v in verdicts if v.get("fingerprint") != current]
     decision = combine(verdicts)
-    if stale:
-        decision = "revise"
+    if stale or missing:
+        decision = "revise" if decision != "reject" else decision
     gate = {
         "decision": decision,
         "members": {v["member"]: v["verdict"] for v in verdicts},
+        "required": required,
+        "missing_reviews": missing,
         "stale_reviews": stale,
         "staged_fingerprint": staged_fingerprint(repo),
         "working_fingerprint": current,
@@ -608,14 +638,17 @@ def cmd_gate(args, config):
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
     (out_dir / "gate.json").write_text(json.dumps(gate, indent=2), encoding="utf-8")
+    stamp = repo / ".council" / "approved.json"
     if decision == "pass":
-        stamp = repo / ".council" / "approved.json"
         stamp.parent.mkdir(exist_ok=True)
         stamp.write_text(json.dumps({"staged_fingerprint": gate["staged_fingerprint"],
                                      "source": str(out_dir / "gate.json")}, indent=2), encoding="utf-8")
+    elif stamp.is_file():
+        stamp.unlink()  # a later non-pass withdraws any earlier approval
     counts = {s: sum(1 for f in gate["findings"] if f["severity"] == s) for s in SEVERITIES}
     print(f"GATE: {decision.upper()} | " + ", ".join(f"{m}={v}" for m, v in gate["members"].items())
-          + f" | findings: {counts}" + (f" | stale: {stale}" if stale else ""))
+          + f" | findings: {counts}" + (f" | stale: {stale}" if stale else "")
+          + (f" | missing: {missing}" if missing else ""))
     return 0 if decision == "pass" else 1
 
 
@@ -630,6 +663,12 @@ def git(repo: Path, *args, check: bool = False) -> str:
     return done.stdout
 
 
+def git_ok(repo: Path, *args) -> tuple[bool, str]:
+    done = subprocess.run(["git", "-C", str(repo), *args], text=True, encoding="utf-8",
+                          errors="replace", capture_output=True, check=False)
+    return done.returncode == 0, done.stdout
+
+
 def repo_root(start: Path) -> Path:
     top = git(start, "rev-parse", "--show-toplevel").strip()
     if not top:
@@ -641,14 +680,30 @@ def run_slug(run_dir: Path) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "-", run_dir.name).strip("-") or "task"
 
 
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
 def snapshot(repo: Path) -> dict:
-    """State of the main checkout that a confined member must not be able to change."""
+    """State of the main checkout that a confined member must not be able to change.
+    Content hashes, not just status labels: rewriting an already-modified file counts."""
+    untracked = git(repo, "ls-files", "--others", "--exclude-standard", "-z").split("\0")
+    hashes = []
+    for rel in filter(None, untracked):
+        try:
+            hashes.append(f"{rel}:{_sha((repo / rel).read_bytes())}")
+        except OSError:
+            hashes.append(f"{rel}:unreadable")
+    refs = [r for r in git(repo, "for-each-ref", "--format=%(refname) %(objectname)",
+                           "refs/heads", "refs/tags").splitlines()
+            if not r.startswith("refs/heads/council/")]  # other council tasks may run in parallel
     return {
         "head": git(repo, "rev-parse", "HEAD").strip(),
         "branch": git(repo, "rev-parse", "--abbrev-ref", "HEAD").strip(),
-        "status": git(repo, "status", "--porcelain", "-uall"),
-        "refs": git(repo, "for-each-ref", "--format=%(refname) %(objectname)",
-                    "refs/heads", "refs/tags"),
+        "index": _sha(git(repo, "diff", "--cached", "--binary").encode("utf-8", "replace")),
+        "worktree": _sha(git(repo, "diff", "--binary").encode("utf-8", "replace")),
+        "untracked": _sha("\n".join(sorted(hashes)).encode("utf-8")),
+        "refs": "\n".join(refs),
         "stash": git(repo, "stash", "list"),
     }
 
@@ -668,7 +723,8 @@ def glob_match(path: str, pattern: str) -> bool:
             regex, i = regex + "[^/]", i + 1
         else:
             regex, i = regex + re.escape(c), i + 1
-    return re.fullmatch(regex, path) is not None
+    flags = re.I if os.name == "nt" else 0  # Windows paths are case-insensitive
+    return re.fullmatch(regex, path, flags) is not None
 
 
 def allowed_paths(brief_text: str) -> list[str]:
@@ -681,14 +737,27 @@ def allowed_paths(brief_text: str) -> list[str]:
 
 def worktree_changes(wt: Path) -> tuple[list[str], int]:
     """Stage everything in the worktree (the chairman reviews the staged diff) and
-    return (changed paths, changed lines)."""
+    return (changed paths, changed lines). No rename detection, NUL-separated, so a
+    rename into a protected path shows up as that path."""
     git(wt, "add", "-A", check=True)
-    files, lines = [], 0
-    for row in git(wt, "diff", "--cached", "--numstat").splitlines():
-        added, deleted, path = row.split("\t", 2)
-        files.append(path)
+    files = [f for f in git(wt, "diff", "--cached", "--no-renames", "--name-only", "-z").split("\0") if f]
+    lines = 0
+    for row in git(wt, "diff", "--cached", "--no-renames", "--numstat").splitlines():
+        added, deleted = row.split("\t")[:2]
         lines += (int(added) if added.isdigit() else 0) + (int(deleted) if deleted.isdigit() else 0)
     return files, lines
+
+
+def ignored_files(wt: Path) -> list[str]:
+    out = git(wt, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+    return [f for f in out.split("\0") if f]
+
+
+def under(path: Path, parent: Path) -> bool:
+    try:
+        return path.resolve().is_relative_to(parent.resolve())
+    except (OSError, ValueError):
+        return False
 
 
 def cmd_task(args, config):
@@ -702,29 +771,39 @@ def cmd_task(args, config):
     brief = Path(args.brief).resolve()
     run_dir = brief.parent
     repo = repo_root(Path(args.workspace).resolve() if args.workspace else Path.cwd())
-    base = args.base or git(repo, "rev-parse", "--abbrev-ref", "HEAD").strip()
-    base_sha = git(repo, "rev-parse", base, check=True).strip()
     slug = run_slug(run_dir)
     branch = f"council/{slug}-{args.member}"
     wt = repo / ".council" / "worktrees" / f"{slug}-{args.member}"
-    temp = os.environ.get("TEMP") or os.environ.get("TMP")
-    if temp and str(wt).lower().startswith(str(Path(temp).resolve()).lower()):
+    temps = [os.environ.get(k) for k in ("TEMP", "TMP", "TMPDIR")]
+    if any(t and under(wt, Path(t)) for t in temps):
         # Codex's workspace-write sandbox also allows writes to %TEMP% (found in the
         # canary test), so a worktree under it would not be confined.
-        print("Refusing to run write mode inside %TEMP%: the sandbox can't confine it.",
+        print("Refusing to run write mode inside a temp folder: the sandbox can't confine it.",
               file=sys.stderr)
-        return 2
-    if wt.exists() or git(repo, "branch", "--list", branch).strip():
-        print(f"{branch} or {wt} already exists. Run `council.py cleanup --dir {run_dir}` "
-              "first, or use a new run folder.", file=sys.stderr)
         return 2
     if subprocess.run(["git", "-C", str(repo), "check-ignore", "-q", ".council/x"],
                       capture_output=True).returncode != 0:
         print("Add `.council/` to .gitignore first, so worktrees and run files never get "
               "committed to the main checkout.", file=sys.stderr)
         return 2
-    wt.parent.mkdir(parents=True, exist_ok=True)
-    git(repo, "worktree", "add", "-b", branch, str(wt), base_sha, check=True)
+    exists = wt.exists() or bool(git(repo, "branch", "--list", branch).strip())
+    if getattr(args, "resume", False):
+        # Another round on the same worktree (e.g. sending review findings back).
+        if not wt.exists():
+            print(f"--continue needs an existing worktree at {wt}.", file=sys.stderr)
+            return 2
+        base = git(wt, "rev-parse", "--abbrev-ref", "HEAD").strip()
+    elif exists:
+        print(f"{branch} or {wt} already exists. Pass --continue for another round, run "
+              f"`council.py cleanup --dir {run_dir}`, or use a new run folder.", file=sys.stderr)
+        return 2
+    else:
+        base = args.base or git(repo, "rev-parse", "--abbrev-ref", "HEAD").strip()
+        base_sha = git(repo, "rev-parse", base, check=True).strip()
+        wt.parent.mkdir(parents=True, exist_ok=True)
+        git(repo, "worktree", "add", "-b", branch, str(wt), base_sha, check=True)
+    start_sha = git(wt, "rev-parse", "HEAD").strip()
+    gitfile = (wt / ".git").read_bytes() if (wt / ".git").is_file() else b""
 
     brief_text = brief.read_text(encoding="utf-8")
     allowed = allowed_paths(brief_text)
@@ -735,23 +814,34 @@ def cmd_task(args, config):
     prompt_file = run_dir / f"{args.member}.task-prompt.md"
     prompt_file.write_text(prompt, encoding="utf-8")
 
+    ignored_before = set(ignored_files(wt))
     before = snapshot(repo)
     result = run_member(args.member, prompt_file, wt, run_dir, cfg,
                         args.timeout or config["timeout_seconds"], write=True)
     after = snapshot(repo)
 
     violations = [f"main checkout {key} changed during the run"
-                  for key in ("head", "branch", "status", "stash") if before[key] != after[key]]
-    if before["refs"] != after["refs"]:
-        violations.append("branches or tags changed during the run")
-    if git(wt, "rev-parse", "HEAD").strip() != base_sha:
-        violations.append("the worktree has new commits (members must not commit)")
-    files, lines = worktree_changes(wt)
-    for f in files:
-        if any(glob_match(f, g) for g in PROTECTED_GLOBS):
-            violations.append(f"protected path changed: {f}")
-        elif allowed and not any(glob_match(f, g) for g in allowed):
-            violations.append(f"outside allowed paths: {f}")
+                  for key in ("head", "branch", "index", "worktree", "untracked", "refs", "stash")
+                  if before[key] != after[key]]
+    # Check the worktree's .git pointer first: if it was rewritten, git commands in the
+    # worktree would operate on some other repository.
+    now_gitfile = (wt / ".git").read_bytes() if (wt / ".git").is_file() else b"missing"
+    files, lines, new_ignored = [], 0, []
+    if now_gitfile != gitfile:
+        violations.append("the worktree's .git file was changed")
+    else:
+        if git(wt, "rev-parse", "HEAD").strip() != start_sha:
+            violations.append("the worktree has new commits (members must not commit)")
+        files, lines = worktree_changes(wt)
+        new_ignored = sorted(set(ignored_files(wt)) - ignored_before)
+        for f in files:
+            if any(glob_match(f, g) for g in PROTECTED_GLOBS):
+                violations.append(f"protected path changed: {f}")
+            elif allowed and not any(glob_match(f, g) for g in allowed):
+                violations.append(f"outside allowed paths: {f}")
+        for f in new_ignored:
+            if any(glob_match(f, g) for g in PROTECTED_GLOBS):
+                violations.append(f"protected ignored file created: {f}")
 
     if violations:
         status = "VIOLATION"
@@ -765,10 +855,10 @@ def cmd_task(args, config):
     report.write_text(result.text or "(no report)\n" + "\n".join(result.notes), encoding="utf-8")
     record = {
         "member": args.member, "status": status, "branch": branch, "worktree": str(wt),
-        "base": base, "base_sha": base_sha, "files": files, "lines_changed": lines,
-        "allowed_paths": allowed, "violations": violations,
-        "staged_fingerprint": staged_fingerprint(wt), "seconds": result.seconds,
-        "notes": result.notes, "stderr": result.stderr[-2000:],
+        "base": base, "start_sha": start_sha, "files": files, "lines_changed": lines,
+        "new_ignored_files": new_ignored, "allowed_paths": allowed, "violations": violations,
+        "staged_fingerprint": staged_fingerprint(wt) if now_gitfile == gitfile else None,
+        "seconds": result.seconds, "notes": result.notes, "stderr": result.stderr[-2000:],
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
     (run_dir / f"{args.member}.task.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
@@ -784,22 +874,35 @@ def cmd_task(args, config):
 
 def cmd_cleanup(args, config):
     """Remove the worktrees and council/* branches a task run created. Only touches
-    paths under .council/worktrees/ and branches named council/<run>-<member>."""
+    paths under .council/worktrees/ and branches named council/<run>-<member>, and
+    keeps anything that would lose work unless --discard is given."""
     run_dir = Path(args.dir).resolve()
     repo = repo_root(Path(args.workspace).resolve() if args.workspace else Path.cwd())
     members = [args.member] if args.member else list(WRITE_MEMBERS)
     slug = run_slug(run_dir)
+    root = repo / ".council" / "worktrees"
     for member in members:
-        wt = repo / ".council" / "worktrees" / f"{slug}-{member}"
+        wt = root / f"{slug}-{member}"
         branch = f"council/{slug}-{member}"
+        if not under(wt, root):
+            print(f"refusing: {wt} is not under {root}", file=sys.stderr)
+            return 2
         if wt.exists():
-            if git(wt, "status", "--porcelain").strip() and not args.discard:
-                print(f"kept {wt}: it has uncommitted work (commit it, or pass --discard)")
+            ok, status = git_ok(wt, "status", "--porcelain")  # ignored build output isn't work
+            head_ok, head = git_ok(wt, "rev-parse", "HEAD")
+            tip_ok, tip = git_ok(repo, "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}")
+            protected = tip_ok and tip.strip() == head.strip() or (
+                head_ok and git_ok(repo, "merge-base", "--is-ancestor", head.strip(), "HEAD")[0])
+            reason = ("git status failed" if not ok else
+                      "it has uncommitted work" if status.strip() else
+                      "it has commits no branch holds" if not protected else "")
+            if reason and not args.discard:
+                print(f"kept {wt}: {reason} (pass --discard to remove it anyway)")
                 continue
             git(repo, "worktree", "remove", "--force", str(wt), check=True)
             print(f"removed worktree {wt}")
         if git(repo, "branch", "--list", branch).strip():
-            merged = branch in git(repo, "branch", "--merged", "HEAD").split()
+            merged = git_ok(repo, "merge-base", "--is-ancestor", branch, "HEAD")[0]
             if merged or args.discard:
                 git(repo, "branch", "-D", branch, check=True)
                 print(f"deleted branch {branch}" + ("" if merged else " (unmerged, discarded)"))
@@ -824,15 +927,19 @@ def main() -> int:
     g = sub.add_parser("gate")
     g.add_argument("--dir", required=True)
     g.add_argument("--workspace")
+    g.add_argument("--require", help="comma-separated reviewers that must have a verdict "
+                                     "(default: every enabled member)")
     t = sub.add_parser("task")
     t.add_argument("--member", required=True)
     t.add_argument("--brief", required=True)
     t.add_argument("--base", help="branch or commit to start from (default: current branch)")
     t.add_argument("--workspace", help="repo to work in (default: current directory)")
     t.add_argument("--timeout", type=int)
+    t.add_argument("--continue", dest="resume", action="store_true",
+                   help="another round in the existing worktree (e.g. with review findings)")
     c = sub.add_parser("cleanup")
     c.add_argument("--dir", required=True)
-    c.add_argument("--member")
+    c.add_argument("--member", choices=WRITE_MEMBERS)
     c.add_argument("--workspace")
     c.add_argument("--discard", action="store_true", help="also delete unmerged council branches")
     args = parser.parse_args()

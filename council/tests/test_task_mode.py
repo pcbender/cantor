@@ -118,7 +118,7 @@ class TaskModeTest(unittest.TestCase):
     def test_escape_is_a_violation(self):
         _, rec = self.run_task("escape")
         self.assertEqual(rec["status"], "VIOLATION")
-        self.assertTrue(any("main checkout status" in v for v in rec["violations"]))
+        self.assertTrue(any("main checkout untracked" in v for v in rec["violations"]))
 
     def test_member_commit_is_a_violation(self):
         _, rec = self.run_task("commit")
@@ -164,6 +164,62 @@ class TaskModeTest(unittest.TestCase):
                                                workspace=None, discard=True), {})
         self.assertNotIn("council/t2-codex", subprocess.run(["git", "branch"], cwd=self.repo,
                                                             capture_output=True, text=True).stdout)
+
+    def test_review_round_runner_checks(self):
+        # Rewriting an already-modified file in the main checkout is caught by content hash.
+        (self.repo / "a.txt").write_text("dirty\n")
+        STUB_REWRITE = "(Path.cwd().parents[2] / 'a.txt').write_text('dirtier\\n')"
+        (self.bin / "stub.py").write_text(STUB.replace(
+            'elif mode == "protected":', f'elif mode == "rewrite":\n    {STUB_REWRITE}\nelif mode == "protected":'))
+        _, rec = self.run_task("rewrite")
+        self.assertEqual(rec["status"], "VIOLATION")
+        self.assertTrue(any("main checkout worktree" in v for v in rec["violations"]))
+
+    def test_rename_into_protected_path(self):
+        (self.repo / "src").mkdir()
+        (self.repo / "src" / "old.yml").write_text("x\n")
+        sh(self.repo, "git", "add", ".")
+        sh(self.repo, "git", "commit", "-qm", "add old")
+        mv = ("(Path.cwd() / '.github').mkdir(exist_ok=True); "
+              "(Path.cwd() / 'src' / 'old.yml').rename(Path.cwd() / '.github' / 'ci.yml')")
+        (self.bin / "stub.py").write_text(STUB.replace(
+            'elif mode == "protected":', f'elif mode == "rename":\n    {mv}\nelif mode == "protected":'))
+        _, rec = self.run_task("rename")
+        self.assertEqual(rec["status"], "VIOLATION")
+        self.assertTrue(any(".github/ci.yml" in v for v in rec["violations"]))
+
+    def test_continue_round(self):
+        _, rec = self.run_task("good")
+        self.assertEqual(rec["status"], "DONE")
+        config = council.load_config()
+        config["members"]["codex"].update(enabled=True, executable=self.stub("good"), extra_args=[])
+        orig = council.ADAPTERS["codex"].build
+        council.ADAPTERS["codex"].build = lambda self_, pf, ws, of, write=False: (
+            [self_.executable()], pf.read_text(encoding="utf-8"))
+        try:
+            args = argparse.Namespace(member="codex", brief=str(self.run_dir / "task.md"), base=None,
+                                      workspace=None, timeout=60, resume=True)
+            self.assertEqual(council.cmd_task(args, config), 0)
+        finally:
+            council.ADAPTERS["codex"].build = orig
+
+    def test_gate_requires_all_reviewers(self):
+        verdict = {"member": "gemini", "verdict": "pass", "findings": [],
+                   "fingerprint": council.diff_fingerprint(self.repo)}
+        (self.run_dir / "gemini.verdict.json").write_text(json.dumps(verdict))
+        config = council.load_config()
+        gate = lambda req: council.cmd_gate(argparse.Namespace(dir=str(self.run_dir), workspace=None,
+                                                               require=req), config)
+        self.assertEqual(gate(None), 1)          # codex is enabled but has no verdict
+        self.assertEqual(gate("gemini"), 0)      # cross-review: only the other member
+        self.assertTrue((self.repo / ".council" / "approved.json").is_file())
+        self.assertEqual(gate("codex,gemini"), 1)
+        self.assertFalse((self.repo / ".council" / "approved.json").is_file())  # withdrawn
+
+    def test_bypass_in_extra_args_refused(self):
+        adapter = council.CodexAdapter({"executable": "codex", "extra_args": ["-s", "danger-full-access"]})
+        with self.assertRaises(council.MemberUnavailable):
+            adapter.executable()
 
     def test_claude_cannot_write(self):
         args = argparse.Namespace(member="claude", brief=str(self.run_dir / "task.md"), base=None,

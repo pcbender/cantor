@@ -43,9 +43,14 @@ the repo's `.gitignore` (task mode refuses to run without it).
   effect in testing.
 - **Afterwards** the runner compares the main checkout (HEAD, branch, status, refs, stash)
   before and after, checks the worktree has no new commits, and checks every changed path
-  against the brief's `## Allowed paths` and a protected list (`.github/`, `.claude/`,
-  `.council/`, `council.config.json`, `CLAUDE.md`, `.gitignore`, settings, lockfiles, `.env`).
-  Any breach is `VIOLATION`.
+  against the brief's `## Allowed paths` and a protected list (`.git`, `.github/`, `.claude/`,
+  `.council/`, `.canto/`, `council.config.json`, `CLAUDE.md`, `.gitignore`, settings,
+  lockfiles, `.env`). The main-checkout comparison uses content hashes, renames are checked
+  as their new path, ignored files the member created are checked too, and a rewritten
+  worktree `.git` pointer is caught before any git command runs there. Any breach is
+  `VIOLATION`. Branches under `council/` are left out of the comparison so two tasks can run
+  in parallel.
+- **Another round** on the same worktree: `task ... --continue`.
 
 ## Install (Serenity, native Windows)
 
@@ -98,9 +103,17 @@ What it checks, in short:
   approval files by hand; `git commit -a` and commits whose staged diff the council has not
   passed, in repos where the commit gate is on.
 
+It splits chained commands (`&&`, `;`, `|`, `&`, newlines, subshells), looks inside
+`bash -c` / `pwsh -Command`, expands git aliases, tracks a `git checkout` earlier in the
+same command, normalises paths (including `..`, `~` and NTFS `::$DATA` suffixes), and checks
+shell writes (`>`, `Set-Content`, `cp`, `sed -i`...) against the same config and forgery rules
+as the Edit tool.
+
 Limits: it sees only the chairman's own tool calls, not what a member runs inside its
-sandbox (the sandboxes and the after-run check cover that). It parses commands with simple
-rules, so treat it as a strong guardrail, not a proof.
+sandbox (the sandboxes and the after-run check cover that). It classifies commands with
+simple parsing, so it is a guardrail against mistakes, not a sandbox: an agent set on
+evading it could write a script and run that. Branch ownership is by name (`council/*`,
+`claude/*`), so another session's `claude/*` branch counts as delegated too.
 
 ## Commit gate (optional, per repo)
 
@@ -111,7 +124,9 @@ blocks it again. Run folders alone don't turn it on.
 ## Gate policy
 
 - Any member says `reject` → **REJECT**
-- Any `revise`, unparseable reply, or member that failed to run → **REVISE**
+- Any `revise`, unparseable reply, member that failed to run, or required reviewer with no
+  verdict (`--require`, default every enabled member) → **REVISE**
+- Any non-pass removes an earlier `.council/approved.json`
 - A `pass` with a blocker or major finding is downgraded to `revise`
 - Reviews of an older diff are marked stale → **REVISE**
 - Otherwise → **PASS**

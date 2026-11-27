@@ -98,6 +98,44 @@ class PolicyGateTest(unittest.TestCase):
         sh(self.repo, "git", "checkout", "-q", "claude/work")
         self.assertEqual(self.bash("git merge --no-ff council/small-codex"), "allow")
 
+    def test_review_round_bypasses_are_caught(self):
+        # Findings from the first council review of this hook.
+        for cmd in ("git status\ngit push origin main", "bash -c \"git push origin main\"",
+                    "git checkout main && git commit -m x", "git -c alias.ship=push ship origin main",
+                    "git --git-dir /other/.git push origin claude/work", "git push -fu origin claude/work",
+                    "git push --repo=origin main", "git branch -f main HEAD~1", "git update-ref refs/heads/main HEAD",
+                    "gh api --method=DELETE repos/o/r", "gh api -XDELETE repos/o/r", "gh api repos/o/r -fname=x",
+                    "py -m pip install requests", "npm --prefix web install left-pad",
+                    "rm -rf .council/../src", "git worktree remove .council/../important",
+                    "Set-Content C:/Users/x/.claude/settings.json '{}'", "echo x > .gitignore",
+                    "& git push origin main", "git stash drop"):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.bash(cmd), "ask")
+        for cmd in ("cat ~/.codex/./auth.json", "type C:\\Users\\x\\.codex\\auth.json"):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.bash(cmd), "deny")
+        self.assertEqual(self.edit(str(self.repo / ".council" / "approved.json::$DATA")), "deny")
+
+    def test_review_round_false_positives_fixed(self):
+        for cmd in ("git log -S 'danger-full-access'", "gh repo view", "gh workflow view build",
+                    "gh secret list", "git config --global --get user.name",
+                    "git commit -m \"fix (parser)\"", "python -m pytest -q", "npm run build"):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.bash(cmd), "allow")
+
+    def test_windows_paths(self):
+        sh(self.repo, "git", "checkout", "-q", "main")
+        win = str(self.repo).replace("/", "\\")
+        self.assertEqual(self.bash(f"git -C {win} commit -m x"), "ask")
+
+    def test_commit_gate_blocks_unreviewed_variants(self):
+        (self.repo / ".council").mkdir()
+        (self.repo / ".council" / "enforce-commit-gate").write_text("")
+        for cmd in ("git commit --include b.txt -m x", "git commit --amend --no-edit",
+                    "git commit -m x a.txt", "git commit -o a.txt -m x"):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.bash(cmd), "deny")
+
     def test_chained_commands_take_the_strictest(self):
         self.assertEqual(self.bash("git add a.txt && git push origin main"), "ask")
         self.assertEqual(self.bash("git status; codex exec --sandbox danger-full-access -"), "deny")
