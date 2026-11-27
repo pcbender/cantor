@@ -1335,33 +1335,33 @@
     "semantic_hash": ""
   },
   "council/scripts/council.py": {
-    "mtime": 1795798397.8950765,
-    "ast_hash": "969103425eefee4ca2306de2096e9806",
+    "mtime": 1795800934.663067,
+    "ast_hash": "5461beb142091d6fc25502616f9d282d",
     "semantic_hash": ""
   },
   "council/scripts/policy_gate.py": {
-    "mtime": 1795798494.976199,
-    "ast_hash": "3362f2137f5d7629abfe8690093c33a0",
+    "mtime": 1795800934.6635716,
+    "ast_hash": "86a5cdbdca2d2e6dcb7de648716fddb7",
     "semantic_hash": ""
   },
   "council/tests/test_policy_gate.py": {
-    "mtime": 1795798514.6568885,
-    "ast_hash": "7466f960664ec33a2fa710e4d6da3ed3",
+    "mtime": 1795800964.0041013,
+    "ast_hash": "cd1fec93253016e1aaac72e0298b785c",
     "semantic_hash": ""
   },
   "council/tests/test_task_mode.py": {
-    "mtime": 1795798445.3315191,
-    "ast_hash": "523a15380220c941c985eda418d3eb4b",
+    "mtime": 1795800293.7271774,
+    "ast_hash": "c06f4cd5a3eff4c16d49c592fa917196",
     "semantic_hash": ""
   },
   "council/README.md": {
-    "mtime": 1795798543.6861067,
-    "ast_hash": "63e8e71597e2a9dee9f10752a71873bc",
+    "mtime": 1795800995.4508152,
+    "ast_hash": "c838baade072c49cd21557a0f43f92d3",
     "semantic_hash": ""
   },
   "council/SKILL.md": {
-    "mtime": 1795798483.2441318,
-    "ast_hash": "03d9525efab1850c738d04796824d49c",
+    "mtime": 1795800995.246816,
+    "ast_hash": "2480b7149b3fc73a2fbd3b78d24d5573",
     "semantic_hash": ""
   },
   "docs/council-handoff.md": {
