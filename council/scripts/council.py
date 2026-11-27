@@ -254,7 +254,9 @@ class GeminiAgyAdapter(Adapter):
         else:
             instruction = (
                 f"Read the file at {prompt_file} and do exactly what it asks. "
-                "Do not modify any files. Reply with your answer only."
+                "Do not modify any files. Do not run shell commands: in this mode they are "
+                "denied and end your run, so use your file-reading tools only. "
+                "Reply with your answer only."
             )
             # --mode plan enforces read-only instead of relying on the instruction alone.
             # The brief's folder is added too: headless agy auto-denies reads outside
@@ -542,6 +544,12 @@ def cmd_run(args, config, kind: str):
     role = cfg.get("role", "")
     prompt = f"You are a council member. Your role: {role}\n\n" + brief.read_text(encoding="utf-8")
     if review:
+        # Save the staged diff where every member can read it: headless agy can't run
+        # `git diff` (shell commands are denied and end its run).
+        diff_file = out_dir / "staged.diff"
+        diff_file.write_text(git(workspace, "diff", "--cached", "--binary"), encoding="utf-8")
+        prompt += (f"\n\nThe staged diff under review is saved at {diff_file}. Read it there; "
+                   "you can also read any file in the repository for context.\n")
         prompt += "\n" + REVIEW_INSTRUCTIONS
     elif kind == "consult":
         prompt += "\n" + CONSULT_INSTRUCTIONS
