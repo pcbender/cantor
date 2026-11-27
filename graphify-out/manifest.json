@@ -1315,8 +1315,8 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1795792449.665416,
-    "ast_hash": "82efb97a359f5c7290bf2513d14686be",
+    "mtime": 1795805767.5705867,
+    "ast_hash": "639251966a0e8b3ff72654da0d0456bc",
     "semantic_hash": ""
   },
   "docs/codex-nested-agent-sandbox-hotfix.md": {
@@ -1330,42 +1330,42 @@
     "semantic_hash": ""
   },
   "council/council.config.json": {
-    "mtime": 1795793319.98584,
+    "mtime": 1795805298.0474327,
     "ast_hash": "fc125bcf74107bb1e603738f504a9f6d",
     "semantic_hash": ""
   },
   "council/scripts/council.py": {
-    "mtime": 1795800934.663067,
-    "ast_hash": "5461beb142091d6fc25502616f9d282d",
+    "mtime": 1795805298.0474327,
+    "ast_hash": "0b737027f84759ad932a36f67ff2e121",
     "semantic_hash": ""
   },
   "council/scripts/policy_gate.py": {
-    "mtime": 1795800934.6635716,
-    "ast_hash": "86a5cdbdca2d2e6dcb7de648716fddb7",
+    "mtime": 1795805298.0479324,
+    "ast_hash": "0986747d5706055069eed7530b4ebb9a",
     "semantic_hash": ""
   },
   "council/tests/test_policy_gate.py": {
-    "mtime": 1795800964.0041013,
-    "ast_hash": "cd1fec93253016e1aaac72e0298b785c",
+    "mtime": 1795805298.0479324,
+    "ast_hash": "4506b5949d1ac6679e6caf1a9b2230bd",
     "semantic_hash": ""
   },
   "council/tests/test_task_mode.py": {
-    "mtime": 1795800293.7271774,
+    "mtime": 1795805298.0484364,
     "ast_hash": "c06f4cd5a3eff4c16d49c592fa917196",
     "semantic_hash": ""
   },
   "council/README.md": {
-    "mtime": 1795800995.4508152,
-    "ast_hash": "c838baade072c49cd21557a0f43f92d3",
+    "mtime": 1795805819.1156468,
+    "ast_hash": "f8e46b4436b3e0af563b7affa4b0987e",
     "semantic_hash": ""
   },
   "council/SKILL.md": {
-    "mtime": 1795800995.246816,
-    "ast_hash": "2480b7149b3fc73a2fbd3b78d24d5573",
+    "mtime": 1795805801.9023032,
+    "ast_hash": "b03d1e599f7e4c3a4151f3a4f5734b50",
     "semantic_hash": ""
   },
   "docs/council-handoff.md": {
-    "mtime": 1795793320.85773,
+    "mtime": 1795805298.0484364,
     "ast_hash": "2cfb5859a4e53b8c05032ec845d773b3",
     "semantic_hash": ""
   }

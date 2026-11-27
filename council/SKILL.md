@@ -15,6 +15,10 @@ keep what you show them short.
 `.council/runs/<yyyymmdd-hhmm>-<short-slug>/` in the repo root (`.council/` must be in
 `.gitignore`; `task` refuses to run otherwise).
 
+Members load the repo's `AGENTS.md` on their own (Codex and agy read it natively), so
+don't paste repo conventions into a brief: write only what is specific to this run. If a
+rule should apply to every agent, it belongs in `AGENTS.md`, not in the brief.
+
 ## Modes
 
 - `/council approach <problem>` — **consult**: how would each member tackle this? Use it
